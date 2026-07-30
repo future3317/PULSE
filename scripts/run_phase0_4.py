@@ -20,6 +20,7 @@ from typing import Any
 import numpy as np
 import pandas as pd
 import yaml
+from pymatgen.core.structure import Structure
 
 warnings.filterwarnings("ignore", category=UserWarning)
 
@@ -308,7 +309,12 @@ def phase_2() -> dict[str, Any]:
 
     # Symmetry projection smoke test on a non-piezoelectric group (should not crash)
     try:
-        rotations = point_group_rotations("P-1")
+        smoke_struct = Structure(
+            np.eye(3) * 4.0,
+            ["Na", "Cl"],
+            [[0.0, 0.0, 0.0], [0.5, 0.5, 0.5]],
+        )
+        rotations = point_group_rotations(smoke_struct)
         _ = project_piezo_tensor(cart, rotations)
         resid = symmetry_residual(cart, rotations)
     except Exception as exc:  # noqa: BLE001
@@ -450,15 +456,15 @@ def phase_3() -> dict[str, Any]:
 
             # Source symmetry residuals (diagnostic only; projection is kept
             # separate because source IEEE frames may not match the CIF setting).
-            sg_symbol = _space_group_symbol(jrow["space_group"])
-            if sg_symbol:
-                try:
-                    rots = point_group_rotations(sg_symbol)
+            try:
+                jarvis_struct = Structure.from_str(jrow["cif"], fmt="cif")
+                if len(jarvis_struct) > 0:
+                    rots = point_group_rotations(jarvis_struct)
                     jresid = symmetry_residual(jtensor, rots)
                     mresid = symmetry_residual(mtensor, rots)
-                except Exception:  # noqa: BLE001
+                else:
                     jresid, mresid = None, None
-            else:
+            except Exception:  # noqa: BLE001
                 jresid, mresid = None, None
 
             sym_threshold = match_cfg.get("symmetry_residual_threshold", 1.0)

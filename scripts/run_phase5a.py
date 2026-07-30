@@ -25,6 +25,7 @@ from typing import Any
 import numpy as np
 import pandas as pd
 import yaml
+from pymatgen.core.structure import Structure
 
 warnings.filterwarnings("ignore", category=UserWarning)
 
@@ -318,32 +319,34 @@ def build_enriched_pairs(
         sg_symbol = _space_group_symbol(jrow["space_group"])
         mtensor_aligned = _transport_tensor(mtensor, rotation) if rotation is not None else mtensor
 
-        # Source residuals.
+        # Source residuals using the actual JARVIS CIF-setting structure.
         jresid_raw = None
         mresid_raw = None
         jresid_norm = None
         mresid_norm = None
-        if sg_symbol:
-            try:
-                rots = point_group_rotations(sg_symbol)
+        try:
+            jarvis_struct = Structure.from_str(jrow["cif"], fmt="cif")
+            if len(jarvis_struct) > 0:
+                rots = point_group_rotations(jarvis_struct)
                 jresid_raw = symmetry_residual(jtensor, rots)
                 mresid_raw = symmetry_residual(mtensor_aligned, rots)
                 jresid_norm = jresid_raw / (np.linalg.norm(jtensor) + 1e-12)
                 mresid_norm = mresid_raw / (np.linalg.norm(mtensor_aligned) + 1e-12)
-            except Exception:  # noqa: BLE001
-                pass
+        except Exception:  # noqa: BLE001
+            pass
 
         # Common point group projection.
         common_proj = None
-        if sg_symbol:
-            try:
-                rots = point_group_rotations(sg_symbol)
+        try:
+            jarvis_struct = Structure.from_str(jrow["cif"], fmt="cif")
+            if len(jarvis_struct) > 0:
+                rots = point_group_rotations(jarvis_struct)
                 common_proj = {
                     "jarvis": project_piezo_tensor(jtensor, rots),
                     "mp": project_piezo_tensor(mtensor_aligned, rots),
                 }
-            except Exception:  # noqa: BLE001
-                pass
+        except Exception:  # noqa: BLE001
+            pass
 
         records.append({
             "jarvis_id": jid,
