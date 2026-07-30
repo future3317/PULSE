@@ -7,10 +7,11 @@ different candidate sets or metrics.
 
 from __future__ import annotations
 
+import warnings
 from dataclasses import dataclass
 
 import numpy as np
-from scipy import stats
+from scipy import optimize, stats
 
 
 @dataclass(frozen=True)
@@ -30,6 +31,8 @@ class RankingResult:
     kendall_tau_ci_high: float
     mean_absolute_rank_shift: float
     median_absolute_rank_shift: float
+    top_10_jaccard: float = float("nan")
+    top_30_jaccard: float = float("nan")
 
 
 def frobenius_norm_score(tensor: np.ndarray) -> float:
@@ -84,6 +87,151 @@ def max_shear_response(tensor: np.ndarray) -> float:
         "max_shear_response has been removed because no rotation-invariant "
         "physical definition was preregistered."
     )
+
+
+def _fibonacci_sphere(n: int) -> np.ndarray:
+    """Deterministic quasi-uniform sampling of the unit sphere."""
+    golden = np.pi * (3.0 - np.sqrt(5.0))
+    ys = np.linspace(1.0, -1.0, n)
+    radius = np.sqrt(np.maximum(0.0, 1.0 - ys * ys))
+    theta = golden * np.arange(n)
+    return np.column_stack((radius * np.cos(theta), ys, radius * np.sin(theta)))
+
+
+def max_longitudinal_modulus(
+    tensor: np.ndarray,
+    *,
+    grid_N: int = 10000,
+    n_starts: int = 20,
+    max_iter: int = 100,
+    tol: float = 1e-9,
+    cross_check: bool = True,
+    cross_check_tol: float = 1e-4,
+) -> float:
+    """Deterministic maximum longitudinal piezoelectric modulus.
+
+    Computes ``max_{||n||=1} | n_i e_ijk n_j n_k |`` with:
+
+    1. a deterministic dense Fibonacci sphere grid;
+    2. multi-start projected gradient ascent on the unit sphere;
+    3. an optional SLSQP constrained-polish cross-check of the best direction;
+    4. internal symmetrisation of the last two tensor indices.
+
+    Parameters
+    ----------
+    grid_N:
+        Number of deterministic sphere samples.
+    n_starts:
+        Number of grid points used as optimisation starting points.
+    max_iter:
+        Maximum projected-gradient iterations per start.
+    tol:
+        Convergence tolerance for the projected-gradient improvement.
+    cross_check:
+        If True, refine the best projected-gradient direction with SLSQP
+        and warn if the two methods disagree by more than ``cross_check_tol``.
+    cross_check_tol:
+        Relative tolerance for agreement between the projected-gradient and
+        SLSQP solutions.
+    """
+    t = np.asarray(tensor, dtype=np.float64)
+    if t.shape != (3, 3, 3):
+        raise ValueError(f"Expected Cartesian tensor shape (3, 3, 3), got {t.shape}")
+    # Enforce the minor symmetry required by the Voigt/Cartesian convention.
+    t = 0.5 * (t + t.transpose(0, 2, 1))
+
+    dirs = _fibonacci_sphere(grid_N)
+    vals = np.abs(np.einsum("ni,ijk,nj,nk->n", dirs, t, dirs, dirs))
+    top_idx = np.argsort(-vals, kind="stable")[:n_starts]
+
+    def _f_and_grad(n: np.ndarray) -> tuple[float, np.ndarray]:
+        f = float(np.einsum("i,ijk,j,k->", n, t, n, n))
+        # Gradient of f with respect to n, respecting minor symmetry in j,k.
+        g1 = np.einsum("ljk,j,k->l", t, n, n)
+        g2 = np.einsum("i,k,ikl->l", n, n, t)
+        return f, g1 + 2.0 * g2
+
+    best_val = 0.0
+    best_dir: np.ndarray | None = None
+
+    for start in dirs[top_idx]:
+        n = start.copy()
+        alpha = 0.3
+        prev_f2 = float("inf")
+        for _ in range(max_iter):
+            f, grad_f = _f_and_grad(n)
+            # Gradient of f^2.
+            grad = 2.0 * f * grad_f
+            grad_tan = grad - np.dot(grad, n) * n
+            gt_norm = np.linalg.norm(grad_tan)
+            if gt_norm < 1e-12:
+                break
+
+            cur_f2 = f * f
+            step = alpha
+            improved = False
+            for _ in range(12):
+                n_try = n + step * grad_tan
+                n_try /= np.linalg.norm(n_try)
+                f_try, _ = _f_and_grad(n_try)
+                if f_try * f_try > cur_f2 + 1e-14:
+                    n = n_try
+                    f = f_try
+                    improved = True
+                    break
+                step *= 0.5
+
+            abs_f = abs(f)
+            if abs_f > best_val:
+                best_val = abs_f
+                best_dir = n.copy()
+
+            if not improved:
+                alpha *= 0.7
+                if alpha < 1e-4:
+                    break
+                continue
+
+            if abs(prev_f2 - f * f) < tol and f * f <= prev_f2:
+                break
+            prev_f2 = f * f
+
+    if cross_check and best_dir is not None:
+        def neg_f2(x: np.ndarray) -> float:
+            f = float(np.einsum("i,ijk,j,k->", x, t, x, x))
+            return -(f * f)
+
+        def neg_f2_jac(x: np.ndarray) -> np.ndarray:
+            f, g = _f_and_grad(x)
+            return -2.0 * f * g
+
+        constraint = {
+            "type": "eq",
+            "fun": lambda x: float(x @ x) - 1.0,
+            "jac": lambda x: 2.0 * x,
+        }
+        result = optimize.minimize(
+            neg_f2,
+            best_dir,
+            jac=neg_f2_jac,
+            method="SLSQP",
+            constraints=constraint,
+            options={"ftol": 1e-12, "maxiter": 200, "disp": False},
+        )
+        if result.success:
+            f_ref = float(np.einsum("i,ijk,j,k->", result.x, t, result.x, result.x))
+            ref_val = abs(f_ref)
+            if ref_val > best_val:
+                best_val = ref_val
+            denom = max(best_val, 1.0)
+            if abs(ref_val - best_val) / denom > cross_check_tol:
+                warnings.warn(
+                    f"max_longitudinal_modulus cross-check mismatch: "
+                    f"projected-gradient={best_val:.6e}, SLSQP={ref_val:.6e}",
+                    stacklevel=2,
+                )
+
+    return float(best_val)
 
 
 def derived_d_score(
@@ -176,6 +324,8 @@ def rank_stability_functional(
         kendall_tau_ci_high=tau_hi,
         mean_absolute_rank_shift=mean_shift,
         median_absolute_rank_shift=median_shift,
+        top_10_jaccard=jaccards.get("top_10_jaccard", float("nan")),
+        top_30_jaccard=jaccards.get("top_30_jaccard", float("nan")),
     )
 
 
@@ -213,7 +363,9 @@ def ranking_summary_table(results: list[RankingResult]) -> list[dict[str, float 
         rows.append({
             "functional": r.functional_name,
             "n_pairs": r.n_pairs,
+            "top_10_jaccard": r.top_10_jaccard,
             "top_20_jaccard": r.top_20_jaccard,
+            "top_30_jaccard": r.top_30_jaccard,
             "top_50_jaccard": r.top_50_jaccard,
             "top_100_jaccard": r.top_100_jaccard,
             "kendall_tau": r.kendall_tau,

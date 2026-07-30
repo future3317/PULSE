@@ -10,6 +10,7 @@ from scipy.spatial.transform import Rotation
 
 from crosspiezo.analysis.ranking import (
     frobenius_norm_score,
+    max_longitudinal_modulus,
     max_longitudinal_response,
     max_shear_response,
 )
@@ -73,4 +74,47 @@ def test_longitudinal_matches_brute_force_oracle():
     ours = max_longitudinal_response(tensor)
     assert np.isclose(ours, expected, atol=1e-2), (
         f"longitudinal functional {ours} != brute-force oracle {expected}"
+    )
+
+
+def test_max_longitudinal_modulus_is_rotation_invariant():
+    """The deterministic modulus must be invariant under physical rotations."""
+    rng = np.random.default_rng(601)
+    tensor = rng.normal(size=(3, 3, 3))
+    tensor = 0.5 * (tensor + tensor.transpose(0, 2, 1))
+    q = _random_rotation_matrix(rng)
+    rotated = _apply_rotation(tensor, q)
+    assert np.isclose(
+        max_longitudinal_modulus(tensor),
+        max_longitudinal_modulus(rotated),
+        atol=1e-6,
+    ), "max_longitudinal_modulus is not rotation invariant"
+
+
+def test_max_longitudinal_modulus_is_deterministic():
+    """Same input must yield exactly the same scalar."""
+    rng = np.random.default_rng(602)
+    tensor = rng.normal(size=(3, 3, 3))
+    tensor = 0.5 * (tensor + tensor.transpose(0, 2, 1))
+    a = max_longitudinal_modulus(tensor)
+    b = max_longitudinal_modulus(tensor)
+    assert a == b, "max_longitudinal_modulus is not deterministic"
+
+
+def test_max_longitudinal_modulus_analytic_oracle():
+    """For a pure e_111 tensor the maximum longitudinal response is |e_111|."""
+    tensor = np.zeros((3, 3, 3), dtype=np.float64)
+    tensor[0, 0, 0] = 5.0
+    assert np.isclose(max_longitudinal_modulus(tensor), 5.0, atol=1e-9)
+
+
+def test_max_longitudinal_modulus_matches_dense_oracle():
+    """The deterministic optimiser must agree with a dense brute-force grid."""
+    rng = np.random.default_rng(603)
+    tensor = rng.normal(size=(3, 3, 3))
+    tensor = 0.5 * (tensor + tensor.transpose(0, 2, 1))
+    ours = max_longitudinal_modulus(tensor, grid_N=5000, n_starts=10)
+    expected = _brute_force_longitudinal(tensor, n_points=100000)
+    assert np.isclose(ours, expected, rtol=1e-3), (
+        f"deterministic modulus {ours} != dense oracle {expected}"
     )
