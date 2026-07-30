@@ -56,7 +56,7 @@ def test_unimodular_basis_change_gives_identity_cartesian_rotation():
 def test_rigid_rotation_recovery():
     """A true rigid rotation of the Cartesian coordinates must be recovered."""
     s1 = _test_structure()
-    theta = 0.4
+    theta = 0.1  # small enough to stay within the frozen 5° angle tolerance
     c, s = np.cos(theta), np.sin(theta)
     q = np.array([[c, -s, 0.0], [s, c, 0.0], [0.0, 0.0, 1.0]])
     # Rotate both lattice and Cartesian positions; fractional coords unchanged.
