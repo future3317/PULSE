@@ -246,10 +246,17 @@ def main() -> int:
     test_panel.to_parquet(PROJECT_ROOT / "artifacts" / "phase5b" / "test_panel.parquet")
     test_jids = set(test_panel["jarvis_id"])
     test_mids = set(test_panel["mp_id"])
+    test_formulas = set(test_panel["formula"])
+    test_prototypes = set(test_panel["prototype"])
 
-    # Exclude test panel from training (and also formula/prototype for strict splits).
+    # Exclude test panel from training by ID, reduced formula, and prototype.
     def _train_pool(recs: list[dict[str, Any]]) -> list[dict[str, Any]]:
-        return [r for r in recs if r["id"] not in test_jids and r["id"] not in test_mids]
+        return [
+            r for r in recs
+            if r["id"] not in test_jids and r["id"] not in test_mids
+            and r["formula"] not in test_formulas
+            and r.get("prototype") not in test_prototypes
+        ]
 
     train_jarvis = _train_pool(jarvis_records)
     train_mp = _train_pool(mp_records)

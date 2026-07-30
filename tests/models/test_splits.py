@@ -52,6 +52,37 @@ def test_source_held_out_requires_exclusion_of_eval_source_from_training():
         )
 
 
+def test_train_pool_excludes_test_formula_and_prototype():
+    """Training pool must have zero intersection with test on ID, formula, and prototype."""
+    test_panel = pd.DataFrame({
+        "jarvis_id": ["J-1"],
+        "mp_id": ["MP-1"],
+        "formula": ["NaCl"],
+        "prototype": ["AB"],
+    })
+    test_jids = set(test_panel["jarvis_id"])
+    test_mids = set(test_panel["mp_id"])
+    test_formulas = set(test_panel["formula"])
+    test_prototypes = set(test_panel["prototype"])
+
+    records = [
+        {"id": "J-1", "formula": "NaCl", "prototype": "AB", "source": "jarvis"},
+        {"id": "J-2", "formula": "NaCl", "prototype": "AB", "source": "jarvis"},
+        {"id": "J-3", "formula": "Na2Cl2", "prototype": "AB", "source": "jarvis"},
+        {"id": "J-4", "formula": "KCl", "prototype": "AB", "source": "jarvis"},
+        {"id": "J-5", "formula": "SiO2", "prototype": "AB2", "source": "jarvis"},
+    ]
+
+    pool = [
+        r for r in records
+        if r["id"] not in test_jids and r["id"] not in test_mids
+        and r["formula"] not in test_formulas
+        and r.get("prototype") not in test_prototypes
+    ]
+    assert len(pool) == 1
+    assert pool[0]["id"] == "J-5"
+
+
 def test_counterfactual_eval_uses_paired_counterpart():
     """Paired-counterfactual predictions must be made on the mate from the other
     source, not on the same-source test set."""

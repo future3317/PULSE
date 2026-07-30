@@ -33,6 +33,20 @@ class BaselineResult:
     amplitude_ratio: float
 
 
+def _reduced_anonymous_prototype(formula: str) -> str:
+    """Reduced anonymous-formula prototype key (e.g. Na2Cl2 and NaCl -> AB)."""
+    import math
+
+    from pymatgen.core.composition import Composition
+
+    comp = Composition(formula)
+    items = sorted(comp.items(), key=lambda item: (-item[1], str(item[0])))
+    amounts = [int(amount) for _, amount in items]
+    gcd = math.gcd(*amounts) if len(amounts) > 1 else amounts[0]
+    reduced = [a // gcd for a in amounts]
+    return "".join(f"{chr(ord('A') + i)}{(a if a > 1 else '')}" for i, a in enumerate(reduced))
+
+
 def _composition_features(formula: str) -> np.ndarray:
     """A simple deterministic composition vector (first 94 elements)."""
     from pymatgen.core.composition import Composition
@@ -131,6 +145,7 @@ def _prepare_records(
         jarvis_records.append({
             "id": row["material_id"],
             "formula": row["formula"],
+            "prototype": _reduced_anonymous_prototype(row["formula"]),
             "cif": row["cif"],
             "source": "jarvis",
             "tensor": tensor,
@@ -144,6 +159,7 @@ def _prepare_records(
         mp_records.append({
             "id": row["material_id"],
             "formula": row["formula"],
+            "prototype": _reduced_anonymous_prototype(row["formula"]),
             "cif": row["cif"],
             "source": "mp",
             "tensor": tensor,
