@@ -96,8 +96,10 @@ def report_equivariant_baselines(metrics: pd.DataFrame) -> pd.DataFrame:
     md += table_from_records(insource.groupby(["model_name", "eval_source"])["absolute_frobenius_mae"].mean().reset_index().to_dict("records"))
 
     md += "\n## Notes\n"
-    md += bullet("If no e3nn model passes the skill gate, the benchmark proceeds as Data-Only Benchmark Go.")
-    write_report(REPORT_ROOT / "19_equivariant_baselines.md", md, title="Phase 5B.4: Equivariant Baselines")
+    md += bullet("The e3nn equivariant graph model was launched on the remote GPU host but did not complete within the available wall-time budget; its training code and a smoke-test forward pass are committed, but no e3nn metrics are reported here.")
+    md += bullet("The `mlp_invariant` and `structural_ridge` models are O(3)-invariant baselines on composition+structure features; they are reported as transparent reference models, not as full tensor-equivariant models.")
+    md += bullet("No reported model beats the zero baseline in absolute in-source MAE; therefore the valid-model gate is not passed and the benchmark proceeds as Data-Only Benchmark Go.")
+    write_report(REPORT_ROOT / "19_equivariant_baselines.md", md, title="Phase 5B.4: Baselines and Model Skill Gate")
     print("[Phase 5B.5] Wrote reports/19_equivariant_baselines.md")
     return valid
 

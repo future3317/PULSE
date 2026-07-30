@@ -27,6 +27,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "src"))
 from crosspiezo.analysis.baselines import (
     _prepare_records,
     composition_mean_baseline,
+    mlp_invariant_baseline,
     source_token_baseline,
     structural_ridge_baseline,
     zero_baseline,
@@ -168,13 +169,15 @@ def _run_baseline_row(
         result = source_token_baseline(train_recs, eval_recs, train_source, eval_source, seed=seed)
     elif name == "structural_ridge":
         result = structural_ridge_baseline(train_recs, eval_recs, train_source, eval_source, feature_mode="structure", seed=seed)
+    elif name == "mlp_invariant":
+        result = mlp_invariant_baseline(train_recs, eval_recs, train_source, eval_source, seed=seed)
     else:
         raise ValueError(name)
     return {
         "model_name": result.baseline_name,
         "train_source": train_source,
         "eval_source": eval_source,
-        "split_type": split_type,
+        "split_type": f"{split_type}_{eval_source}",
         "seed": seed,
         "n_train": result.n_train,
         "n_test": result.n_test,
@@ -197,6 +200,7 @@ def main() -> int:
     parser.add_argument("--n-seeds", type=int, default=3)
     parser.add_argument("--max-atoms", type=int, default=200, help="skip structures with more atoms")
     parser.add_argument("--device", type=str, default="cuda" if torch.cuda.is_available() else "cpu")
+    parser.add_argument("--skip-e3nn", action="store_true", help="train only fast baselines, skip e3nn")
     args = parser.parse_args()
 
     device = torch.device(args.device)
@@ -218,23 +222,35 @@ def main() -> int:
     train_jarvis = _train_pool(jarvis_records)
     train_mp = _train_pool(mp_records)
 
-    # Build PyTorch datasets from the original dataframes.
-    def _build_dataset(df: pd.DataFrame, source: str) -> list[PiezoRecord]:
-        ds = PiezoGraphDataset(df, source=source)
-        # Filter oversized structures to keep memory reasonable.
-        return [r for r in ds.records if len(r.z) <= args.max_atoms]
-
-    jarvis_all = _build_dataset(jarvis_df, "jarvis")
-    mp_all = _build_dataset(mp_df, "mp")
-    train_jarvis_ds = [r for r in jarvis_all if r.material_id not in test_jids]
-    train_mp_ds = [r for r in mp_all if r.material_id not in test_mids]
-    pooled_all = train_jarvis_ds + train_mp_ds
-
-    # Eval sets.
-    eval_jarvis = [r for r in jarvis_all if r.material_id in test_jids]
-    eval_mp = [r for r in mp_all if r.material_id in test_mids]
+    # Eval record sets for baselines.
     eval_jarvis_recs = [r for r in jarvis_records if r["id"] in test_jids]
     eval_mp_recs = [r for r in mp_records if r["id"] in test_mids]
+
+    # Build PyTorch datasets only if e3nn models are requested.
+    if not args.skip_e3nn:
+        def _build_dataset(df: pd.DataFrame, source: str) -> list[PiezoRecord]:
+            ds = PiezoGraphDataset(df, source=source)
+            # Filter oversized structures to keep memory reasonable.
+            return [r for r in ds.records if len(r.z) <= args.max_atoms]
+
+        jarvis_all = _build_dataset(jarvis_df, "jarvis")
+        mp_all = _build_dataset(mp_df, "mp")
+        train_jarvis_ds = [r for r in jarvis_all if r.material_id not in test_jids]
+        train_mp_ds = [r for r in mp_all if r.material_id not in test_mids]
+        pooled_all = train_jarvis_ds + train_mp_ds
+
+        # Eval sets.
+        eval_jarvis = [r for r in jarvis_all if r.material_id in test_jids]
+        eval_mp = [r for r in mp_all if r.material_id in test_mids]
+    else:
+        # Dummy containers so the e3nn loop can be skipped cleanly.
+        jarvis_all = []
+        mp_all = []
+        train_jarvis_ds = []
+        train_mp_ds = []
+        pooled_all = []
+        eval_jarvis = []
+        eval_mp = []
 
     metrics_rows: list[dict[str, Any]] = []
 
@@ -250,6 +266,12 @@ def main() -> int:
         ("structural_ridge", train_mp, eval_mp_recs, "mp", "mp", "in_source"),
         ("structural_ridge", train_jarvis, eval_mp_recs, "jarvis", "mp", "source_held_out"),
         ("structural_ridge", train_mp, eval_jarvis_recs, "mp", "jarvis", "source_held_out"),
+        ("mlp_invariant", train_jarvis, eval_jarvis_recs, "jarvis", "jarvis", "in_source"),
+        ("mlp_invariant", train_mp, eval_mp_recs, "mp", "mp", "in_source"),
+        ("mlp_invariant", train_jarvis + train_mp, eval_jarvis_recs, "pooled", "jarvis", "in_source"),
+        ("mlp_invariant", train_jarvis + train_mp, eval_mp_recs, "pooled", "mp", "in_source"),
+        ("mlp_invariant", train_jarvis, eval_mp_recs, "jarvis", "mp", "source_held_out"),
+        ("mlp_invariant", train_mp, eval_jarvis_recs, "mp", "jarvis", "source_held_out"),
     ]
     for name, tr, ev, ts, es, st in baseline_splits:
         for seed in range(42, 42 + args.n_seeds):

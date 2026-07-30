@@ -40,13 +40,11 @@ def compute_valid_models(
     # Baseline thresholds per eval_source and split_type.
     baseline_df = agg[agg["model_name"].isin(baseline_names)].copy()
     baseline_thresholds = baseline_df.groupby(["eval_source", "split_type"])["absolute_frobenius_mae_mean"].min().to_dict()
-    baseline_thresholds_norm = baseline_df.groupby(["eval_source", "split_type"])["normalized_frobenius_mae_mean"].min().to_dict()
 
     def _valid(row: pd.Series) -> bool:
         key = (row["eval_source"], row["split_type"])
-        abs_ok = row["absolute_frobenius_mae_mean"] < baseline_thresholds.get(key, float("inf"))
-        norm_ok = row["normalized_frobenius_mae_mean"] < baseline_thresholds_norm.get(key, float("inf"))
-        return abs_ok or norm_ok
+        in_source = row["split_type"] in ("in_source_jarvis", "in_source_mp")
+        return in_source and row["absolute_frobenius_mae_mean"] < baseline_thresholds.get(key, float("inf"))
 
     agg["valid"] = agg.apply(_valid, axis=1)
     return agg

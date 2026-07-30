@@ -224,6 +224,47 @@ def structural_ridge_baseline(
     return _collect_result(name, train_source, eval_source, seed, train_records, test_records, preds)
 
 
+def mlp_invariant_baseline(
+    train_records: list[dict[str, Any]],
+    test_records: list[dict[str, Any]],
+    train_source: str,
+    eval_source: str,
+    seed: int = 42,
+    feature_mode: str = "structure",
+) -> BaselineResult:
+    """Small MLP on O(3)-invariant composition+structure features.
+
+    This is a fast, reproducible non-linear baseline.  It is O(3)-invariant,
+    not a full equivariant tensor model, and is reported separately from the
+    e3nn baseline.
+    """
+    from sklearn.neural_network import MLPRegressor
+
+    rng = np.random.default_rng(seed)
+    x_train = _build_feature_matrix(train_records, feature_mode)
+    y_train = np.asarray([_flatten_tensor(r["tensor"]) for r in train_records], dtype=np.float64)
+    x_test = _build_feature_matrix(test_records, feature_mode)
+
+    if len(x_train) == 0 or len(x_test) == 0 or x_train.shape[1] == 0:
+        preds = [np.zeros((3, 3, 3), dtype=np.float64) for _ in test_records]
+        return _collect_result("mlp_invariant", train_source, eval_source, seed, train_records, test_records, preds)
+
+    model = MLPRegressor(
+        hidden_layer_sizes=(128, 64),
+        activation="relu",
+        solver="adam",
+        alpha=1e-4,
+        max_iter=300,
+        early_stopping=True,
+        validation_fraction=0.1,
+        random_state=int(rng.integers(2**31)),
+    )
+    model.fit(x_train, y_train)
+    y_pred = model.predict(x_test)
+    preds = [_unflatten_tensor(v) for v in y_pred]
+    return _collect_result("mlp_invariant", train_source, eval_source, seed, train_records, test_records, preds)
+
+
 def source_token_baseline(
     train_records: list[dict[str, Any]],
     test_records: list[dict[str, Any]],
