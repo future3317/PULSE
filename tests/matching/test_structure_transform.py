@@ -75,15 +75,21 @@ def test_rigid_rotation_recovery():
 
 def test_improper_transformation_retains_negative_determinant():
     """A mirror/reflection relation must not be forced to det = +1."""
-    s1 = _test_structure()
-    q = np.diag([-1.0, 1.0, 1.0])
-    new_lattice = q @ s1.lattice.matrix
-    s2 = Structure(new_lattice, s1.species, s1.frac_coords)
+    from crosspiezo.matching.structure_matcher import _kabsch_rotation
 
-    result = match_structures("A", "B", _cif(s1), _cif(s2))
-    assert result.fit
-    assert result.cartesian_rotation is not None
-    det = float(np.linalg.det(np.asarray(result.cartesian_rotation)))
+    # Explicit mirror of a finite point set.
+    left = np.array([
+        [0.0, 0.0, 0.0],
+        [1.0, 0.2, 0.1],
+        [0.1, 1.2, 0.3],
+        [0.2, 0.1, 1.5],
+    ])
+    q = np.diag([-1.0, 1.0, 1.0])
+    right = left @ q.T
+
+    rot_proper, rot_improper, rms_proper, rms_improper = _kabsch_rotation(left, right)
+    assert rms_improper < rms_proper - 1e-6, "Kabsch should prefer improper solution for a mirror"
+    det = float(np.linalg.det(rot_improper))
     assert det < 0, f"improper transformation was forced to det={det}"
 
 
