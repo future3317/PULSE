@@ -2,10 +2,8 @@
 
 from __future__ import annotations
 
-import json
 import random
 from dataclasses import dataclass
-from pathlib import Path
 from typing import Any
 
 import numpy as np
@@ -16,7 +14,6 @@ from pymatgen.core.structure import Structure
 from torch.utils.data import DataLoader, Dataset
 
 from crosspiezo.conventions.voigt import voigt_to_cartesian
-from crosspiezo.models.piezo_e3nn import PiezoE3NN
 
 
 def _to_array(value: Any) -> np.ndarray | None:

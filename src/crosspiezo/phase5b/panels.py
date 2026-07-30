@@ -9,7 +9,10 @@ from typing import Any
 import numpy as np
 import pandas as pd
 
-from crosspiezo.conventions.symmetry import point_group_rotations, project_piezo_tensor, symmetry_residual
+from crosspiezo.conventions.symmetry import (
+    point_group_rotations,
+    symmetry_residual,
+)
 from crosspiezo.conventions.voigt import voigt_to_cartesian
 
 
@@ -58,9 +61,9 @@ def _crystal_system(space_group_number: int) -> str:
 
 def _transport_rotations(rotations: list[np.ndarray], frame_rotation: np.ndarray) -> list[np.ndarray]:
     """Conjugate source-frame point-group rotations into the common frame."""
-    R = np.asarray(frame_rotation, dtype=np.float64)
-    Rinv = np.linalg.inv(R)
-    return [np.asarray(R @ g @ Rinv, dtype=np.float64) for g in rotations]
+    rot = np.asarray(frame_rotation, dtype=np.float64)
+    rot_inv = np.linalg.inv(rot)
+    return [np.asarray(rot @ g @ rot_inv, dtype=np.float64) for g in rotations]
 
 
 def _normalized_residual(tensor: np.ndarray, rotations: list[np.ndarray] | None) -> tuple[float, float]:
@@ -79,10 +82,7 @@ def build_enriched_pairs(data_root: Path) -> pd.DataFrame:
     with open(config_path) as f:
         cfg = yaml.safe_load(f)
     sources = cfg["sources"]["t2c_flow"]
-    if data_root is not None:
-        root = Path(data_root) / "T2C-Flow"
-    else:
-        root = Path(sources["root"])
+    root = Path(data_root) / "T2C-Flow" if data_root is not None else Path(sources["root"])
     jarvis = pd.read_parquet(root / sources["records"]["jarvis_piezo"])
     mp = pd.read_parquet(root / sources["records"]["mp_piezo"])
     pairs = pd.read_parquet(Path(__file__).resolve().parent.parent.parent.parent / "artifacts" / "pair_manifests" / "strict_pairs.parquet")
@@ -117,7 +117,6 @@ def build_enriched_pairs(data_root: Path) -> pd.DataFrame:
                 rotation = np.asarray(rot_val, dtype=np.float64)
             atom_perm = mrec["atom_permutation"]
 
-        sg_symbol = _space_group_symbol(jrow["space_group"])
         sg_num = int(float(jrow["space_group"])) if pd.notna(jrow["space_group"]) else None
         mtensor_aligned = mtensor
         if rotation is not None:

@@ -7,7 +7,9 @@ from typing import Any
 import numpy as np
 import pandas as pd
 
-from crosspiezo.analysis.discrepancy import absolute_discrepancy, discrepancy_summary, normalized_discrepancy
+from crosspiezo.analysis.discrepancy import (
+    discrepancy_summary,
+)
 from crosspiezo.analysis.o3_transport import (
     domain_aware_discrepancy,
     exact_transported_discrepancy,
@@ -17,7 +19,6 @@ from crosspiezo.analysis.o3_transport import (
 )
 from crosspiezo.conventions.symmetry import point_group_rotations, project_piezo_tensor
 from crosspiezo.phase5b.panels import _space_group_symbol
-
 
 VARIANTS = [
     "source_native_invariant",

@@ -72,7 +72,7 @@ def _build_periodic_graph(
         nbrs = structure.get_neighbors(site, r=cutoff)
         # Sort by distance and cap neighbors.
         nbrs = sorted(nbrs, key=lambda x: x[1])[:max_neighbors]
-        for nbr, dist in nbrs:
+        for nbr, _dist in nbrs:
             j = nbr.index
             vec = nbr.coords - site.coords
             centers.append(i)

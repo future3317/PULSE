@@ -25,7 +25,6 @@ warnings.filterwarnings("ignore", category=UserWarning)
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "src"))
 
 from crosspiezo.analysis.baselines import (
-    BaselineResult,
     _prepare_records,
     composition_mean_baseline,
     source_token_baseline,
@@ -98,9 +97,6 @@ def _build_eval_records(
     mp_records: list[dict[str, Any]],
     test_panel: pd.DataFrame,
 ) -> dict[str, list[dict[str, Any]]]:
-    jarvis_by_id = {r["id"]: r for r in jarvis_records}
-    mp_by_id = {r["id"]: r for r in mp_records}
-
     test_jids = set(test_panel["jarvis_id"])
     test_mids = set(test_panel["mp_id"])
     test_formulas = set(test_panel["formula"])
@@ -131,7 +127,6 @@ def _train_val_split(records: list[PiezoRecord], val_frac: float, seed: int) -> 
     idx = np.arange(len(records))
     rng.shuffle(idx)
     n_val = max(1, int(round(len(records) * val_frac)))
-    val_idx = set(idx[:n_val])
     train = [records[i] for i in idx[n_val:]]
     val = [records[i] for i in idx[:n_val]]
     return train, val
@@ -213,8 +208,6 @@ def main() -> int:
     jarvis_records, mp_records = _load_records(data_root)
     test_panel = _load_test_panel(data_root)
     test_panel.to_parquet(PROJECT_ROOT / "artifacts" / "phase5b" / "test_panel.parquet")
-    test_panel_prototypes = set(test_panel["prototype"])
-    test_panel_formulas = set(test_panel["formula"])
     test_jids = set(test_panel["jarvis_id"])
     test_mids = set(test_panel["mp_id"])
 

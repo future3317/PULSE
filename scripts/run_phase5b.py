@@ -196,8 +196,8 @@ def phase_hierarchy(enriched: pd.DataFrame, core: pd.DataFrame, extended: pd.Dat
     print("[Phase 5B.4] Computing discrepancy hierarchy...")
     # Restrict to rows present in panels; recompute sublayers from enriched.
     hierarchy_all = compute_hierarchy(enriched)
-    core_keys = set(zip(core["jarvis_id"], core["mp_id"]))
-    ext_keys = set(zip(extended["jarvis_id"], extended["mp_id"]))
+    core_keys = set(zip(core["jarvis_id"], core["mp_id"], strict=False))
+    ext_keys = set(zip(extended["jarvis_id"], extended["mp_id"], strict=False))
     hierarchy_all["in_core"] = hierarchy_all.apply(lambda r: (r["jarvis_id"], r["mp_id"]) in core_keys, axis=1)
     hierarchy_all["in_extended"] = hierarchy_all.apply(lambda r: (r["jarvis_id"], r["mp_id"]) in ext_keys, axis=1)
     hierarchy_all.to_parquet(PHASE5B_ARTIFACT / "discrepancy_hierarchy.parquet")

@@ -64,7 +64,7 @@ def compute_pmr_table(
     in_source = valid_models[valid_models["split_type"].isin(["in_source_jarvis", "in_source_mp"]) & valid_models["valid"]]
 
     rows: list[dict[str, Any]] = []
-    for (model_name, train_src), model_grp in in_source.groupby(["model_name", "train_source"]):
+    for (model_name, train_src), _model_grp in in_source.groupby(["model_name", "train_source"]):
         # In-source error: mean and median across eval sources/seeds.
         abs_mae_values = metrics[
             (metrics["model_name"] == model_name)

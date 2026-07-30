@@ -8,7 +8,6 @@ prediction NPZ files from the remote training host.
 from __future__ import annotations
 
 import argparse
-import json
 import sys
 from pathlib import Path
 from typing import Any
@@ -18,10 +17,12 @@ import pandas as pd
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "src"))
 
-from crosspiezo.analysis.discrepancy import discrepancy_summary
 from crosspiezo.phase5b.calibration import conformal_coverage, residual_scale_calibration
-from crosspiezo.phase5b.hierarchy import hierarchy_summary
-from crosspiezo.phase5b.leaderboard import aggregate_leaderboard, rank_inversion_table, source_token_gain
+from crosspiezo.phase5b.leaderboard import (
+    aggregate_leaderboard,
+    rank_inversion_table,
+    source_token_gain,
+)
 from crosspiezo.phase5b.pmr import compute_pmr_table, compute_spg, compute_valid_models
 from crosspiezo.reports.markdown import bullet, table_from_records, write_report
 
@@ -47,8 +48,7 @@ def _load_hierarchy() -> pd.DataFrame | None:
 
 def _paired_discrepancies(hierarchy: pd.DataFrame, extended: pd.DataFrame, core: pd.DataFrame) -> dict[str, np.ndarray]:
     exact = hierarchy[hierarchy["variant"] == "exact_transported"]
-    extended_keys = set(zip(extended["jarvis_id"], extended["mp_id"]))
-    core_keys = set(zip(core["jarvis_id"], core["mp_id"]))
+    core_keys = set(zip(core["jarvis_id"], core["mp_id"], strict=False))
 
     def _mask(keys: set[tuple[str, str]]) -> pd.Series:
         return exact.apply(lambda r: (r["jarvis_id"], r["mp_id"]) in keys, axis=1)
@@ -57,10 +57,18 @@ def _paired_discrepancies(hierarchy: pd.DataFrame, extended: pd.DataFrame, core:
     ext_norm = extended.copy()
     ext_norm["max_norm"] = ext_norm[["jarvis_norm", "mp_norm"]].max(axis=1)
     high_threshold = ext_norm["max_norm"].median()
-    high_keys = set(zip(ext_norm[ext_norm["max_norm"] >= high_threshold]["jarvis_id"], ext_norm[ext_norm["max_norm"] >= high_threshold]["mp_id"]))
+    high_keys = set(zip(
+        ext_norm[ext_norm["max_norm"] >= high_threshold]["jarvis_id"],
+        ext_norm[ext_norm["max_norm"] >= high_threshold]["mp_id"],
+        strict=False,
+    ))
 
     # T1a keys.
-    t1a_keys = set(zip(extended[extended["sublayer"] == "T1a"]["jarvis_id"], extended[extended["sublayer"] == "T1a"]["mp_id"]))
+    t1a_keys = set(zip(
+        extended[extended["sublayer"] == "T1a"]["jarvis_id"],
+        extended[extended["sublayer"] == "T1a"]["mp_id"],
+        strict=False,
+    ))
 
     scopes: dict[str, np.ndarray] = {
         "all": exact["absolute"].dropna().values,
