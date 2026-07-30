@@ -6,6 +6,7 @@ from typing import Any
 
 import numpy as np
 import pandas as pd
+from pymatgen.core.structure import Structure
 
 from crosspiezo.analysis.discrepancy import (
     discrepancy_summary,
@@ -18,7 +19,7 @@ from crosspiezo.analysis.o3_transport import (
     symmetry_projected_discrepancy,
 )
 from crosspiezo.conventions.symmetry import point_group_rotations, project_piezo_tensor
-from crosspiezo.phase5b.panels import _space_group_symbol
+from crosspiezo.phase5b.panels import _structure_from_cif
 
 VARIANTS = [
     "source_native_invariant",
@@ -39,7 +40,11 @@ def compute_hierarchy(enriched: pd.DataFrame) -> pd.DataFrame:
         left = row["jarvis_tensor"]
         right = row["mp_tensor_raw"]
         rot = row["rotation"]
-        sg = _space_group_symbol(row["space_group"])
+
+        # Use the JARVIS structure as the common reference for point-group ops.
+        common_struct = _structure_from_cif(row.get("jarvis_cif"))
+        if common_struct is None:
+            common_struct = _structure_from_cif(row.get("mp_cif"))
 
         # Source-native invariant: compare Frobenius norms (frame independent).
         jnorm = float(np.linalg.norm(left))
@@ -62,16 +67,19 @@ def compute_hierarchy(enriched: pd.DataFrame) -> pd.DataFrame:
 
         exact = exact_transported_discrepancy(left, right, rot)
         domain = domain_aware_discrepancy(left, right, rot)
-        proper = proper_orbit_discrepancy(left, right, sg) if sg else _nan_variant()
-        pg_equiv = point_group_equivalent_discrepancy(left, right, sg) if sg else _nan_variant()
-        sym_proj = symmetry_projected_discrepancy(left, right, sg, rot) if sg else _nan_variant()
+        if common_struct is not None:
+            proper = proper_orbit_discrepancy(left, right, common_struct, rotation=rot)
+            pg_equiv = point_group_equivalent_discrepancy(left, right, common_struct, rotation=rot)
+            sym_proj = symmetry_projected_discrepancy(left, right, common_struct, rotation=rot)
+        else:
+            proper = pg_equiv = sym_proj = _nan_variant()
 
         for name, vals, retention in [
             ("exact_transported", exact, 1.0),
             ("proper_orbit", proper, 1.0),
             ("domain_aware", domain, 1.0),
             ("point_group_equivalent", pg_equiv, 1.0),
-            ("symmetry_projected", sym_proj, _norm_retention(left, right, sg, rot)),
+            ("symmetry_projected", sym_proj, _norm_retention(left, right, common_struct, rot)),
         ]:
             records.append({
                 "jarvis_id": jid,
@@ -103,11 +111,16 @@ def _nan_variant() -> dict[str, float]:
     }
 
 
-def _norm_retention(left: np.ndarray, right: np.ndarray, sg: str | None, rot: np.ndarray | None) -> float:
-    if sg is None:
+def _norm_retention(
+    left: np.ndarray,
+    right: np.ndarray,
+    common_struct: Structure | None,
+    rot: np.ndarray | None,
+) -> float:
+    if common_struct is None:
         return float("nan")
     try:
-        rots = point_group_rotations(sg)
+        rots = point_group_rotations(common_struct)
     except Exception:  # noqa: BLE001
         return float("nan")
     right_t = right

@@ -11,12 +11,19 @@ from pymatgen.core.structure import Structure
 from crosspiezo.matching.structure_matcher import match_structures
 
 
-def _simple_cubic_structure(a: float = 3.0, species: str = "NaCl") -> Structure:
-    """A 2-atom cubic structure."""
+def _test_structure(a: float = 3.0) -> Structure:
+    """A non-collinear 4-atom cubic structure for robust Kabsch tests."""
     lattice = np.eye(3) * a
-    if species == "NaCl":
-        return Structure(lattice, ["Na", "Cl"], [[0.0, 0.0, 0.0], [0.5, 0.5, 0.5]])
-    return Structure(lattice, ["Si"], [[0.0, 0.0, 0.0]])
+    return Structure(
+        lattice,
+        ["Na", "Cl", "K", "F"],
+        [
+            [0.0, 0.0, 0.0],
+            [0.5, 0.5, 0.5],
+            [0.5, 0.0, 0.5],
+            [0.0, 0.5, 0.0],
+        ],
+    )
 
 
 def _cif(struct: Structure) -> str:
@@ -25,8 +32,8 @@ def _cif(struct: Structure) -> str:
 
 def test_unimodular_basis_change_gives_identity_cartesian_rotation():
     """Swapping cell axes is a relabeling, not a physical rotation; Q must be I."""
-    s1 = _simple_cubic_structure()
-    # Swap a and b axes; update fractional coords accordingly.
+    s1 = _test_structure()
+    # Swap a and b axes; keep fractional coords unchanged (Cartesian coords stay put).
     lattice2 = np.array([[0.0, 3.0, 0.0], [3.0, 0.0, 0.0], [0.0, 0.0, 3.0]])
     s2 = Structure(lattice2, s1.species, s1.frac_coords)
 
@@ -41,13 +48,13 @@ def test_unimodular_basis_change_gives_identity_cartesian_rotation():
 
 def test_rigid_rotation_recovery():
     """A true rigid rotation of the Cartesian coordinates must be recovered."""
-    s1 = _simple_cubic_structure()
+    s1 = _test_structure()
     theta = 0.4
     c, s = np.cos(theta), np.sin(theta)
     q = np.array([[c, -s, 0.0], [s, c, 0.0], [0.0, 0.0, 1.0]])
+    # Rotate both lattice and Cartesian positions; fractional coordinates unchanged.
     new_lattice = q @ s1.lattice.matrix
-    new_frac = s1.frac_coords @ np.linalg.inv(q).T
-    s2 = Structure(new_lattice, s1.species, new_frac)
+    s2 = Structure(new_lattice, s1.species, s1.frac_coords)
 
     result = match_structures("A", "B", _cif(s1), _cif(s2))
     assert result.fit
@@ -58,11 +65,10 @@ def test_rigid_rotation_recovery():
 
 def test_improper_transformation_retains_negative_determinant():
     """A mirror/reflection relation must not be forced to det = +1."""
-    s1 = _simple_cubic_structure()
+    s1 = _test_structure()
     q = np.diag([-1.0, 1.0, 1.0])
     new_lattice = q @ s1.lattice.matrix
-    new_frac = s1.frac_coords @ np.linalg.inv(q).T
-    s2 = Structure(new_lattice, s1.species, new_frac)
+    s2 = Structure(new_lattice, s1.species, s1.frac_coords)
 
     result = match_structures("A", "B", _cif(s1), _cif(s2))
     assert result.fit
@@ -73,7 +79,7 @@ def test_improper_transformation_retains_negative_determinant():
 
 def test_rms_distance_is_less_than_max_distance():
     """StructureMatcher.get_rms_dist returns (rms, max); fields must match."""
-    s1 = _simple_cubic_structure()
+    s1 = _test_structure()
     # Displace one atom by 0.4 Å.
     frac = s1.frac_coords.copy()
     frac[0, 0] += 0.4 / 3.0
@@ -89,10 +95,10 @@ def test_rms_distance_is_less_than_max_distance():
 
 def test_match_result_includes_unimodular_transform_and_translation():
     """The match record must expose the integer basis matrix and translation."""
-    s1 = _simple_cubic_structure()
-    s2 = _simple_cubic_structure()
+    s1 = _test_structure()
+    s2 = _test_structure()
     result = match_structures("A", "B", _cif(s1), _cif(s2))
     assert result.fit
     record = __import__("crosspiezo.matching.structure_matcher", fromlist=["to_match_record"]).to_match_record(result)
     assert record.unimodular_cell_transform is not None
-    assert len(record.pass_fail_reasons) == 0 or "translation" in str(record.pass_fail_reasons)
+    assert record.fractional_translation is not None

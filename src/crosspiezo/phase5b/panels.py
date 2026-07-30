@@ -8,12 +8,32 @@ from typing import Any
 
 import numpy as np
 import pandas as pd
+from pymatgen.core.structure import Structure
 
 from crosspiezo.conventions.symmetry import (
     point_group_rotations,
     symmetry_residual,
 )
 from crosspiezo.conventions.voigt import voigt_to_cartesian
+
+
+def _crystal_system(space_group_number: int) -> str:
+    """Standard International Tables crystal-system ranges."""
+    if 1 <= space_group_number <= 2:
+        return "triclinic"
+    if 3 <= space_group_number <= 15:
+        return "monoclinic"
+    if 16 <= space_group_number <= 74:
+        return "orthorhombic"
+    if 75 <= space_group_number <= 142:
+        return "tetragonal"
+    if 143 <= space_group_number <= 167:
+        return "trigonal"
+    if 168 <= space_group_number <= 194:
+        return "hexagonal"
+    if 195 <= space_group_number <= 230:
+        return "cubic"
+    return "unknown"
 
 
 def _to_array(value: Any) -> np.ndarray | None:
@@ -43,20 +63,7 @@ def _space_group_symbol(space_group: Any) -> str | None:
         return None
 
 
-def _crystal_system(space_group_number: int) -> str:
-    mapping = {
-        1: "triclinic",
-        2: "triclinic",
-        3: "monoclinic",
-        75: "tetragonal",
-        143: "trigonal",
-        168: "hexagonal",
-        195: "cubic",
-    }
-    for threshold, system in sorted(mapping.items(), reverse=True):
-        if space_group_number >= threshold:
-            return system
-    return "unknown"
+
 
 
 def _transport_rotations(rotations: list[np.ndarray], frame_rotation: np.ndarray) -> list[np.ndarray]:
@@ -146,27 +153,74 @@ def build_enriched_pairs(data_root: Path) -> pd.DataFrame:
     return pd.DataFrame(records)
 
 
+def _structure_from_cif(cif_string: str | None) -> Structure | None:
+    """Parse a CIF string into a pymatgen Structure, or None if unavailable."""
+    if not isinstance(cif_string, str):
+        return None
+    try:
+        return Structure.from_str(cif_string, fmt="cif")
+    except Exception:  # noqa: BLE001
+        return None
+
+
 def compute_source_native_residuals(enriched: pd.DataFrame) -> pd.DataFrame:
-    """Compute native, transported, and common symmetry residuals per source."""
+    """Compute native, transported, and common symmetry residuals per source.
+
+    Each source's native residual is computed with the point group of that
+    source's actual CIF structure, not with a shared abstract space-group symbol.
+    """
+    from pymatgen.core.structure import Structure
+
     rows: list[dict[str, Any]] = []
     for _, row in enriched.iterrows():
-        sg_symbol = _space_group_symbol(row["space_group"])
-        if sg_symbol is None:
-            continue
-        try:
-            common_rots = point_group_rotations(sg_symbol)
-        except Exception:  # noqa: BLE001
-            continue
-
         rotation = row["rotation"]
+
+        jarvis_struct = _structure_from_cif(row.get("jarvis_cif"))
+        mp_struct = _structure_from_cif(row.get("mp_cif"))
+
+        source_structures: dict[str, Structure | None] = {
+            "jarvis": jarvis_struct,
+            "mp": mp_struct,
+        }
+
+        # Determine a common structure for the common-frame residual.  Prefer the
+        # JARVIS structure when available; otherwise use MP.
+        common_struct = jarvis_struct if jarvis_struct is not None else mp_struct
+
         for source, tensor_key in [("jarvis", "jarvis_tensor"), ("mp", "mp_tensor_raw")]:
             tensor = row[tensor_key]
+            source_struct = source_structures[source]
+
+            if source_struct is None:
+                rows.append({
+                    "jarvis_id": row["jarvis_id"],
+                    "mp_id": row["mp_id"],
+                    "source": source,
+                    "space_group": row["space_group"],
+                    "crystal_system": row["crystal_system"],
+                    "norm": float(np.linalg.norm(tensor)),
+                    "native_residual_raw": float("nan"),
+                    "native_residual_normalized": float("nan"),
+                    "transport_residual_raw": float("nan"),
+                    "transport_residual_normalized": float("nan"),
+                    "common_residual_raw": float("nan"),
+                    "common_residual_normalized": float("nan"),
+                    "native_frame_status": "native_frame_unresolved",
+                })
+                continue
+
+            try:
+                source_rots = point_group_rotations(source_struct)
+            except Exception:  # noqa: BLE001
+                source_rots = []
+
             # Native frame: source CIF point group.
-            native_raw, native_norm = _normalized_residual(tensor, common_rots)
+            native_raw, native_norm = _normalized_residual(tensor, source_rots)
+            native_status = "native_frame_verified" if source_rots else "native_frame_unresolved"
 
             # Transported frame: conjugate source point group to common frame.
-            if rotation is not None:
-                trans_rots = _transport_rotations(common_rots, rotation)
+            if rotation is not None and source_rots:
+                trans_rots = _transport_rotations(source_rots, rotation)
                 # For MP, the tensor in common frame is mp_tensor_aligned.
                 t_tensor = row["jarvis_tensor"] if source == "jarvis" else row["mp_tensor_aligned"]
                 transport_raw, transport_norm = _normalized_residual(t_tensor, trans_rots)
@@ -174,6 +228,13 @@ def compute_source_native_residuals(enriched: pd.DataFrame) -> pd.DataFrame:
                 transport_raw, transport_norm = float("nan"), float("nan")
 
             # Common frame: common point group.
+            if common_struct is not None:
+                try:
+                    common_rots = point_group_rotations(common_struct)
+                except Exception:  # noqa: BLE001
+                    common_rots = []
+            else:
+                common_rots = []
             c_tensor = row["jarvis_tensor"] if source == "jarvis" else row["mp_tensor_aligned"]
             common_raw, common_norm = _normalized_residual(c_tensor, common_rots)
 
@@ -190,6 +251,7 @@ def compute_source_native_residuals(enriched: pd.DataFrame) -> pd.DataFrame:
                 "transport_residual_normalized": transport_norm,
                 "common_residual_raw": common_raw,
                 "common_residual_normalized": common_norm,
+                "native_frame_status": native_status,
             })
     return pd.DataFrame(rows)
 

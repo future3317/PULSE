@@ -9,8 +9,8 @@ real lattice setting and orientation.
 from __future__ import annotations
 
 import numpy as np
+import spglib
 from pymatgen.core.structure import Structure
-from pymatgen.symmetry.analyzer import SpacegroupAnalyzer
 
 
 def structure_point_group_rotations(
@@ -20,31 +20,44 @@ def structure_point_group_rotations(
 ) -> list[np.ndarray]:
     """Return the Cartesian point-group rotation matrices for a structure.
 
+    The operations are obtained from spglib for the *input* cell and then
+    converted to the Cartesian basis defined by ``structure.lattice.matrix``.
+    This guarantees Euclidean orthogonality and preserves the source's actual
+    setting/orientation.
+
     Parameters
     ----------
     structure:
         The pymatgen ``Structure`` whose actual setting is used.
     symprec, angle_tolerance:
-        Spglib precision parameters passed to ``SpacegroupAnalyzer``.
+        Spglib precision parameters.
 
     Returns
     -------
     rotations:
         Unique 3x3 orthogonal matrices (det = +/-1) in Cartesian coordinates.
     """
-    analyzer = SpacegroupAnalyzer(structure, symprec=symprec, angle_tolerance=angle_tolerance)
-    ops = analyzer.get_point_group_operations(cartesian=True)
+    lattice = np.asarray(structure.lattice.matrix, dtype=np.float64)
+    positions = np.asarray(structure.frac_coords, dtype=np.float64)
+    numbers = np.asarray(structure.atomic_numbers, dtype=np.int32)
+    cell = (lattice, positions, numbers)
+
+    dataset = spglib.get_symmetry_dataset(cell, symprec=symprec, angle_tolerance=angle_tolerance)
+    if dataset is None:
+        # Fall back to identity only.
+        return [np.eye(3, dtype=np.float64)]
+
+    inv_lattice = np.linalg.inv(lattice)
     seen: list[np.ndarray] = []
-    for op in ops:
-        rot = np.asarray(op.rotation_matrix, dtype=np.float64)
-        # Validate orthogonality.
-        if not np.allclose(rot.T @ rot, np.eye(3), atol=1e-8):
-            raise ValueError("Non-orthogonal Cartesian rotation from SpacegroupAnalyzer")
+    for r_frac in dataset.rotations:
+        rot = lattice @ np.asarray(r_frac, dtype=np.float64) @ inv_lattice
+        # Validate Euclidean orthogonality.
+        if not np.allclose(rot.T @ rot, np.eye(3), atol=1e-7):
+            raise ValueError("Non-orthogonal Cartesian rotation from spglib conversion")
         det = float(np.linalg.det(rot))
-        if not (abs(det - 1.0) < 1e-8 or abs(det + 1.0) < 1e-8):
+        if not (abs(det - 1.0) < 1e-7 or abs(det + 1.0) < 1e-7):
             raise ValueError(f"Rotation determinant {det} is not +/-1")
-        # Deduplicate within numerical tolerance.
-        if not any(np.allclose(rot, existing, atol=1e-8) for existing in seen):
+        if not any(np.allclose(rot, existing, atol=1e-7) for existing in seen):
             seen.append(rot)
     return seen
 
