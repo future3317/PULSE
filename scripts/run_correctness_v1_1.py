@@ -27,8 +27,8 @@ warnings.filterwarnings("ignore", category=UserWarning)
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 SRC_ROOT = PROJECT_ROOT / "src"
 CONFIG_ROOT = PROJECT_ROOT / "configs"
-ARTIFACT_ROOT = PROJECT_ROOT / "artifacts" / "correctness_v1_1_1"
-REPORT_ROOT = PROJECT_ROOT / "reports" / "correctness_v1_1_1"
+ARTIFACT_ROOT = PROJECT_ROOT / "artifacts" / "correctness_v1_1"
+REPORT_ROOT = PROJECT_ROOT / "reports" / "correctness_v1_1"
 
 sys.path.insert(0, str(SRC_ROOT))
 sys.path.insert(0, str(PROJECT_ROOT))
