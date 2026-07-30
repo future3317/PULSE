@@ -205,19 +205,23 @@ def _rotation_between_matched_structures(
     coords_right_raw = np.asarray(s_right.cart_coords, dtype=np.float64)[mapping_array]
     lattice_left = np.asarray(s_left.lattice.matrix, dtype=np.float64)
 
-    # Apply periodic image correction so that mapped atoms are in the same cell.
-    coords_right = _periodic_image_aligned_coords(coords_left, coords_right_raw, lattice_left)
+    # First try Kabsch on the raw mapped coordinates.  This preserves improper
+    # relations (e.g. mirror partners) that periodic image correction would
+    # otherwise fold into a proper rotation.
+    try:
+        rot_proper, rot_improper, rms_proper, rms_improper = _kabsch_rotation(coords_left, coords_right_raw)
+    except Exception:  # noqa: BLE001
+        return None, unimodular_transform, fractional_translation, atom_mapping, "unresolved", None
 
-    # If image-corrected coordinates already coincide, this is a pure basis relabel.
-    if np.allclose(coords_left, coords_right, atol=1e-5):
-        return (
-            np.eye(3, dtype=np.float64),
-            unimodular_transform,
-            fractional_translation,
-            atom_mapping,
-            "basis_relabel",
-            0.0,
-        )
+    # If the raw match is already excellent, accept it (possibly improper).
+    best_rms_raw = min(rms_proper, rms_improper)
+    if best_rms_raw < 1e-3:
+        if rms_improper < rms_proper - 1e-6:
+            return rot_improper, unimodular_transform, fractional_translation, atom_mapping, "improper_relation", rms_improper
+        return rot_proper, unimodular_transform, fractional_translation, atom_mapping, "basis_relabel" if np.allclose(rot_proper, np.eye(3), atol=1e-6) else "proper_rotation", rms_proper
+
+    # Otherwise apply periodic image correction and recompute.
+    coords_right = _periodic_image_aligned_coords(coords_left, coords_right_raw, lattice_left)
 
     try:
         rot_proper, rot_improper, rms_proper, rms_improper = _kabsch_rotation(coords_left, coords_right)
