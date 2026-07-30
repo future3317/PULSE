@@ -38,18 +38,21 @@ def _tensor_from_row(row: pd.Series) -> np.ndarray | None:
 
 
 def _formula_to_prototype(formula: str) -> str:
-    """Return an anonymous-formula prototype (e.g. AB2), sensitive to stoichiometry.
+    """Return a reduced anonymous-formula prototype (e.g. AB2).
 
-    Unlike ``Composition.anonymized_formula`` this keeps the integer
-    stoichiometric ratio, so Na2Cl2 (A2B2) and NaCl (AB) are different prototypes.
+    The stoichiometric coefficients are divided by their greatest common divisor
+    so that scaled formulas such as Na2Cl2 and NaCl both map to AB.
     """
+    import math
+
     from pymatgen.core.composition import Composition
 
     comp = Composition(formula)
     items = sorted(comp.items(), key=lambda item: (-item[1], str(item[0])))
-    return "".join(
-        f"{chr(ord('A') + i)}{int(amount)}" for i, (_, amount) in enumerate(items)
-    )
+    amounts = [int(amount) for _, amount in items]
+    gcd = math.gcd(*amounts) if len(amounts) > 1 else amounts[0]
+    reduced = [a // gcd for a in amounts]
+    return "".join(f"{chr(ord('A') + i)}{a}" for i, a in enumerate(reduced))
 
 
 @dataclass(frozen=True)

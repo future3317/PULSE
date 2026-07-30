@@ -19,11 +19,11 @@ from crosspiezo.models.trainer import (
 from scripts.train_e3nn import _baseline_splits
 
 
-def test_formula_to_prototype_is_not_element_set():
-    """Na2Cl2 and NaCl are the same chemical system but different prototypes."""
+def test_formula_to_prototype_uses_reduced_stoichiometry():
+    """Na2Cl2 and NaCl reduce to the same anonymous formula AB."""
     a = trainer_prototype("Na2Cl2")
     b = trainer_prototype("NaCl")
-    assert a != b, f"prototype collapsed stoichiometries: {a} == {b}"
+    assert a == b == "AB", f"expected AB, got {a} and {b}"
 
 
 def test_prototype_helper_consistent_across_modules():
