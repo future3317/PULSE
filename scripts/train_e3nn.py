@@ -61,12 +61,17 @@ def _data_root(cfg: dict[str, Any]) -> Path:
     raise FileNotFoundError("Cannot locate data root")
 
 
-def _load_records(data_root: Path) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
+def _load_dataframes(data_root: Path) -> tuple[pd.DataFrame, pd.DataFrame]:
     cfg = _load_config("data_sources.yaml")
     sources = cfg["sources"]["t2c_flow"]
     root = data_root / "T2C-Flow"
     jarvis_df = pd.read_parquet(root / sources["records"]["jarvis_piezo"])
     mp_df = pd.read_parquet(root / sources["records"]["mp_piezo"])
+    return jarvis_df, mp_df
+
+
+def _load_records(data_root: Path) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
+    jarvis_df, mp_df = _load_dataframes(data_root)
     return _prepare_records(jarvis_df, mp_df)
 
 
@@ -204,6 +209,7 @@ def main() -> int:
 
     cfg = _load_config("data_sources.yaml")
     data_root = _data_root(cfg)
+    jarvis_df, mp_df = _load_dataframes(data_root)
     jarvis_records, mp_records = _load_records(data_root)
     test_panel = _load_test_panel(data_root)
     test_panel.to_parquet(PROJECT_ROOT / "artifacts" / "phase5b" / "test_panel.parquet")
@@ -219,18 +225,14 @@ def main() -> int:
     train_jarvis = _train_pool(jarvis_records)
     train_mp = _train_pool(mp_records)
 
-    # Build PyTorch datasets.
-    def _build_dataset(records: list[dict[str, Any]], source: str) -> list[PiezoRecord]:
-        df = pd.DataFrame(records)
-        if df.empty:
-            return []
-        df = df.rename(columns={"id": "material_id"})
+    # Build PyTorch datasets from the original dataframes.
+    def _build_dataset(df: pd.DataFrame, source: str) -> list[PiezoRecord]:
         ds = PiezoGraphDataset(df, source=source)
         # Filter oversized structures to keep memory reasonable.
         return [r for r in ds.records if len(r.z) <= args.max_atoms]
 
-    jarvis_all = _build_dataset(jarvis_records, "jarvis")
-    mp_all = _build_dataset(mp_records, "mp")
+    jarvis_all = _build_dataset(jarvis_df, "jarvis")
+    mp_all = _build_dataset(mp_df, "mp")
     train_jarvis_ds = [r for r in jarvis_all if r.material_id not in test_jids]
     train_mp_ds = [r for r in mp_all if r.material_id not in test_mids]
     pooled_all = train_jarvis_ds + train_mp_ds
@@ -238,21 +240,23 @@ def main() -> int:
     # Eval sets.
     eval_jarvis = [r for r in jarvis_all if r.material_id in test_jids]
     eval_mp = [r for r in mp_all if r.material_id in test_mids]
+    eval_jarvis_recs = [r for r in jarvis_records if r["id"] in test_jids]
+    eval_mp_recs = [r for r in mp_records if r["id"] in test_mids]
 
     metrics_rows: list[dict[str, Any]] = []
 
     # Baselines.
     baseline_splits: list[tuple[str, list[dict[str, Any]], list[dict[str, Any]], str, str, str]] = [
-        ("zero", [], eval_jarvis, "none", "jarvis", "in_source"),
-        ("zero", [], eval_mp, "none", "mp", "in_source"),
-        ("composition_mean", train_jarvis, eval_jarvis, "jarvis", "jarvis", "in_source"),
-        ("composition_mean", train_mp, eval_mp, "mp", "mp", "in_source"),
-        ("source_specific_composition_mean", train_jarvis + train_mp, eval_jarvis, "pooled", "jarvis", "in_source"),
-        ("source_specific_composition_mean", train_jarvis + train_mp, eval_mp, "pooled", "mp", "in_source"),
-        ("structural_ridge", train_jarvis, eval_jarvis, "jarvis", "jarvis", "in_source"),
-        ("structural_ridge", train_mp, eval_mp, "mp", "mp", "in_source"),
-        ("structural_ridge", train_jarvis, eval_mp, "jarvis", "mp", "source_held_out"),
-        ("structural_ridge", train_mp, eval_jarvis, "mp", "jarvis", "source_held_out"),
+        ("zero", [], eval_jarvis_recs, "none", "jarvis", "in_source"),
+        ("zero", [], eval_mp_recs, "none", "mp", "in_source"),
+        ("composition_mean", train_jarvis, eval_jarvis_recs, "jarvis", "jarvis", "in_source"),
+        ("composition_mean", train_mp, eval_mp_recs, "mp", "mp", "in_source"),
+        ("source_specific_composition_mean", train_jarvis + train_mp, eval_jarvis_recs, "pooled", "jarvis", "in_source"),
+        ("source_specific_composition_mean", train_jarvis + train_mp, eval_mp_recs, "pooled", "mp", "in_source"),
+        ("structural_ridge", train_jarvis, eval_jarvis_recs, "jarvis", "jarvis", "in_source"),
+        ("structural_ridge", train_mp, eval_mp_recs, "mp", "mp", "in_source"),
+        ("structural_ridge", train_jarvis, eval_mp_recs, "jarvis", "mp", "source_held_out"),
+        ("structural_ridge", train_mp, eval_jarvis_recs, "mp", "jarvis", "source_held_out"),
     ]
     for name, tr, ev, ts, es, st in baseline_splits:
         for seed in range(42, 42 + args.n_seeds):

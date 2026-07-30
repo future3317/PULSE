@@ -74,9 +74,14 @@ class PiezoE3NN(nn.Module):
 
     def forward(self, data: Any) -> torch.Tensor:
         """Forward pass returning a (batch, 3, 3, 3) Cartesian tensor."""
-        z = data.z
-        pos = data.pos
-        batch = getattr(data, "batch", torch.zeros(z.size(0), dtype=torch.long, device=z.device))
+        def _get(key: str) -> torch.Tensor:
+            if isinstance(data, dict):
+                return data[key]
+            return getattr(data, key)
+
+        z = _get("z")
+        pos = _get("pos")
+        batch = _get("batch") if (isinstance(data, dict) and "batch" in data) else getattr(data, "batch", torch.zeros(z.size(0), dtype=torch.long, device=z.device))
 
         # Node features: just a single scalar per atom.
         x = torch.ones(z.size(0), 1, device=z.device, dtype=torch.float32)
@@ -85,9 +90,7 @@ class PiezoE3NN(nn.Module):
         node_attr = self.atom_embed(z)
         node_attr = self.node_attr_proj(node_attr)
         if self.source_token_dim > 0:
-            token = getattr(data, "source_token", None)
-            if token is None:
-                raise ValueError("source_token_dim > 0 but data has no source_token")
+            token = _get("source_token")
             node_attr = torch.cat([node_attr, token], dim=-1)
 
         # e3nn.Network builds the radius graph internally and expects a dict/Data
