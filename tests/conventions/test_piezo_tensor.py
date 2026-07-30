@@ -15,6 +15,7 @@ from pymatgen.analysis.piezo import PiezoTensor
 from crosspiezo.conventions.voigt import (
     cartesian_to_voigt,
     piezo_stress_voigt_to_cartesian,
+    tensor_lineage_metrics,
     trusted_piezo_stress_voigt_to_cartesian,
     voigt_to_cartesian,
 )
@@ -102,11 +103,91 @@ def test_round_trip_does_not_imply_correctness():
 
 
 def test_tensor_lineage_reports_zero_diff_for_consistent_tensors():
-    """When stored Cartesian equals trusted reconstruction, lineage diff is zero."""
+    """When all three Cartesian tensors agree, lineage diffs are zero."""
     rng = np.random.default_rng(105)
     cart = _random_symmetric_piezo_tensor(rng)
     internal = cartesian_to_voigt(cart, engineering_shear=True)
-    from crosspiezo.conventions.voigt import tensor_lineage_metrics
-    metrics = tensor_lineage_metrics(internal, cart)
+    trusted = trusted_piezo_stress_voigt_to_cartesian(internal)
+    project = piezo_stress_voigt_to_cartesian(internal)
+    metrics = tensor_lineage_metrics(internal, trusted, project, cart)
+    assert metrics["frobenius_diff_trusted_vs_project"] < 1e-9
     assert metrics["frobenius_diff_trusted_vs_stored"] < 1e-9
-    assert metrics["relative_diff"] < 1e-9
+    assert metrics["frobenius_diff_project_vs_stored"] < 1e-9
+    assert metrics["relative_diff_trusted_vs_stored"] < 1e-9
+
+
+def test_tensor_lineage_detects_broken_project_shear():
+    """Old v1.1 API would have falsely passed; new API detects project shear mismatch."""
+    rng = np.random.default_rng(106)
+    cart = _random_symmetric_piezo_tensor(rng)
+    internal = cartesian_to_voigt(cart, engineering_shear=True)
+    trusted = trusted_piezo_stress_voigt_to_cartesian(internal)
+    project = piezo_stress_voigt_to_cartesian(internal).copy()
+    # Corrupt only a shear component in the project tensor.
+    project[0, 1, 2] += 1.0
+    project[0, 2, 1] += 1.0
+    metrics = tensor_lineage_metrics(internal, trusted, project, cart)
+    assert metrics["frobenius_diff_trusted_vs_project"] > 0.9
+    assert metrics["frobenius_diff_project_vs_stored"] > 0.9
+    assert metrics["frobenius_diff_trusted_vs_stored"] < 1e-9
+
+
+def test_tensor_lineage_detects_broken_stored_shear():
+    """New API detects stored shear mismatch even when trusted/project agree."""
+    rng = np.random.default_rng(107)
+    cart = _random_symmetric_piezo_tensor(rng)
+    internal = cartesian_to_voigt(cart, engineering_shear=True)
+    trusted = trusted_piezo_stress_voigt_to_cartesian(internal)
+    project = piezo_stress_voigt_to_cartesian(internal)
+    stored = cart.copy()
+    stored[1, 0, 2] += 0.5
+    stored[1, 2, 0] += 0.5
+    metrics = tensor_lineage_metrics(internal, trusted, project, stored)
+    assert metrics["frobenius_diff_trusted_vs_stored"] > 0.4
+    assert metrics["frobenius_diff_project_vs_stored"] > 0.4
+    assert metrics["shear_diff_trusted_vs_stored"] > 0.4
+
+
+def test_tensor_lineage_detects_swapped_shear_order():
+    """Swapping Voigt shear columns changes the stored tensor but not trusted."""
+    rng = np.random.default_rng(108)
+    cart = _random_symmetric_piezo_tensor(rng)
+    internal = cartesian_to_voigt(cart, engineering_shear=True)
+    trusted = trusted_piezo_stress_voigt_to_cartesian(internal)
+    project = piezo_stress_voigt_to_cartesian(internal)
+    swapped = internal.copy()
+    swapped[:, [3, 4, 5]] = swapped[:, [4, 5, 3]]
+    stored = piezo_stress_voigt_to_cartesian(swapped)
+    metrics = tensor_lineage_metrics(internal, trusted, project, stored)
+    assert metrics["frobenius_diff_project_vs_stored"] > 1e-3
+    assert metrics["shear_diff_project_vs_stored"] > 1e-3
+
+
+def test_tensor_lineage_detects_transposed_voigt():
+    """A transposed/reshuffled 3x6 Voigt field produces a mismatched stored tensor."""
+    rng = np.random.default_rng(109)
+    cart = _random_symmetric_piezo_tensor(rng)
+    internal = cartesian_to_voigt(cart, engineering_shear=True)
+    trusted = trusted_piezo_stress_voigt_to_cartesian(internal)
+    project = piezo_stress_voigt_to_cartesian(internal)
+    # Transpose then reshape back to (3,6) to simulate an order swap that still
+    # passes shape checks but corrupts the mapping.
+    reshuffled = internal.T.copy().reshape(3, 6)
+    stored = piezo_stress_voigt_to_cartesian(reshuffled)
+    metrics = tensor_lineage_metrics(internal, trusted, project, stored)
+    assert metrics["frobenius_diff_project_vs_stored"] > 1e-3
+
+
+def test_tensor_lineage_rejects_unexpected_source_order():
+    """Passing a stored tensor with the wrong minor symmetry is rejected."""
+    rng = np.random.default_rng(110)
+    cart = _random_symmetric_piezo_tensor(rng)
+    internal = cartesian_to_voigt(cart, engineering_shear=True)
+    trusted = trusted_piezo_stress_voigt_to_cartesian(internal)
+    project = piezo_stress_voigt_to_cartesian(internal)
+    # Break minor symmetry in the stored tensor.
+    stored = cart.copy()
+    stored[0, 1, 2] += 1.0
+    metrics = tensor_lineage_metrics(internal, trusted, project, stored)
+    # The function does not silently symmetrise; it reports the discrepancy.
+    assert metrics["frobenius_diff_project_vs_stored"] > 0.9

@@ -148,37 +148,47 @@ def trusted_piezo_stress_voigt_to_cartesian(voigt: np.ndarray) -> np.ndarray:
 
 
 def tensor_lineage_metrics(
-    raw_voigt: np.ndarray,
+    processed_voigt: np.ndarray,
+    trusted_cartesian: np.ndarray,
+    project_cartesian: np.ndarray,
     stored_cartesian: np.ndarray,
-    project_cartesian: np.ndarray | None = None,
 ) -> dict[str, float]:
-    """Compare raw-Voigt-derived Cartesian tensors to the stored Cartesian field.
+    """Compare processed-Voigt-derived Cartesian tensors to the stored field.
 
-    Returns Frobenius norm differences and relative differences, plus a
-    shear-only diagnostic.  ``project_cartesian`` defaults to the trusted
-    pymatgen reconstruction.
+    All three Cartesian tensors are passed explicitly so that trusted and
+    project converters can be audited independently.  No tensor is regenerated
+    inside this function.
     """
-    raw_voigt = np.asarray(raw_voigt, dtype=np.float64)
+    processed_voigt = np.asarray(processed_voigt, dtype=np.float64)
+    trusted_cartesian = np.asarray(trusted_cartesian, dtype=np.float64)
+    project_cartesian = np.asarray(project_cartesian, dtype=np.float64)
     stored_cartesian = np.asarray(stored_cartesian, dtype=np.float64)
-    if project_cartesian is None:
-        project_cartesian = trusted_piezo_stress_voigt_to_cartesian(raw_voigt)
-    else:
-        project_cartesian = np.asarray(project_cartesian, dtype=np.float64)
 
-    diff_trusted = np.linalg.norm(project_cartesian - stored_cartesian)
-    diff_project = np.linalg.norm(project_cartesian - stored_cartesian)  # same as trusted when None
+    if processed_voigt.shape != (3, 6):
+        raise ValueError(f"Expected Voigt shape (3, 6), got {processed_voigt.shape}")
+    for arr, name in [(trusted_cartesian, "trusted"), (project_cartesian, "project"), (stored_cartesian, "stored")]:
+        if arr.shape != (3, 3, 3):
+            raise ValueError(f"Expected {name} Cartesian shape (3, 3, 3), got {arr.shape}")
+
+    def _diff(a: np.ndarray, b: np.ndarray) -> float:
+        return float(np.linalg.norm(a - b))
+
+    def _shear_diff(a: np.ndarray, b: np.ndarray) -> float:
+        a_voigt = _cart_to_voigt_direct(a)
+        b_voigt = _cart_to_voigt_direct(b)
+        return float(np.linalg.norm(a_voigt[:, 3:6] - b_voigt[:, 3:6]))
+
     denom = max(np.linalg.norm(stored_cartesian), 1e-12)
 
-    # Shear-only difference (off-diagonal strain components in Voigt indices 3,4,5).
-    trusted_voigt = _cart_to_voigt_direct(project_cartesian)
-    stored_voigt = _cart_to_voigt_direct(stored_cartesian)
-    shear_diff = np.linalg.norm(trusted_voigt[:, 3:6] - stored_voigt[:, 3:6])
-
     return {
-        "frobenius_diff_trusted_vs_stored": float(diff_trusted),
-        "frobenius_diff_project_vs_stored": float(diff_project),
-        "relative_diff": float(diff_trusted / denom),
-        "shear_only_diff": float(shear_diff),
+        "frobenius_diff_trusted_vs_project": _diff(trusted_cartesian, project_cartesian),
+        "frobenius_diff_trusted_vs_stored": _diff(trusted_cartesian, stored_cartesian),
+        "frobenius_diff_project_vs_stored": _diff(project_cartesian, stored_cartesian),
+        "shear_diff_trusted_vs_stored": _shear_diff(trusted_cartesian, stored_cartesian),
+        "shear_diff_project_vs_stored": _shear_diff(project_cartesian, stored_cartesian),
+        "relative_diff_trusted_vs_stored": _diff(trusted_cartesian, stored_cartesian) / denom,
+        "relative_diff_project_vs_stored": _diff(project_cartesian, stored_cartesian) / denom,
         "stored_norm": float(np.linalg.norm(stored_cartesian)),
-        "trusted_norm": float(np.linalg.norm(project_cartesian)),
+        "trusted_norm": float(np.linalg.norm(trusted_cartesian)),
+        "project_norm": float(np.linalg.norm(project_cartesian)),
     }

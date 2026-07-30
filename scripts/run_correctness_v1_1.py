@@ -356,9 +356,9 @@ def _source_reconstruction(jarvis: pd.DataFrame, mp: pd.DataFrame) -> dict[str, 
             # Lineage comparison.
             lineage_status = "raw_lineage_verified"
             lineage_metrics: dict[str, float] = {}
-            if trusted_cart is not None:
-                lineage_metrics = tensor_lineage_metrics(raw_voigt, stored_cart, project_cart)
-                if lineage_metrics["relative_diff"] > 1e-3:
+            if trusted_cart is not None and project_cart is not None:
+                lineage_metrics = tensor_lineage_metrics(raw_voigt, trusted_cart, project_cart, stored_cart)
+                if lineage_metrics["relative_diff_trusted_vs_stored"] > 1e-3:
                     lineage_status = "conversion_mismatch"
             else:
                 lineage_status = "conversion_mismatch"
