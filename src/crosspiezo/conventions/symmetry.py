@@ -42,14 +42,17 @@ def structure_point_group_rotations(
     numbers = np.asarray(structure.atomic_numbers, dtype=np.int32)
     cell = (lattice, positions, numbers)
 
-    dataset = spglib.get_symmetry_dataset(cell, symprec=symprec, angle_tolerance=angle_tolerance)
-    if dataset is None:
-        # Fall back to identity only.
+    # Use spglib.get_symmetry (not get_symmetry_dataset) because the latter
+    # returns rotations in the standardized conventional cell.  get_symmetry
+    # returns rotations in the input cell, which convert cleanly to the input
+    # Cartesian basis.
+    symmetry = spglib.get_symmetry(cell, symprec=symprec, angle_tolerance=angle_tolerance)
+    if symmetry is None:
         return [np.eye(3, dtype=np.float64)]
 
     inv_lattice = np.linalg.inv(lattice)
     seen: list[np.ndarray] = []
-    for r_frac in dataset.rotations:
+    for r_frac in symmetry["rotations"]:
         rot = lattice @ np.asarray(r_frac, dtype=np.float64) @ inv_lattice
         # Validate Euclidean orthogonality.
         if not np.allclose(rot.T @ rot, np.eye(3), atol=1e-7):

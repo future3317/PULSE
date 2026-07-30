@@ -20,13 +20,15 @@ def _tensor_with_single_component(i: int, j: int, k: int, value: float) -> np.nd
 
 
 def _minimal_df(cif: str | None = None) -> pd.DataFrame:
+    tensor = _tensor_with_single_component(0, 0, 0, 1.0)
     return pd.DataFrame({
         "jarvis_id": ["J-1"],
         "mp_id": ["MP-1"],
         "space_group": [62],
         "crystal_system": ["orthorhombic"],
-        "jarvis_tensor": [_tensor_with_single_component(0, 0, 0, 1.0)],
-        "mp_tensor_raw": [_tensor_with_single_component(0, 0, 0, 1.0)],
+        "jarvis_tensor": [tensor],
+        "mp_tensor_raw": [tensor],
+        "mp_tensor_aligned": [tensor],
         "jarvis_cif": [cif],
         "mp_cif": [cif],
         "rotation": [None],
