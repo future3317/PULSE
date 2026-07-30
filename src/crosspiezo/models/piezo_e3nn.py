@@ -97,7 +97,8 @@ class PiezoE3NN(nn.Module):
         # with ``pos``, ``x``, ``z``, and ``batch``.
         out = self.network({"pos": pos, "x": x, "z": node_attr, "batch": batch})
 
-        # Convert irrep output to Cartesian tensor and symmetrize last two indices.
+        # Convert irrep output to Cartesian tensor and symmetrize the last two
+        # (strain) indices.  The first index is the polar response direction.
         cart = self.ct.to_cartesian(out)
-        cart = 0.5 * (cart + cart.transpose(1, 2))
+        cart = 0.5 * (cart + cart.transpose(-1, -2))
         return cart

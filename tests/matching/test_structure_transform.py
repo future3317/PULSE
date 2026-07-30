@@ -25,8 +25,9 @@ def _test_structure() -> Structure:
     )
 
 
-def _cif(struct: Structure) -> str:
-    return struct.to(fmt="cif")
+def _cif(struct: Structure) -> Structure:
+    """Return the structure directly; serializing to CIF discards orientation."""
+    return struct
 
 
 def test_unimodular_basis_change_gives_identity_cartesian_rotation():

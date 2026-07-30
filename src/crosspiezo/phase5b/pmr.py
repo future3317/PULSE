@@ -20,6 +20,38 @@ def _mean_ci(values: np.ndarray, seed: int = 42) -> tuple[float, float, float]:
     return point, lo, hi
 
 
+def _ratio_bootstrap(
+    discrepancies: np.ndarray,
+    errors: np.ndarray,
+    n_replicates: int = 2000,
+    seed: int = 42,
+    confidence: float = 0.95,
+) -> tuple[float, float]:
+    """Percentile bootstrap CI for a ratio of paired statistics.
+
+    The same bootstrap index is applied to both ``discrepancies`` and ``errors``
+    so that the joint pairing is preserved in each replicate.
+    """
+    discs = np.asarray(discrepancies, dtype=np.float64)
+    errs = np.asarray(errors, dtype=np.float64)
+    n = min(len(discs), len(errs))
+    if n < 2:
+        return float("nan"), float("nan")
+    discs = discs[:n]
+    errs = errs[:n]
+    rng = np.random.default_rng(seed)
+    ratios = np.empty(n_replicates, dtype=np.float64)
+    for i in range(n_replicates):
+        idx = rng.choice(n, size=n, replace=True)
+        d = discs[idx]
+        e = errs[idx]
+        ratios[i] = float(np.mean(d) / (np.mean(e) + 1e-12))
+    alpha = 1.0 - confidence
+    lo = float(np.percentile(ratios, 100 * alpha / 2))
+    hi = float(np.percentile(ratios, 100 * (1.0 - alpha / 2)))
+    return lo, hi
+
+
 def compute_valid_models(
     metrics: pd.DataFrame,
     baseline_names: list[str] | None = None,
@@ -90,6 +122,11 @@ def compute_pmr_table(
             _, mean_lo, mean_hi = _mean_ci(discs)
             _, median_lo, median_hi = _median_ci(discs)
 
+            mean_pmr = mean_disc / (mean_abs_err + 1e-12)
+            median_pmr = median_disc / (median_abs_err + 1e-12)
+            mean_pmr_lo, mean_pmr_hi = _ratio_bootstrap(discs, abs_mae_values, seed=42)
+            median_pmr_lo, median_pmr_hi = _ratio_bootstrap(discs, abs_mae_values, seed=43)
+
             rows.append({
                 "model_name": model_name,
                 "train_source": train_src,
@@ -103,14 +140,16 @@ def compute_pmr_table(
                 "median_paired_ci95_high": median_hi,
                 "mean_in_source_mae": mean_abs_err,
                 "median_in_source_mae": median_abs_err,
-                "PMR_mean_absolute": mean_disc / (mean_abs_err + 1e-12),
-                "PMR_median_absolute": median_disc / (median_abs_err + 1e-12),
+                "PMR_mean_absolute": mean_pmr,
+                "PMR_median_absolute": median_pmr,
                 "PMR_mean_normalized": mean_disc / (mean_norm_err + 1e-12),
                 "PMR_median_normalized": median_disc / (median_norm_err + 1e-12),
-                "PMR_mean_absolute_ci95_low": mean_lo / (mean_abs_err + 1e-12),
-                "PMR_mean_absolute_ci95_high": mean_hi / (mean_abs_err + 1e-12),
-                "PMR_median_absolute_ci95_low": median_lo / (median_abs_err + 1e-12),
-                "PMR_median_absolute_ci95_high": median_hi / (median_abs_err + 1e-12),
+                "PMR_mean_absolute_ci95_low": mean_pmr_lo,
+                "PMR_mean_absolute_ci95_high": mean_pmr_hi,
+                "PMR_median_absolute_ci95_low": median_pmr_lo,
+                "PMR_median_absolute_ci95_high": median_pmr_hi,
+                "per_sample_discrepancy": np.asarray(discs, dtype=np.float64),
+                "per_sample_model_error": np.asarray(abs_mae_values, dtype=np.float64),
             })
 
     return pd.DataFrame(rows)

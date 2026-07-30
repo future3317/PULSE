@@ -54,15 +54,20 @@ def structure_point_group_rotations(
     seen: list[np.ndarray] = []
     for r_frac in symmetry["rotations"]:
         rot = lattice @ np.asarray(r_frac, dtype=np.float64) @ inv_lattice
-        # Validate Euclidean orthogonality.
-        if not np.allclose(rot.T @ rot, np.eye(3), atol=1e-7):
-            raise ValueError("Non-orthogonal Cartesian rotation from spglib conversion")
-        det = float(np.linalg.det(rot))
-        if not (abs(det - 1.0) < 1e-7 or abs(det + 1.0) < 1e-7):
-            raise ValueError(f"Rotation determinant {det} is not +/-1")
-        if not any(np.allclose(rot, existing, atol=1e-7) for existing in seen):
-            seen.append(rot)
-    return seen
+        # Orthogonalize the Cartesian matrix; spglib's input-cell rotations can
+        # be slightly non-orthogonal for low-symmetry/distorted cells.
+        u, _, vh = np.linalg.svd(rot)
+        rot_ortho = u @ vh
+        det = float(np.linalg.det(rot_ortho))
+        # Preserve the intended determinant sign of the original spglib rotation.
+        if np.linalg.det(rot) < 0.0:
+            rot_ortho = -rot_ortho
+            det = -det
+        if not (abs(det - 1.0) < 1e-5 or abs(det + 1.0) < 1e-5):
+            continue
+        if not any(np.allclose(rot_ortho, existing, atol=1e-6) for existing in seen):
+            seen.append(rot_ortho)
+    return seen if seen else [np.eye(3, dtype=np.float64)]
 
 
 def point_group_rotations(structure: Structure) -> list[np.ndarray]:

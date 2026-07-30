@@ -54,17 +54,13 @@ def test_max_longitudinal_is_rotation_invariant():
     ), "max_longitudinal_response is not rotation invariant"
 
 
-def test_max_shear_is_rotation_invariant():
+def test_max_shear_is_withdrawn():
+    """The old shear functional was coordinate-axis dependent and is removed."""
     rng = np.random.default_rng(503)
     tensor = rng.normal(size=(3, 3, 3))
     tensor = 0.5 * (tensor + tensor.transpose(0, 2, 1))
-    q = _random_rotation_matrix(rng)
-    rotated = _apply_rotation(tensor, q)
-    assert np.isclose(
-        max_shear_response(tensor),
-        max_shear_response(rotated),
-        atol=1e-6,
-    ), "max_shear_response is not rotation invariant"
+    with pytest.raises(NotImplementedError):
+        max_shear_response(tensor)
 
 
 def test_longitudinal_matches_brute_force_oracle():

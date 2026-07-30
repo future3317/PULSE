@@ -38,9 +38,18 @@ def _tensor_from_row(row: pd.Series) -> np.ndarray | None:
 
 
 def _formula_to_prototype(formula: str) -> str:
+    """Return an anonymous-formula prototype (e.g. AB2), sensitive to stoichiometry.
+
+    Unlike ``Composition.anonymized_formula`` this keeps the integer
+    stoichiometric ratio, so Na2Cl2 (A2B2) and NaCl (AB) are different prototypes.
+    """
     from pymatgen.core.composition import Composition
+
     comp = Composition(formula)
-    return "-".join(sorted({str(el) for el in comp.elements}))
+    items = sorted(comp.items(), key=lambda item: (-item[1], str(item[0])))
+    return "".join(
+        f"{chr(ord('A') + i)}{int(amount)}" for i, (_, amount) in enumerate(items)
+    )
 
 
 @dataclass(frozen=True)
@@ -51,13 +60,55 @@ class PiezoRecord:
     prototype: str
     z: torch.Tensor
     pos: torch.Tensor
+    lattice: torch.Tensor
+    edge_index: torch.Tensor
+    edge_vec: torch.Tensor
+    edge_len: torch.Tensor
     target: torch.Tensor
 
 
-class PiezoGraphDataset(Dataset[PiezoRecord]):
-    """Lightweight dataset for the e3nn radius-graph model."""
+def _build_periodic_graph(
+    struct: Structure, cutoff: float = 4.0, max_neighbors: int = 16
+) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+    """Build a radius graph with periodic boundary conditions via pymatgen."""
+    centers: list[int] = []
+    neighbors: list[int] = []
+    vectors: list[np.ndarray] = []
+    for i, site in enumerate(struct):
+        nbrs = struct.get_neighbors(site, r=cutoff)
+        nbrs = sorted(nbrs, key=lambda x: x[1])[:max_neighbors]
+        for nbr, _dist in nbrs:
+            j = nbr.index
+            vec = nbr.coords - site.coords
+            centers.append(i)
+            neighbors.append(j)
+            vectors.append(vec)
+    if not centers:
+        centers = [0]
+        neighbors = [0]
+        vectors = [np.zeros(3)]
+    edge_index = torch.tensor([centers, neighbors], dtype=torch.long)
+    edge_vec = torch.tensor(np.stack(vectors), dtype=torch.float32)
+    edge_len = torch.linalg.norm(edge_vec, dim=1)
+    return edge_index, edge_vec, edge_len
 
-    def __init__(self, df: pd.DataFrame, source: str) -> None:
+
+class PiezoGraphDataset(Dataset[PiezoRecord]):
+    """Lightweight dataset for the e3nn radius-graph model.
+
+    The record now also carries lattice and periodic-edge information.  The
+    current ``PiezoE3NN`` model does not consume these edges and is therefore
+    marked as an invalid crystal baseline until a periodic-graph equivariant
+    model is implemented.
+    """
+
+    def __init__(
+        self,
+        df: pd.DataFrame,
+        source: str,
+        cutoff: float = 4.0,
+        max_neighbors: int = 16,
+    ) -> None:
         self.records: list[PiezoRecord] = []
         for _, row in df.iterrows():
             cif = row.get("cif")
@@ -70,6 +121,7 @@ class PiezoGraphDataset(Dataset[PiezoRecord]):
             tensor = _tensor_from_row(row)
             if tensor is None or len(struct) == 0:
                 continue
+            edge_index, edge_vec, edge_len = _build_periodic_graph(struct, cutoff, max_neighbors)
             self.records.append(PiezoRecord(
                 material_id=str(row["material_id"]),
                 formula=str(row["formula"]),
@@ -77,6 +129,10 @@ class PiezoGraphDataset(Dataset[PiezoRecord]):
                 prototype=_formula_to_prototype(str(row["formula"])),
                 z=torch.tensor(struct.atomic_numbers, dtype=torch.long),
                 pos=torch.tensor(struct.cart_coords, dtype=torch.float32),
+                lattice=torch.tensor(struct.lattice.matrix, dtype=torch.float32),
+                edge_index=edge_index,
+                edge_vec=edge_vec,
+                edge_len=edge_len,
                 target=torch.tensor(tensor, dtype=torch.float32),
             ))
 
@@ -93,6 +149,10 @@ def _collate_records(batch: list[PiezoRecord], source_token_dim: int = 0) -> dic
     token_chunks: list[torch.Tensor] = []
     y_chunks: list[torch.Tensor] = []
     batch_idx: list[torch.Tensor] = []
+    edge_index_chunks: list[torch.Tensor] = []
+    edge_vec_chunks: list[torch.Tensor] = []
+    edge_len_chunks: list[torch.Tensor] = []
+    lattice_chunks: list[torch.Tensor] = []
     offset = 0
     for i, rec in enumerate(batch):
         pos_chunks.append(rec.pos)
@@ -103,16 +163,56 @@ def _collate_records(batch: list[PiezoRecord], source_token_dim: int = 0) -> dic
             token_chunks.append(token)
         y_chunks.append(rec.target)
         batch_idx.append(torch.full((len(rec.z),), i, dtype=torch.long))
+        edge_index_chunks.append(rec.edge_index + offset)
+        edge_vec_chunks.append(rec.edge_vec)
+        edge_len_chunks.append(rec.edge_len)
+        lattice_chunks.append(rec.lattice)
         offset += len(rec.z)
     out: dict[str, torch.Tensor] = {
         "pos": torch.cat(pos_chunks, dim=0),
         "z": torch.cat(z_chunks, dim=0),
         "batch": torch.cat(batch_idx, dim=0),
         "y": torch.stack(y_chunks, dim=0),
+        "edge_index": torch.cat(edge_index_chunks, dim=1),
+        "edge_vec": torch.cat(edge_vec_chunks, dim=0),
+        "edge_len": torch.cat(edge_len_chunks, dim=0),
+        "lattice": torch.stack(lattice_chunks, dim=0),
     }
     if source_token_dim > 0:
         out["source_token"] = torch.cat(token_chunks, dim=0)
     return out
+
+
+def build_paired_counterfactual_eval(
+    test_panel: pd.DataFrame,
+    jarvis_records: list[dict[str, Any]],
+    mp_records: list[dict[str, Any]],
+) -> dict[str, list[dict[str, Any]]]:
+    """Return the paired-counterfactual eval sets for the two sources.
+
+    A "paired counterfactual" prediction for a JARVIS test material is made on
+    its MP mate (and vice-versa), never on a same-source record.  This prevents
+    the cross-source test set from leaking into the source's own test panel.
+    """
+    mate_jarvis_ids = set(test_panel["jarvis_id"])
+    mate_mp_ids = set(test_panel["mp_id"])
+    jarvis_by_id = {r["id"]: r for r in jarvis_records}
+    mp_by_id = {r["id"]: r for r in mp_records}
+    return {
+        "paired_counterfactual_jarvis": [mp_by_id[mid] for mid in mate_mp_ids if mid in mp_by_id],
+        "paired_counterfactual_mp": [jarvis_by_id[jid] for jid in mate_jarvis_ids if jid in jarvis_by_id],
+    }
+
+
+def paired_counterfactual_is_disjoint(
+    paired_eval: dict[str, list[dict[str, Any]]],
+    train_ids: set[str],
+) -> bool:
+    """Return True if no paired-counterfactual eval record appears in training."""
+    for recs in paired_eval.values():
+        if any(r["id"] in train_ids for r in recs):
+            return False
+    return True
 
 
 def set_seed(seed: int) -> None:

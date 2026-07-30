@@ -46,6 +46,14 @@ def _load_hierarchy() -> pd.DataFrame | None:
     return pd.read_parquet(path)
 
 
+def _load_ranking() -> pd.DataFrame | None:
+    """Load Phase 5A ranking-stability metrics (Frobenius norm, longitudinal, shear)."""
+    path = PROJECT_ROOT / "artifacts" / "phase5a" / "ranking_metrics.parquet"
+    if not path.exists():
+        return None
+    return pd.read_parquet(path)
+
+
 def _paired_discrepancies(hierarchy: pd.DataFrame, extended: pd.DataFrame, core: pd.DataFrame) -> dict[str, np.ndarray]:
     exact = hierarchy[hierarchy["variant"] == "exact_transported"]
     core_keys = set(zip(core["jarvis_id"], core["mp_id"], strict=False))
@@ -205,12 +213,25 @@ def report_calibration(metrics: pd.DataFrame) -> None:
     print("[Phase 5B.8] Wrote reports/22_lightweight_calibration.md")
 
 
+def _frobenius_ranking_metrics(ranking: pd.DataFrame | None) -> tuple[float, float]:
+    """Return (top_50_jaccard, kendall_tau) for the Frobenius-norm functional."""
+    if ranking is None or ranking.empty:
+        return float("nan"), float("nan")
+    row = ranking[ranking["functional"] == "frobenius_norm"]
+    if row.empty:
+        row = ranking.iloc[0]
+    else:
+        row = row.iloc[0]
+    return float(row["top_50_jaccard"]), float(row["kendall_tau"])
+
+
 def report_decision(
     metrics: pd.DataFrame,
     valid_models: pd.DataFrame,
     pmr: pd.DataFrame,
     extended: pd.DataFrame,
     core: pd.DataFrame,
+    ranking: pd.DataFrame | None,
     lambda_audit: dict[str, Any],
 ) -> None:
     print("[Phase 5B.11] Compiling final decision...")
@@ -218,9 +239,8 @@ def report_decision(
     has_valid_model = len(valid_names) > 0
     n_core = len(core)
 
-    # Ranking instability from Phase 0-4 / 5A.
-    top50_jaccard = 0.07526881720430108
-    kendall_tau = 0.2568831475074093
+    # Ranking instability from Phase 0-4 / 5A (read from artifact, never hardcoded).
+    top50_jaccard, kendall_tau = _frobenius_ranking_metrics(ranking)
 
     decision = "Data-Only Benchmark Go"
     rationale = (
@@ -262,15 +282,22 @@ def report_decision(
     print("[Phase 5B.11] Wrote reports/25_phase5b_decision.md")
 
 
-def write_manuscript_notes() -> None:
+def write_manuscript_notes(
+    extended: pd.DataFrame,
+    core: pd.DataFrame,
+    ranking: pd.DataFrame | None,
+) -> None:
     MANUSCRIPT_NOTES.mkdir(parents=True, exist_ok=True)
+    top50_jaccard, kendall_tau = _frobenius_ranking_metrics(ranking)
+    n_extended = len(extended)
+    n_core = len(core)
     (MANUSCRIPT_NOTES / "phase5b_revised_title_and_abstract.md").write_text(
         "# Revised title and abstract\n\n"
         "Title: CrossPiezo: Cross-Protocol Evaluation Reveals Unstable Rankings in AI Screening of Piezoelectric Materials\n\n"
         "Abstract points:\n"
-        "- 538 strict JARVIS-MP structure-matched pairs.\n"
-        "- Source-native frame audit shows JARVIS tensors are not aligned with the CIF-setting point group; only 15 pairs enter the Core panel.\n"
-        "- Ranking by Frobenius norm is unstable (top-50 Jaccard 0.075).\n"
+        f"- {n_extended} strict JARVIS-MP structure-matched pairs.\n"
+        f"- Source-native frame audit shows JARVIS tensors are not aligned with the CIF-setting point group; only {n_core} pairs enter the Core panel.\n"
+        f"- Ranking by Frobenius norm is unstable (top-50 Jaccard {top50_jaccard:.3f}).\n"
         "- Valid PMR is reported only from models that beat zero/mean baselines; otherwise the paper stays data-only.\n"
         "- Soft-mode mechanism is withdrawn pending full atom-resolved Λ recovery or third-protocol adjudication.\n",
         encoding="utf-8",
@@ -279,8 +306,8 @@ def write_manuscript_notes() -> None:
         "# Claim matrix after Phase 5B\n\n"
         "| Claim | Status | Evidence |\n"
         "|---|---|---|\n"
-        "| Cross-protocol disagreement exists | Go | Extended median normalized discrepancy ~1.6 |\n"
-        "| Rankings are unstable | Go | top-50 Jaccard 0.075, Kendall tau 0.26 |\n"
+        "| Cross-protocol disagreement exists | Go | Extended median normalized discrepancy from artifact |\n"
+        f"| Rankings are unstable | Go | top-50 Jaccard {top50_jaccard:.3f}, Kendall tau {kendall_tau:.3f} |\n"
         "| Protocol gap exceeds competent model error | Conditional | Valid PMR only if model passes skill gate |\n"
         "| Soft-mode mechanism explains disagreement | Withdrawn | grouped CV negative, no full Λ |\n",
         encoding="utf-8",
@@ -307,6 +334,8 @@ def main() -> int:
         print("ERROR: discrepancy hierarchy artifact missing. Run run_phase5b.py first.")
         return 1
 
+    ranking = _load_ranking()
+
     extended = pd.read_parquet(PHASE5B_ARTIFACT / "extended_pairs.parquet")
     core = pd.read_parquet(PHASE5B_ARTIFACT / "core_pairs.parquet")
 
@@ -328,8 +357,8 @@ def main() -> int:
 
     if not args.skip_decision:
         lambda_audit = {"extended": {"full_lambda_candidate_count": 0}}
-        report_decision(metrics, valid_models, pmr, extended, core, lambda_audit)
-        write_manuscript_notes()
+        report_decision(metrics, valid_models, pmr, extended, core, ranking, lambda_audit)
+        write_manuscript_notes(extended, core, ranking)
 
     print("\nPhase 5B model/decision reports complete.")
     return 0

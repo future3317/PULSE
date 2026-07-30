@@ -37,21 +37,53 @@ def frobenius_norm_score(tensor: np.ndarray) -> float:
     return float(np.linalg.norm(np.asarray(tensor, dtype=np.float64)))
 
 
-def max_longitudinal_response(tensor: np.ndarray) -> float:
-    """Maximum |e_{iii}| over the three longitudinal directions."""
+def max_longitudinal_response(tensor: np.ndarray, n_samples: int = 20000, seed: int = 42) -> float:
+    """Maximum directional piezoelectric response, max_{||n||=1} |n_i e_ijk n_j n_k|.
+
+    This is a rotation-invariant scalar functional.  It is evaluated by uniform
+    sphere sampling followed by a small local polish using the largest sample as
+    a starting point.
+    """
     t = np.asarray(tensor, dtype=np.float64)
-    return float(np.max(np.abs([t[0, 0, 0], t[1, 1, 1], t[2, 2, 2]])))
+    rng = np.random.default_rng(seed)
+    dirs = rng.normal(size=(n_samples, 3))
+    dirs /= np.linalg.norm(dirs, axis=1, keepdims=True) + 1e-12
+    vals = np.abs(np.einsum("ni,ijk,nj,nk->n", dirs, t, dirs, dirs))
+    best_idx = int(np.argmax(vals))
+    best_dir = dirs[best_idx]
+    best_val = float(vals[best_idx])
+
+    # Lightweight local refinement: tiny gradient-free coordinate ascent.
+    step = 0.05
+    for _ in range(50):
+        grad = np.zeros(3)
+        for eps_axis in range(3):
+            perturb = best_dir.copy()
+            perturb[eps_axis] += 1e-5
+            perturb /= np.linalg.norm(perturb)
+            v = abs(float(np.einsum("i,ijk,j,k->", perturb, t, perturb, perturb)))
+            grad[eps_axis] = (v - best_val) / 1e-5
+        trial = best_dir + step * grad
+        trial /= np.linalg.norm(trial)
+        v = abs(float(np.einsum("i,ijk,j,k->", trial, t, trial, trial)))
+        if v > best_val:
+            best_dir = trial
+            best_val = v
+        else:
+            step *= 0.5
+    return best_val
 
 
 def max_shear_response(tensor: np.ndarray) -> float:
-    """Maximum |e_{ijk}| over all shear (i != j != k allowed) components."""
-    t = np.asarray(tensor, dtype=np.float64)
-    # All components except the three longitudinal ones.
-    mask = np.ones((3, 3, 3), dtype=bool)
-    mask[0, 0, 0] = False
-    mask[1, 1, 1] = False
-    mask[2, 2, 2] = False
-    return float(np.max(np.abs(t[mask])))
+    """Shear response functional is not uniquely defined for rank-3 tensors.
+
+    The old implementation used arbitrary coordinate-axis components and was not
+    rotation invariant.  It is withdrawn pending a physically motivated definition.
+    """
+    raise NotImplementedError(
+        "max_shear_response has been removed because no rotation-invariant "
+        "physical definition was preregistered."
+    )
 
 
 def derived_d_score(

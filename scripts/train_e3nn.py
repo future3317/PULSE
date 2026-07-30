@@ -38,6 +38,7 @@ from crosspiezo.models.trainer import (
     PiezoRecord,
     _collate_records,
     _formula_to_prototype,
+    build_paired_counterfactual_eval,
     evaluate_model,
     set_seed,
     train_one_model,
@@ -106,10 +107,9 @@ def _build_eval_records(
     eval_sets: dict[str, list[dict[str, Any]]] = {}
     eval_sets["jarvis_insource"] = [r for r in jarvis_records if r["id"] in test_jids]
     eval_sets["mp_insource"] = [r for r in mp_records if r["id"] in test_mids]
-    eval_sets["jarvis_source_held_out"] = eval_sets["jarvis_insource"]
-    eval_sets["mp_source_held_out"] = eval_sets["mp_insource"]
-    eval_sets["paired_counterfactual_jarvis"] = eval_sets["jarvis_insource"]
-    eval_sets["paired_counterfactual_mp"] = eval_sets["mp_insource"]
+    # With only two sources, a pooled model cannot be "source-held-out".
+    # Cross-source evaluation is reported as cross_source, not source_held_out.
+    eval_sets.update(build_paired_counterfactual_eval(test_panel, jarvis_records, mp_records))
 
     eval_sets["jarvis_formula_disjoint"] = [r for r in jarvis_records if r["formula"] in test_formulas]
     eval_sets["mp_formula_disjoint"] = [r for r in mp_records if r["formula"] in test_formulas]
@@ -270,8 +270,8 @@ def main() -> int:
         ("mlp_invariant", train_mp, eval_mp_recs, "mp", "mp", "in_source"),
         ("mlp_invariant", train_jarvis + train_mp, eval_jarvis_recs, "pooled", "jarvis", "in_source"),
         ("mlp_invariant", train_jarvis + train_mp, eval_mp_recs, "pooled", "mp", "in_source"),
-        ("mlp_invariant", train_jarvis, eval_mp_recs, "jarvis", "mp", "source_held_out"),
-        ("mlp_invariant", train_mp, eval_jarvis_recs, "mp", "jarvis", "source_held_out"),
+        ("mlp_invariant", train_jarvis, eval_mp_recs, "jarvis", "mp", "cross_source"),
+        ("mlp_invariant", train_mp, eval_jarvis_recs, "mp", "jarvis", "cross_source"),
     ]
     for name, tr, ev, ts, es, st in baseline_splits:
         for seed in range(42, 42 + args.n_seeds):
@@ -298,8 +298,8 @@ def main() -> int:
         eval_map: dict[str, list[PiezoRecord]] = {
             "in_source_jarvis": eval_jarvis,
             "in_source_mp": eval_mp,
-            "source_held_out_jarvis": eval_jarvis,
-            "source_held_out_mp": eval_mp,
+            "cross_source_jarvis": eval_jarvis,
+            "cross_source_mp": eval_mp,
             "paired_counterfactual_jarvis": eval_jarvis,
             "paired_counterfactual_mp": eval_mp,
         }

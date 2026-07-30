@@ -158,11 +158,18 @@ def compute_soft_mode_features(data: dict[str, Any]) -> dict[str, float] | None:
 
 
 def _formula_to_prototype(formula: str) -> str:
-    """A crude prototype key: sorted element symbols ignoring stoichiometry."""
+    """Anonymous-formula prototype key (e.g. AB2), sensitive to stoichiometry.
+
+    Keeps the integer stoichiometric ratio so that scaled formulas such as
+    Na2Cl2 (A2B2) and NaCl (AB) remain distinct prototypes.
+    """
     from pymatgen.core.composition import Composition
 
     comp = Composition(formula)
-    return "-".join(sorted({str(el) for el in comp.elements}))
+    items = sorted(comp.items(), key=lambda item: (-item[1], str(item[0])))
+    return "".join(
+        f"{chr(ord('A') + i)}{int(amount)}" for i, (_, amount) in enumerate(items)
+    )
 
 
 def nested_regression_analysis(
