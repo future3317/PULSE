@@ -72,39 +72,33 @@ def _space_group_relation(s1: Structure, s2: Structure) -> str:
     return "different"
 
 
-def _cartesian_rotation_from_mapping(
+def _rotation_from_lattices(
     s_left: Structure,
     s_right: Structure,
-    mapping: np.ndarray,
+    unimodular_transform: np.ndarray,
 ) -> np.ndarray | None:
-    """Recover the orthogonal Cartesian rotation mapping s_right onto s_left.
+    """Recover the orthogonal Cartesian rotation from the matched lattices.
 
-    Uses a Kabsch/Procrustes fit over the matched atom Cartesian coordinates.
-    Both proper and improper rotations are allowed; basis relabelings that do
-    not correspond to a physical rotation return identity (or the true rotation
-    if the coordinates themselves were rotated).
+    The structure matcher supplies an integer unimodular matrix ``M`` such that
+    the right fractional coordinates map onto the left cell.  The deformation
+    gradient ``F = L_right @ M.T @ inv(L_left)`` encodes both the basis change
+    and the physical rotation/strain.  Its polar factor is the orthogonal
+    rotation that transports tensors from the right Cartesian frame to the left
+    Cartesian frame.  Both proper and improper rotations are preserved.
     """
-    coords_left = np.asarray(s_left.cart_coords, dtype=np.float64)
-    coords_right = np.asarray(s_right.cart_coords, dtype=np.float64)[mapping]
-
-    centroid_left = np.mean(coords_left, axis=0)
-    centroid_right = np.mean(coords_right, axis=0)
-    centered_left = coords_left - centroid_left
-    centered_right = coords_right - centroid_right
-
-    # Covariance matrix: right -> left.
-    h = centered_right.T @ centered_left
-    u, _, vh = svd(h)
-
-    # Allow improper rotations; do not force det = +1.
-    rotation = vh.T @ u.T
-
-    # Sanity check orthogonality and reconstruction.
-    if not np.allclose(rotation.T @ rotation, np.eye(3), atol=1e-6):
+    left_lattice = np.asarray(s_left.lattice.matrix, dtype=np.float64)
+    right_lattice = np.asarray(s_right.lattice.matrix, dtype=np.float64)
+    m = np.asarray(unimodular_transform, dtype=np.float64)
+    try:
+        f = right_lattice @ m.T @ np.linalg.inv(left_lattice)
+    except np.linalg.LinAlgError:
         return None
-    reconstructed = centered_right @ rotation.T + centroid_left
-    rms = float(np.sqrt(np.mean((reconstructed - coords_left) ** 2)))
-    if rms > 1.0:
+    u, _, vh = svd(f)
+    rotation = u @ vh
+    # Preserve determinant sign when the raw deformation is improper.
+    if np.linalg.det(rotation) > 0.0 and np.linalg.det(f) < 0.0:
+        rotation = -rotation
+    if not np.allclose(rotation.T @ rotation, np.eye(3), atol=1e-6):
         return None
     return rotation
 
@@ -135,8 +129,18 @@ def _rotation_between_matched_structures(
     except Exception:  # noqa: BLE001
         return None, None, None, None
 
+    rotation = _rotation_from_lattices(s_left, s_right, unimodular_transform)
+
+    # If the matched atom Cartesian coordinates already coincide, the pair is a
+    # pure basis relabel and the physical rotation is identity.  The lattice-
+    # based estimate can otherwise introduce a small spurious rotation because
+    # the relabeled cell has a different shape.
     mapping_array = np.asarray(atom_mapping, dtype=np.int64)
-    rotation = _cartesian_rotation_from_mapping(s_left, s_right, mapping_array)
+    coords_left = np.asarray(s_left.cart_coords, dtype=np.float64)
+    coords_right = np.asarray(s_right.cart_coords, dtype=np.float64)[mapping_array]
+    if rotation is not None and np.allclose(coords_left, coords_right, atol=1e-6):
+        rotation = np.eye(3, dtype=np.float64)
+
     return rotation, unimodular_transform, fractional_translation, atom_mapping
 
 

@@ -189,6 +189,37 @@ def _run_baseline_row(
     }
 
 
+def _baseline_splits(
+    train_jarvis: list[dict[str, Any]],
+    train_mp: list[dict[str, Any]],
+    eval_jarvis_recs: list[dict[str, Any]],
+    eval_mp_recs: list[dict[str, Any]],
+) -> list[tuple[str, list[dict[str, Any]], list[dict[str, Any]], str, str, str]]:
+    """Return the baseline evaluation split definitions.
+
+    With only two sources, a pooled model cannot be "source-held-out"; those
+    evaluations are reported as ``cross_source`` instead.
+    """
+    return [
+        ("zero", [], eval_jarvis_recs, "none", "jarvis", "in_source"),
+        ("zero", [], eval_mp_recs, "none", "mp", "in_source"),
+        ("composition_mean", train_jarvis, eval_jarvis_recs, "jarvis", "jarvis", "in_source"),
+        ("composition_mean", train_mp, eval_mp_recs, "mp", "mp", "in_source"),
+        ("source_specific_composition_mean", train_jarvis + train_mp, eval_jarvis_recs, "pooled", "jarvis", "in_source"),
+        ("source_specific_composition_mean", train_jarvis + train_mp, eval_mp_recs, "pooled", "mp", "in_source"),
+        ("structural_ridge", train_jarvis, eval_jarvis_recs, "jarvis", "jarvis", "in_source"),
+        ("structural_ridge", train_mp, eval_mp_recs, "mp", "mp", "in_source"),
+        ("structural_ridge", train_jarvis, eval_mp_recs, "jarvis", "mp", "source_held_out"),
+        ("structural_ridge", train_mp, eval_jarvis_recs, "mp", "jarvis", "source_held_out"),
+        ("mlp_invariant", train_jarvis, eval_jarvis_recs, "jarvis", "jarvis", "in_source"),
+        ("mlp_invariant", train_mp, eval_mp_recs, "mp", "mp", "in_source"),
+        ("mlp_invariant", train_jarvis + train_mp, eval_jarvis_recs, "pooled", "jarvis", "in_source"),
+        ("mlp_invariant", train_jarvis + train_mp, eval_mp_recs, "pooled", "mp", "in_source"),
+        ("mlp_invariant", train_jarvis, eval_mp_recs, "jarvis", "mp", "cross_source"),
+        ("mlp_invariant", train_mp, eval_jarvis_recs, "mp", "jarvis", "cross_source"),
+    ]
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--epochs", type=int, default=40)
@@ -255,24 +286,9 @@ def main() -> int:
     metrics_rows: list[dict[str, Any]] = []
 
     # Baselines.
-    baseline_splits: list[tuple[str, list[dict[str, Any]], list[dict[str, Any]], str, str, str]] = [
-        ("zero", [], eval_jarvis_recs, "none", "jarvis", "in_source"),
-        ("zero", [], eval_mp_recs, "none", "mp", "in_source"),
-        ("composition_mean", train_jarvis, eval_jarvis_recs, "jarvis", "jarvis", "in_source"),
-        ("composition_mean", train_mp, eval_mp_recs, "mp", "mp", "in_source"),
-        ("source_specific_composition_mean", train_jarvis + train_mp, eval_jarvis_recs, "pooled", "jarvis", "in_source"),
-        ("source_specific_composition_mean", train_jarvis + train_mp, eval_mp_recs, "pooled", "mp", "in_source"),
-        ("structural_ridge", train_jarvis, eval_jarvis_recs, "jarvis", "jarvis", "in_source"),
-        ("structural_ridge", train_mp, eval_mp_recs, "mp", "mp", "in_source"),
-        ("structural_ridge", train_jarvis, eval_mp_recs, "jarvis", "mp", "source_held_out"),
-        ("structural_ridge", train_mp, eval_jarvis_recs, "mp", "jarvis", "source_held_out"),
-        ("mlp_invariant", train_jarvis, eval_jarvis_recs, "jarvis", "jarvis", "in_source"),
-        ("mlp_invariant", train_mp, eval_mp_recs, "mp", "mp", "in_source"),
-        ("mlp_invariant", train_jarvis + train_mp, eval_jarvis_recs, "pooled", "jarvis", "in_source"),
-        ("mlp_invariant", train_jarvis + train_mp, eval_mp_recs, "pooled", "mp", "in_source"),
-        ("mlp_invariant", train_jarvis, eval_mp_recs, "jarvis", "mp", "cross_source"),
-        ("mlp_invariant", train_mp, eval_jarvis_recs, "mp", "jarvis", "cross_source"),
-    ]
+    baseline_splits = _baseline_splits(
+        train_jarvis, train_mp, eval_jarvis_recs, eval_mp_recs
+    )
     for name, tr, ev, ts, es, st in baseline_splits:
         for seed in range(42, 42 + args.n_seeds):
             try:

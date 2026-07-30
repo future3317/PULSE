@@ -16,6 +16,7 @@ from crosspiezo.models.trainer import (
     build_paired_counterfactual_eval,
     paired_counterfactual_is_disjoint,
 )
+from scripts.train_e3nn import _baseline_splits
 
 
 def test_formula_to_prototype_is_not_element_set():
@@ -35,18 +36,19 @@ def test_prototype_helper_consistent_across_modules():
 
 def test_source_held_out_requires_exclusion_of_eval_source_from_training():
     """A split named 'source_held_out_X' must be evaluated on a model that never
-    saw source X during training."""
-    rows = [
-        {"model_name": "mlp", "train_source": "pooled", "eval_source": "jarvis", "split_type": "source_held_out_jarvis"},
-        {"model_name": "ridge", "train_source": "jarvis", "eval_source": "mp", "split_type": "source_held_out_mp"},
-    ]
-    for row in rows:
-        split = row["split_type"]
+    saw source X during training.  With only two sources, pooled models are not
+    source-held-out."""
+    splits = _baseline_splits([], [], [], [])
+    for name, _tr, _ev, train, eval_source, split in splits:
+        if not split.startswith("source_held_out"):
+            continue
         held_source = split.split("_")[-1]
-        train = row["train_source"]
-        assert train != "pooled", "pooled model cannot be source-held-out with only two sources"
+        assert train != "pooled", (
+            f"{name} {split} uses a pooled train_source; pooled models cannot be "
+            "source-held-out with only two sources"
+        )
         assert held_source not in train.split("+"), (
-            f"{split} evaluated on model trained with {train}"
+            f"{name} {split} evaluated on model trained with {train}"
         )
 
 

@@ -76,10 +76,14 @@ def _build_periodic_graph(
     vectors: list[np.ndarray] = []
     for i, site in enumerate(struct):
         nbrs = struct.get_neighbors(site, r=cutoff)
-        nbrs = sorted(nbrs, key=lambda x: x[1])[:max_neighbors]
-        for nbr, _dist in nbrs:
-            j = nbr.index
-            vec = nbr.coords - site.coords
+        # ``get_neighbors`` returns neighbor objects directly in newer pymatgen.
+        def _dist(nbr: Any) -> float:
+            return float(getattr(nbr, "nn_distance", getattr(nbr, "distance", 0.0)))
+
+        nbrs = sorted(nbrs, key=_dist)[:max_neighbors]
+        for nbr in nbrs:
+            j = int(getattr(nbr, "index", nbr))
+            vec = np.asarray(nbr.coords, dtype=np.float64) - np.asarray(site.coords, dtype=np.float64)
             centers.append(i)
             neighbors.append(j)
             vectors.append(vec)
