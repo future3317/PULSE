@@ -178,7 +178,7 @@ def _run_matching(jarvis: pd.DataFrame, mp: pd.DataFrame, overlap: pd.DataFrame)
             sg_symbol = _space_group_symbol(jrow.get("space_group"))
             jresid = mresid = None
             try:
-                jstruct = Structure(jrow["cif"], fmt="cif")
+                jstruct = Structure.from_str(jrow["cif"], fmt="cif")
                 if len(jstruct) > 0:
                     rots = point_group_rotations(jstruct)
                     jresid = symmetry_residual(jtensor, rots)
@@ -252,7 +252,7 @@ def _source_reconstruction(jarvis: pd.DataFrame, mp: pd.DataFrame) -> dict[str, 
             status = "native_frame_unresolved"
             residual = float("nan")
             try:
-                struct = Structure(row["cif"], fmt="cif")
+                struct = Structure.from_str(row["cif"], fmt="cif")
                 if len(struct) > 0 and tensor is not None:
                     rots = point_group_rotations(struct)
                     residual = symmetry_residual(tensor, rots)
