@@ -1,0 +1,27 @@
+{
+  "timestamp": "2026-07-30T16:02:21.289720+00:00",
+  "commit": "687351861862e3460994bf9bab7f8d5e734ec153",
+  "decision": "Material Go (proceed with screening-resolution manuscript)",
+  "gate_checklist": [
+    {
+      "criterion": "elite_tail_gap_P2",
+      "status": "check",
+      "note": "P2 AUC-Concordance range: 2.12-2.95"
+    },
+    {
+      "criterion": "control_property_available",
+      "status": "pass",
+      "note": "8 attribute/panel combinations usable"
+    },
+    {
+      "criterion": "robust_portfolio_benchmarked",
+      "status": "pass",
+      "note": "192 strategy/k/metric evaluations"
+    },
+    {
+      "criterion": "results_traceable",
+      "status": "pass",
+      "note": "All CSVs carry SHA256 in result manifest"
+    }
+  ]
+}

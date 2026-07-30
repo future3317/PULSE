@@ -1,0 +1,13 @@
+panel,attribute,available_n,status,AUC_Concordance,kendall_tau
+P0,volume,573,ok,44.98180712952074,0.967315954203421
+P0,band_gap,573,ok,43.955644321159426,0.9081664896594879
+P0,energy_above_hull,573,ok,26.103265801134185,0.6110458972173113
+P0,formation_energy_per_atom,0,insufficient_N,,
+P0,dielectric_total_trace,573,ok,14.018714131550645,0.48172964279143093
+P0,elastic_bulk_modulus_vrh,0,insufficient_N,,
+P2,volume,207,ok,47.25526495632627,0.983488906609128
+P2,band_gap,207,ok,44.22012184343382,0.9472968221205436
+P2,energy_above_hull,207,ok,25.438839156242906,0.6453676980627704
+P2,formation_energy_per_atom,0,insufficient_N,,
+P2,dielectric_total_trace,207,ok,14.001914998348282,0.4798067451569023
+P2,elastic_bulk_modulus_vrh,0,insufficient_N,,

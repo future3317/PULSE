@@ -1,0 +1,7 @@
+panel,contribution,effective_n,status,kendall_tau,top_10pct_adjusted_jaccard
+P0,total,573,ok,0.2453490536947952,0.023979174376674968
+P0,electronic,0,insufficient_N,,
+P0,ionic,0,insufficient_N,,
+P2,total,207,ok,0.191753834607627,0.0007353286282939176
+P2,electronic,0,insufficient_N,,
+P2,ionic,0,insufficient_N,,

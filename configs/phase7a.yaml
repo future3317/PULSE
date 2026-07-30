@@ -1,0 +1,161 @@
+# CrossPiezo Phase 7A: Screening Resolution, Controls and Robust Portfolio
+# Frozen before viewing any Phase 7A results.
+#
+# Branch: research/screening-resolution-v1
+# Baseline commit: 687351861862e3460994bf9bab7f8d5e734ec153
+
+metadata:
+  phase: 7A
+  baseline_commit: 687351861862e3460994bf9bab7f8d5e734ec153
+  branch: research/screening-resolution-v1
+  frozen_at: 2026-07-30T14:45:00Z
+
+panels:
+  # Frozen nested panels from Phase 6A/6B. Do not redefine.
+  primary:
+    - P0
+    - P2
+  membership_path: artifacts/phase6a/panels/panel_membership.parquet
+
+metrics:
+  # Coordinate-invariant response scalars (primary endpoints).
+  primary:
+    - name: F1_Frobenius
+      jarvis_col: jarvis_f1
+      mp_col: mp_f1
+      description: Cartesian Frobenius norm of the piezoelectric stress tensor
+    - name: F3_Longitudinal
+      jarvis_col: jarvis_f3
+      mp_col: mp_f3
+      description: True collinear longitudinal maximum
+    - name: F4_KelvinOp
+      jarvis_col: jarvis_f4
+      mp_col: mp_f4
+      description: Kelvin/Mandel operator norm on symmetric strain
+
+screening_resolution:
+  # Quantile fractions q = k / N, reported as percentages.
+  q_percentiles:
+    start: 1
+    stop: 50
+    step: 1
+  # Pre-registered threshold for "consensus threshold crossing" (q_consensus).
+  adjusted_overlap_threshold: 0.0
+  overlap_ci_alpha: 0.05
+  bootstrap_replicates: 200
+  random_seed: 42
+  # Summary quantities pre-registered before viewing results.
+  summaries:
+    - AUC_Concordance
+    - q_consensus
+
+property_controls:
+  # Negative-control properties to compare against piezoelectric response.
+  # Each entry defines a scalar attribute and the columns/sources from which it is read.
+  attributes:
+    - name: volume
+      required: true
+      jarvis_col: null  # computed from CIF
+      mp_col: null
+      unit: Angstrom^3
+      description: Unit-cell volume per formula unit
+    - name: band_gap
+      required: true
+      jarvis_col: band_gap
+      mp_col: band_gap
+      unit: eV
+      description: Electronic band gap
+    - name: energy_above_hull
+      required: false
+      jarvis_col: energy_above_hull
+      mp_col: energy_above_hull
+      unit: eV/atom
+      description: Energy above the convex hull
+    - name: formation_energy_per_atom
+      required: false
+      jarvis_col: null
+      mp_col: formation_energy_per_atom
+      unit: eV/atom
+      description: Formation energy per atom (MP only; reported if available)
+    - name: dielectric_total_trace
+      required: true
+      jarvis_col: dielectric_total
+      mp_col: dielectric_total
+      unit: dimensionless
+      description: Trace of the total dielectric tensor
+    - name: elastic_bulk_modulus_vrh
+      required: true
+      jarvis_col: elastic_tensor
+      mp_col: elastic_tensor
+      unit: GPa
+      description: Voigt-Reuss-Hill average bulk modulus from elastic tensor
+  # Use the same q-curve and rank-displacement settings as the primary metrics.
+  use_primary_screening_settings: true
+  grouped_bootstrap_replicates: 2000
+  grouped_bootstrap_seed: 43
+
+electronic_ionic:
+  # Decomposition only when both sources carry convention-complete total/electronic/ionic tensors.
+  min_effective_n: 100
+  contributions:
+    - total
+    - electronic
+    - ionic
+  cancellation_index: true
+
+heterogeneity:
+  covariates:
+    - crystal_system
+    - point_group  # when available
+    - anion_group
+    - n_atoms
+    - polarity
+    - heavy_atom_fraction
+    - response_magnitude
+    - rms_distance
+    - lattice_distance
+  methods:
+    - grouped_bootstrap
+    - permutation
+    - fdr_correction
+  match_quality_curve: true
+
+robust_portfolio:
+  strategies:
+    - jarvis_only
+    - mp_only
+    - average_rank
+    - borda_count
+    - maximin
+    - consensus_intersection
+    - union_portfolio
+    - disagreement_abstention
+  metrics:
+    - worst_source_recall_at_k
+    - worst_source_ndcg_at_k
+    - worst_source_rank_regret
+    - portfolio_size
+    - portfolio_coverage
+  k_values:
+    - 10
+    - 20
+    - 50
+    - 100
+  quantile_rank_method: source_wise_percentile
+
+statistics:
+  random_seed: 42
+  bootstrap_replicates: 2000
+  permutation_replicates: 4999
+  confidence_level: 0.95
+  kendall_variant: b
+
+outputs:
+  artifact_root: artifacts/phase7a
+  result_root: results/phase7a
+  report_root: reports/phase7a
+  literature_matrix: results/phase7a/literature_matrix.csv
+  manuscript:
+    tex: CrossPiezo_ScreeningResolution_Manuscript_v0.4.tex
+    bib: CrossPiezo_ScreeningResolution_references.bib
+  ccfa_concept: docs/ccfa_method_paper_concept.md
