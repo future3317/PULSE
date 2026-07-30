@@ -1,0 +1,5 @@
+metric,formula,rotation_invariant,primary,note
+F1_Frobenius,||e||_F,True,True,Full Cartesian Frobenius norm
+F_MP_SVD,sigma_max(3x6 Voigt matrix),False,False,MP source field only; not a Cartesian invariant
+F3_Longitudinal,max_{||n||=1} |n_i e_ijk n_j n_k|,True,True,True collinear longitudinal maximum
+F4_KelvinOp,sigma_max(A_K),True,True,Kelvin/Mandel operator norm

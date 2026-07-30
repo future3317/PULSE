@@ -425,3 +425,126 @@ def ranking_summary_table(results: list[RankingResult]) -> list[dict[str, float 
             "median_abs_rank_shift": r.median_absolute_rank_shift,
         })
     return rows
+
+
+# -----------------------------------------------------------------------------
+# Phase 6B corrected null statistics
+# -----------------------------------------------------------------------------
+
+
+def expected_jaccard_hypergeometric(n: int, k: int) -> float:
+    """Exact expectation of top-k Jaccard under independent random ranking.
+
+    Two independent top-k sets are drawn from n items without replacement.
+    The intersection size X ~ Hypergeometric(N=n, K=k, n=k).  The Jaccard is
+    J = X / (2k - X).  This function returns E[J] exactly by summation.
+    """
+    if n <= 0 or k <= 0 or k > n:
+        return float("nan")
+    dist = stats.hypergeom(n, k, k)
+    xs = np.arange(max(0, 2 * k - n), min(k, n) + 1, dtype=np.float64)
+    pmf = dist.pmf(xs.astype(int))
+    jaccards = xs / (2.0 * k - xs)
+    return float(np.sum(pmf * jaccards))
+
+
+def hypergeometric_overlap_pvalue(n: int, k: int, x: int) -> float:
+    """P(intersection >= x) for two independent top-k sets under hypergeom null."""
+    if n <= 0 or k <= 0 or x > k:
+        return float("nan")
+    return float(stats.hypergeom.sf(x - 1, n, k, k))
+
+
+def chance_adjusted_jaccard(observed: float, expected: float) -> float:
+    """Adjusted Jaccard = (observed - expected) / (1 - expected)."""
+    if not np.isfinite(expected) or expected >= 1.0:
+        return float("nan")
+    return float((observed - expected) / (1.0 - expected))
+
+
+def permutation_pvalue(
+    left: np.ndarray,
+    right: np.ndarray,
+    observed_stat: float,
+    n_permutations: int = 4999,
+    seed: int = 42,
+    alternative: str = "two-sided",
+) -> float:
+    """Finite-sample corrected permutation p-value: (b + 1) / (B + 1).
+
+    Tests the null hypothesis of no association between paired scores.
+    This is a test of exchangeability, not a test of "sufficient agreement".
+    """
+    rng = np.random.default_rng(seed)
+    n = len(left)
+    if n < 5:
+        return float("nan")
+    b = 0
+    for _ in range(n_permutations):
+        perm = rng.permutation(n)
+        tau, _ = stats.kendalltau(left, right[perm])
+        if tau is None:
+            continue
+        if alternative == "two-sided":
+            if abs(float(tau)) >= abs(observed_stat):
+                b += 1
+        elif alternative == "greater":
+            if float(tau) >= observed_stat:
+                b += 1
+        else:
+            if float(tau) <= observed_stat:
+                b += 1
+    return (b + 1) / (n_permutations + 1)
+
+
+def cohen_kappa(a: np.ndarray, b: np.ndarray) -> float:
+    """Cohen's kappa for two binary vectors of equal length."""
+    n = len(a)
+    if n == 0:
+        return float("nan")
+    p_o = (a == b).mean()
+    p_yes = (a.sum() + b.sum()) / (2.0 * n)
+    p_no = 1.0 - p_yes
+    p_e = p_yes * p_yes + p_no * p_no
+    if p_e >= 1.0 - 1e-12:
+        return 1.0
+    return float((p_o - p_e) / (1.0 - p_e))
+
+
+def matthews_correlation(a: np.ndarray, b: np.ndarray) -> float:
+    """Matthews correlation coefficient for two binary vectors."""
+    tp = int((a & b).sum())
+    tn = int((~a & ~b).sum())
+    fp = int((~a & b).sum())
+    fn = int((a & ~b).sum())
+    denom = np.sqrt((tp + fp) * (tp + fn) * (tn + fp) * (tn + fn))
+    if denom == 0:
+        return 0.0
+    return float((tp * tn - fp * fn) / denom)
+
+
+def kendall_tau_bootstrap_ci(
+    left: np.ndarray,
+    right: np.ndarray,
+    n_replicates: int = 2000,
+    seed: int = 42,
+    confidence: float = 0.95,
+) -> tuple[float, float]:
+    """Percentile bootstrap confidence interval for Kendall tau-b."""
+    n = len(left)
+    if n < 5:
+        return float("nan"), float("nan")
+    rng = np.random.default_rng(seed)
+    reps = np.empty(n_replicates, dtype=np.float64)
+    for i in range(n_replicates):
+        idx = rng.choice(n, size=n, replace=True)
+        tau, _ = stats.kendalltau(left[idx], right[idx])
+        reps[i] = float(tau) if tau is not None else float("nan")
+    valid = np.isfinite(reps)
+    if np.sum(valid) < n_replicates // 2:
+        return float("nan"), float("nan")
+    reps = reps[valid]
+    alpha = 1.0 - confidence
+    lo = float(np.percentile(reps, 100 * alpha / 2))
+    hi = float(np.percentile(reps, 100 * (1.0 - alpha / 2)))
+    return lo, hi

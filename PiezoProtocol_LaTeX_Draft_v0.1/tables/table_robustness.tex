@@ -1,0 +1,28 @@
+\begin{table}[t]
+\centering
+\caption{Robustness matrix for F1 Frobenius across subsets and transformations.}
+\label{tab:robustness}
+\begin{tabular}{lrrrrr}
+\toprule
+Subset & N & $\tau$ & $\tau$ CI low & $\tau$ CI high & $J_{\text{adj}}$ (top 10\%) & Median rank displacement \\
+\midrule
+panel_P0 & 573 & 0.245 & 0.187 & 0.305 & 0.024 & 0.189 \\
+panel_P1 & 536 & 0.254 & 0.194 & 0.309 & 0.031 & 0.194 \\
+panel_P2 & 207 & 0.192 & 0.095 & 0.284 & 0.001 & 0.233 \\
+panel_P3 & 207 & 0.192 & 0.095 & 0.284 & 0.001 & 0.233 \\
+both_above_0.05 & 482 & 0.153 & 0.089 & 0.216 & 0.040 & 0.226 \\
+either_above_0.25 & 478 & 0.048 & -0.012 & 0.109 & 0.030 & 0.263 \\
+high_response_union & 478 & 0.048 & -0.012 & 0.109 & 0.030 & 0.263 \\
+exclude_top_1pct_amplitude & 567 & 0.254 & 0.198 & 0.310 & 0.037 & 0.193 \\
+winsorized_5_95 & 573 & 0.246 & 0.187 & 0.306 & 0.024 & 0.189 \\
+log_eps_F & 573 & 0.245 & 0.187 & 0.305 & 0.024 & 0.189 \\
+without_orthorhombic & 456 & 0.229 & 0.160 & 0.291 & 0.034 & 0.189 \\
+without_tetragonal & 488 & 0.232 & 0.172 & 0.293 & 0.041 & 0.191 \\
+without_cubic & 523 & 0.235 & 0.172 & 0.300 & 0.032 & 0.188 \\
+without_hexagonal & 412 & 0.275 & 0.209 & 0.338 & 0.091 & 0.186 \\
+without_monoclinic & 514 & 0.251 & 0.189 & 0.310 & 0.022 & 0.186 \\
+without_trigonal & 490 & 0.246 & 0.184 & 0.305 & 0.001 & 0.193 \\
+without_triclinic & 555 & 0.253 & 0.192 & 0.311 & 0.027 & 0.179 \\
+\bottomrule
+\end{tabular}
+\end{table}

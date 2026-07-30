@@ -1,0 +1,38 @@
+{
+  "timestamp": "2026-07-30T13:17:43.497128+00:00",
+  "phase6a_commit": "c2ed53e29605ed55c35036d03a73e8e2b0ef9aaf",
+  "phase6b_commit": "c2ed53e29605ed55c35036d03a73e8e2b0ef9aaf",
+  "files": {
+    "metric_definition.csv": {
+      "sha256": "c5e720d59f919c334bf2852ec829449a69c5df87dc4087bb32604d3e847d8695",
+      "n_rows": 4
+    },
+    "panel_counts.csv": {
+      "sha256": "0eb6fee161915d0f085dc1eb89d013513dc2b43bd1bf56ab22dd3975f0d35953",
+      "n_rows": 4
+    },
+    "ranking_primary.csv": {
+      "sha256": "cf515f47dd16c650eb663c1f03f972b3eb8b1987fae65921b5ca1f2d1f48f249",
+      "n_rows": 6
+    },
+    "robust_summary.csv": {
+      "sha256": "a84449b770175ae85cbf974101efce0c4b76e3306b56590cbcdd5cd432d253a7",
+      "n_rows": 9
+    },
+    "robustness_primary.csv": {
+      "sha256": "2b7b309703e493c0276a42bb853d5f1212844aef731e613db74018aa0e9f2101",
+      "n_rows": 51
+    },
+    "threshold_primary.csv": {
+      "sha256": "edefbbbd12b5d7d428a12112b916f60eadc6b2ebb994ec08cd82b135f1399916",
+      "n_rows": 18
+    },
+    "verification_differences.csv": {
+      "sha256": "a69bf66ddbe0a6f2de380259d684d15064d0a565879e08b3a5eca7885b342c17",
+      "n_rows": 60
+    },
+    "result_manifest.json": {
+      "sha256": "77ba4684705429e833c005c93ff41cb095a1427285f138c52cdf545b89700e45"
+    }
+  }
+}

@@ -1,0 +1,102 @@
+\documentclass[11pt]{article}
+
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amssymb,amsfonts,bm}
+\usepackage{booktabs,multirow,array}
+\usepackage{graphicx}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\usepackage{cleveref}
+\usepackage{siunitx}
+\usepackage{enumitem}
+\usepackage{microtype}
+\usepackage{authblk}
+
+\hypersetup{
+  colorlinks=true,
+  linkcolor=blue!60!black,
+  citecolor=blue!60!black,
+  urlcolor=blue!60!black
+}
+
+\newcommand{\E}{\mathbf{e}}
+\newcommand{\norm}[1]{\left\lVert #1 \right\rVert}
+
+\title{\textbf{CrossPiezo: A Conversion-Audited, Structure-Matched Benchmark Reveals Weak Cross-Database Concordance in Piezoelectric Screening}}
+
+\author[1]{Anonymous Author(s)}
+\affil[1]{Anonymous Institution}
+\date{Manuscript freeze v0.2 --- 30 July 2026}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+High-throughput piezoelectric databases are widely used to train and benchmark machine-learning models, yet the cross-database stability of their rankings has not been audited with coordinate-invariant metrics and strict structure matching. Here we introduce \textsc{CrossPiezo}-Invariant-v1, a conversion-audited, structure-matched benchmark built from 8,316 processed piezoelectric tensor records in the Materials Project (MP) and JARVIS databases. After trusted Voigt-to-Cartesian conversion of every record, we identify 573 strict structure-matched pairs (P0) and a tighter 207-pair subset (P2) below frozen RMS and lattice-distance thresholds. For each pair we compute three coordinate-invariant response scalars---the Cartesian Frobenius norm (F1), the true collinear longitudinal maximum (F3), and the Kelvin/Mandel operator norm (F4)---and compare MP and JARVIS rankings. Kendall $\tau$ on P0 ranges from 0.19 to 0.27 across metrics, with 95\% confidence intervals well below 0.5; exact chance-adjusted top-10\% overlaps are near zero. The weak concordance is not driven by low-response noise: it persists in high-response unions, after excluding top-1\% amplitude outliers, under winsorization and log transformation, and on the strict P2 panel. We release hash-bound result tables, panel membership, and reproducibility instructions so that every reported number can be traced to a frozen artifact. We do not identify a ground-truth tensor, claim that one database is more accurate, or attribute disagreement to any single physical mechanism.
+\end{abstract}
+
+\section{Introduction}
+
+Piezoelectric response tensors are central to electromechanical materials design but expensive to compute with density-functional perturbation theory. The Materials Project (MP) and JARVIS projects have released thousands of computed tensors\cite{dejong2015,choudhary2020}, and recent equivariant neural networks report strong in-source prediction accuracy\cite{yan2024,dong2025}. However, improved agreement with a held-out subset of one database does not guarantee that a candidate material is robustly ranked across independently generated high-throughput datasets\cite{hegde2023}.
+
+A prerequisite for any cross-database comparison is a coordinate-invariant measure of response amplitude. Published database fields such as MP's \texttt{e\_ij\_max} are source-field-native scalars computed from the reported Voigt matrix; they need not equal a physical coordinate invariant of the full Cartesian tensor. Without this distinction, ranking-instability claims can be artifacts of convention rather than disagreement in physical response.
+
+We therefore build \textsc{CrossPiezo}-Invariant-v1 with three design principles: (1) every processed tensor is reconstructed with a trusted Voigt-to-Cartesian converter and compared to the stored Cartesian field; (2) cross-source pairs require a strict pymatgen \texttt{StructureMatcher} fit under frozen tolerances, with no O(3) tensor transport or componentwise frame requirement; (3) all ranking conclusions use coordinate-invariant scalars. The result is a frozen audit, not a new model or a claim about physical truth.
+
+\section{Data and preprocessing}
+
+The frozen inventory contains 8,316 processed records (5,000 JARVIS and 3,316 MP) with paired Voigt and stored Cartesian tensors. Every record with both fields is converted independently by the pymatgen \texttt{PiezoTensor.from\_vasp\_voigt} oracle and by the project converter; 8,316 pass a Frobenius-difference tolerance of $10^{-6}$ against the stored Cartesian field. We then match the 1,266 JARVIS--MP formula overlaps with pymatgen's \texttt{StructureMatcher} using the frozen configuration in \texttt{configs/matching.yaml}, obtaining 573 strict matched pairs (P0). A tighter panel P2 is defined by taking P1 (same or related space-group setting, $N=536$) and keeping pairs with RMS and lattice distance below the P1 medians, yielding $N=207$. P3 further requires both sides to carry processed-source provenance labels; because all P2 pairs satisfy this label, P3 equals P2 and is reported only as a supplementary check.
+
+\section{Coordinate-invariant response metrics}
+
+We report four response scalars but distinguish their roles:
+
+\begin{itemize}[leftmargin=1.5em]
+    \item \textbf{F1}: Cartesian Frobenius norm $\norm{\E}_F$, a coordinate invariant.
+    \item \textbf{F3}: True collinear longitudinal maximum $\max_{\norm{\mathbf n}=1} |n_i e_{ijk} n_j n_k|$, computed by deterministic sphere sampling plus constrained optimization; a coordinate invariant.
+    \item \textbf{F4}: Kelvin/Mandel operator norm of the linear map from symmetric strain to polarization; a coordinate invariant.
+    \item \textbf{F\_MP\_SVD}: Largest singular value of the reported 3$\times$6 Voigt matrix, matching MP's \texttt{e\_ij\_max} field. This is a source-field-native scalar, not a Cartesian invariant, and is used only for MP field audit.
+\end{itemize}
+
+All rotation-invariance claims are tested by applying random physical rotations and checking scalar preservation to $10^{-6}$.
+
+\section{Results}
+
+\subsection{Primary ranking instability}
+
+\Cref{tab:primary_ranking} reports the primary ranking-stability endpoints on P0 and P2. On P0, Kendall $\tau$ is 0.245 for F1 (95\% CI [0.187, 0.305]), 0.269 for F3 [0.214, 0.324], and 0.255 for F4 [0.197, 0.315]. Spearman correlations are similarly modest. The exact chance-adjusted top-10\% Jaccard overlaps are 0.024 (F1), 0.013 (F3), and 0.035 (F4)---all close to the random-null expectation. The median normalized rank displacement is approximately 0.19, meaning a typical material moves by nearly one-fifth of the ranking range between sources.
+
+On the strict P2 panel, concordance is even weaker: F1 $\tau=0.192$ [0.095, 0.284], F3 $\tau=0.215$ [0.120, 0.303], F4 $\tau=0.205$ [0.108, 0.297]; adjusted top-10\% Jaccards are near zero. The upper bounds of all 95\% confidence intervals remain below 0.5, supporting the ``weak concordance'' characterization.
+
+\input{tables/table_primary_ranking.tex}
+
+\subsection{Threshold and quantile screening disagreement}
+
+Absolute thresholds such as 0.5\,C/m$^2$ have different physical meanings for F1, F3, and F4. We therefore treat threshold screening as a metric-specific sensitivity analysis. At 0.5\,C/m$^2$ on P0, Cohen's kappa is 0.21 for F1, 0.12 for F3, and 0.18 for F4, with raw agreement 0.61--0.67. The primary unified screening uses top quantiles. At the top 10\% level on P0, only 8 materials are consensus high for F1, 7 for F3, and 9 for F4; source-only counts are roughly 48--50 per metric (\Cref{tab:top_quantile_consensus}).
+
+\input{tables/table_top_quantile_consensus.tex}
+
+\subsection{Robustness}
+
+\Cref{tab:robustness} summarizes the robustness matrix for F1. Weak concordance persists after excluding bilateral near-zero records, in the high-response union, after removing the top-1\% amplitude outliers, under winsorization and log transformation, and in leave-one-crystal-system-out subsets. The only partial exception is the ``without hexagonal'' subset, where $\tau$ rises to 0.275, reflecting the sensitivity of overall concordance to the hexagonal majority class; nevertheless the top-tail adjusted overlap remains modest. These checks support the conclusion that the weak concordance is not driven by low-response noise or a few outliers.
+
+\input{tables/table_robustness.tex}
+
+\section{Discussion}
+
+The observed weak concordance is a statement about database definitions and processed fields, not about the physical correctness of either source. The MP-reported \texttt{e\_ij\_max} field is reproducible as the largest singular value of the reported Voigt matrix, but it should not be equated with the true longitudinal maximum without proof of equivalence. Our observed cross-database intervals $[\min(F_J,F_M), \max(F_J,F_M)]$ describe the empirical range across the two available sources; they are not statistical confidence intervals and should not be used to certify individual candidates.
+
+Future work could add a third computational protocol or experimental adjudication set to distinguish protocol bias from physical truth, and could audit database-version shifts. The current dataset is sufficient to establish that single-database high-response candidates are not automatically cross-database robust candidates.
+
+\section{Methods summary}
+
+All code, frozen panel membership, hash-bound result tables, and reproducibility instructions are available in the \textsc{CrossPiezo} repository (branch \texttt{paper/invariant-manuscript-freeze-v1}). Statistics are computed with scipy: Kendall $\tau$-b, Spearman, percentile bootstrap CI (2,000 replicates), exact hypergeometric expectation of Jaccard overlap, and permutation null with finite-sample correction $(b+1)/(B+1)$ for $B=4,999$. An independent verification script reproduces the primary statistics from the frozen panel table and agrees with the main implementation within tolerance.
+
+\section{Data availability}
+
+The \textsc{CrossPiezo}-Invariant-v1 benchmark cards (DATA\_CARD.md, BENCHMARK\_CARD.md, REPRODUCIBILITY.md, LICENSE\_AUDIT.md) are included in the repository. Raw upstream data remain subject to the original database licenses; reconstruction instructions point to the frozen source versions and hashes.
+
+\bibliographystyle{unsrt}
+\bibliography{CrossPiezo_Invariant_references}
+
+\end{document}
