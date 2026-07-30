@@ -58,11 +58,13 @@ def structure_point_group_rotations(
         # be slightly non-orthogonal for low-symmetry/distorted cells.
         u, _, vh = np.linalg.svd(rot)
         rot_ortho = u @ vh
-        det = float(np.linalg.det(rot_ortho))
+        det_raw = np.linalg.det(rot)
+        det_ortho = np.linalg.det(rot_ortho)
         # Preserve the intended determinant sign of the original spglib rotation.
-        if np.linalg.det(rot) < 0.0:
+        if det_raw * det_ortho < 0.0:
             rot_ortho = -rot_ortho
-            det = -det
+            det_ortho = -det_ortho
+        det = float(det_ortho)
         if not (abs(det - 1.0) < 1e-5 or abs(det + 1.0) < 1e-5):
             continue
         if not any(np.allclose(rot_ortho, existing, atol=1e-6) for existing in seen):
