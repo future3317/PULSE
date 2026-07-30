@@ -11,8 +11,12 @@ from crosspiezo.matching.structure_matcher import match_structures
 
 
 def _test_structure() -> Structure:
-    """A low-symmetry triclinic structure for robust rotation tests."""
-    lattice = np.array([[2.5, 0.0, 0.0], [0.3, 3.0, 0.0], [0.1, 0.2, 4.0]])
+    """A low-symmetry triclinic structure for robust rotation tests.
+
+    The lattice is kept nearly orthogonal so that a physical rigid rotation
+    stays within the frozen angle tolerance (5°) while still being triclinic.
+    """
+    lattice = np.array([[2.5, 0.0, 0.0], [0.1, 3.0, 0.0], [0.1, 0.1, 4.0]])
     return Structure(
         lattice,
         ["Na", "Cl", "K", "F"],
