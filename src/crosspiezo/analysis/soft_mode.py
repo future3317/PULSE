@@ -173,7 +173,7 @@ def _formula_to_prototype(formula: str) -> str:
     amounts = [int(amount) for _, amount in items]
     gcd = math.gcd(*amounts) if len(amounts) > 1 else amounts[0]
     reduced = [a // gcd for a in amounts]
-    return "".join(f"{chr(ord('A') + i)}{a}" for i, a in enumerate(reduced))
+    return "".join(f"{chr(ord('A') + i)}{(a if a > 1 else '')}" for i, a in enumerate(reduced))
 
 
 def nested_regression_analysis(
