@@ -825,7 +825,6 @@ def revalidate_rankings(enriched: pd.DataFrame) -> pd.DataFrame:
     scores: dict[str, tuple[list[float], list[float]]] = {
         "frobenius_norm": ([], []),
         "max_longitudinal_response": ([], []),
-        "max_shear_response": ([], []),
     }
 
     for _, row in enriched.iterrows():
@@ -835,8 +834,6 @@ def revalidate_rankings(enriched: pd.DataFrame) -> pd.DataFrame:
         scores["frobenius_norm"][1].append(frobenius_norm_score(mt))
         scores["max_longitudinal_response"][0].append(max_longitudinal_response(jt))
         scores["max_longitudinal_response"][1].append(max_longitudinal_response(mt))
-        scores["max_shear_response"][0].append(max_shear_response(jt))
-        scores["max_shear_response"][1].append(max_shear_response(mt))
 
     results: list[Any] = []
     for func_name, (left, right) in scores.items():
