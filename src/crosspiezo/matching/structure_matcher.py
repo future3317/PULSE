@@ -33,6 +33,8 @@ class MatchResult:
     space_group_relation: str | None = None
     ambiguity: str | None = None
     reasons: list[str] | None = None
+    rotation_class: str | None = None
+    kabsch_rms: float | None = None
 
 
 def parse_cif(cif_string: str) -> Structure:
@@ -103,11 +105,77 @@ def _rotation_from_lattices(
     return rotation
 
 
+def _periodic_image_aligned_coords(
+    coords_left: np.ndarray,
+    coords_right: np.ndarray,
+    lattice_left: np.ndarray,
+) -> np.ndarray:
+    """Shift right Cartesian coordinates by lattice images to align with left.
+
+    For each atom pair, choose the lattice-image shift that minimizes the
+    Cartesian distance to the left coordinate.
+    """
+    inv_lattice = np.linalg.inv(lattice_left)
+    frac_diff = (coords_right @ inv_lattice) - (coords_left @ inv_lattice)
+    # Nearest integer image shift in the left fractional basis.
+    image_shift = np.rint(frac_diff)
+    return coords_right - image_shift @ lattice_left
+
+
+def _kabsch_rotation(
+    coords_left: np.ndarray,
+    coords_right: np.ndarray,
+) -> tuple[np.ndarray, np.ndarray, float, float]:
+    """Compute the best proper and improper orthogonal transforms aligning right to left.
+
+    Returns
+    -------
+    rotation_proper:
+        Best proper rotation (det = +1).
+    rotation_improper:
+        Best improper rotation (det = -1), if distinct; otherwise None.
+    rms_proper:
+        RMS reconstruction error for the proper rotation.
+    rms_improper:
+        RMS reconstruction error for the improper rotation.
+    """
+    left = np.asarray(coords_left, dtype=np.float64)
+    right = np.asarray(coords_right, dtype=np.float64)
+    if left.shape != right.shape:
+        raise ValueError("Coordinate arrays must have the same shape")
+
+    centroid_left = np.mean(left, axis=0)
+    centroid_right = np.mean(right, axis=0)
+    p = left - centroid_left
+    q = right - centroid_right
+
+    h = q.T @ p
+    u, _, vh = svd(h)
+    rot_proper = vh.T @ u.T
+    if np.linalg.det(rot_proper) < 0:
+        # Force proper by reflecting the last singular vector.
+        vh[-1, :] *= -1
+        rot_proper = vh.T @ u.T
+
+    # Improper candidate: reflect one axis after SVD.
+    vh_imp = vh.copy()
+    vh_imp[-1, :] *= -1
+    rot_improper = vh_imp.T @ u.T
+    if np.linalg.det(rot_improper) > 0:
+        rot_improper = -rot_improper
+
+    def _rms(r: np.ndarray) -> float:
+        pred = q @ r.T + centroid_left
+        return float(np.sqrt(np.mean((pred - left) ** 2)))
+
+    return rot_proper, rot_improper, _rms(rot_proper), _rms(rot_improper)
+
+
 def _rotation_between_matched_structures(
     matcher: PMGStructureMatcher,
     s_left: Structure,
     s_right: Structure,
-) -> tuple[np.ndarray | None, np.ndarray | None, list[float] | None, list[int] | None]:
+) -> tuple[np.ndarray | None, np.ndarray | None, list[float] | None, list[int] | None, str | None, float | None]:
     """Estimate the Cartesian rotation and lattice transform for a matched pair.
 
     Returns
@@ -120,6 +188,9 @@ def _rotation_between_matched_structures(
         Translation vector in the s_left fractional basis.
     atom_mapping:
         ``mapping[i]`` is the index in s_right corresponding to site ``i`` in s_left.
+    rotation_class:
+        One of ``basis_relabel``, ``proper_rotation``, ``improper_relation``,
+        ``deformation``, or ``unresolved``.
     """
     try:
         transform = matcher.get_transformation(s_left, s_right)
@@ -127,21 +198,47 @@ def _rotation_between_matched_structures(
         fractional_translation = [float(x) for x in transform[1]]
         atom_mapping = [int(x) for x in transform[2]]
     except Exception:  # noqa: BLE001
-        return None, None, None, None
+        return None, None, None, None, "unresolved", None
 
-    rotation = _rotation_from_lattices(s_left, s_right, unimodular_transform)
-
-    # If the matched atom Cartesian coordinates already coincide, the pair is a
-    # pure basis relabel and the physical rotation is identity.  The lattice-
-    # based estimate can otherwise introduce a small spurious rotation because
-    # the relabeled cell has a different shape.
     mapping_array = np.asarray(atom_mapping, dtype=np.int64)
     coords_left = np.asarray(s_left.cart_coords, dtype=np.float64)
-    coords_right = np.asarray(s_right.cart_coords, dtype=np.float64)[mapping_array]
-    if rotation is not None and np.allclose(coords_left, coords_right, atol=1e-6):
-        rotation = np.eye(3, dtype=np.float64)
+    coords_right_raw = np.asarray(s_right.cart_coords, dtype=np.float64)[mapping_array]
+    lattice_left = np.asarray(s_left.lattice.matrix, dtype=np.float64)
 
-    return rotation, unimodular_transform, fractional_translation, atom_mapping
+    # Apply periodic image correction so that mapped atoms are in the same cell.
+    coords_right = _periodic_image_aligned_coords(coords_left, coords_right_raw, lattice_left)
+
+    # If image-corrected coordinates already coincide, this is a pure basis relabel.
+    if np.allclose(coords_left, coords_right, atol=1e-5):
+        return (
+            np.eye(3, dtype=np.float64),
+            unimodular_transform,
+            fractional_translation,
+            atom_mapping,
+            "basis_relabel",
+            0.0,
+        )
+
+    try:
+        rot_proper, rot_improper, rms_proper, rms_improper = _kabsch_rotation(coords_left, coords_right)
+    except Exception:  # noqa: BLE001
+        return None, unimodular_transform, fractional_translation, atom_mapping, "unresolved", None
+
+    # Choose the solution with lower RMS; improper is allowed if it reconstructs better.
+    if rms_improper < rms_proper - 1e-6:
+        rotation = rot_improper
+        rotation_class = "improper_relation"
+    else:
+        rotation = rot_proper
+        rotation_class = "proper_rotation"
+
+    # If even the best Kabsch solution does not reproduce coordinates well, the
+    # match contains real deformation/relaxation and the rotation is unresolved.
+    best_rms = min(rms_proper, rms_improper)
+    if best_rms > 0.5:
+        return None, unimodular_transform, fractional_translation, atom_mapping, "deformation", best_rms
+
+    return rotation, unimodular_transform, fractional_translation, atom_mapping, rotation_class, best_rms
 
 
 def match_structures(
@@ -151,7 +248,7 @@ def match_structures(
     right_cif: str | Structure,
     ltol: float = 0.2,
     stol: float = 0.3,
-    angle_tol: float = 30.0,
+    angle_tol: float = 5.0,
     primitive_cell: bool = False,
     attempt_supercell: bool = False,
 ) -> MatchResult:
@@ -208,32 +305,15 @@ def match_structures(
 
     fit = matcher.fit(s_left, s_right)
     if not fit:
-        # Retry with a larger angular tolerance.  Real cross-source pairs rarely
-        # differ by more than a few degrees, but synthetic rotation tests and
-        # some basis relabelings need a wider initial gate.  The site distances
-        # still enforce a genuine structural match.
-        matcher_fallback = PMGStructureMatcher(
-            ltol=ltol,
-            stol=stol,
-            angle_tol=max(angle_tol, 60.0),
-            primitive_cell=primitive_cell,
-            scale=True,
-            attempt_supercell=attempt_supercell,
+        reasons.extend(["structure_match_failed", f"space_group_relation:{sg_rel}"])
+        return MatchResult(
+            match_key=match_key,
+            tier=MatchTier.QUARANTINE,
+            fit=False,
+            lattice_distance=_lattice_distance(s_left, s_right),
+            space_group_relation=sg_rel,
+            reasons=reasons,
         )
-        fit = matcher_fallback.fit(s_left, s_right)
-        if fit:
-            matcher = matcher_fallback
-            reasons.append("matched_after_angle_fallback")
-        else:
-            reasons.extend(["structure_match_failed", f"space_group_relation:{sg_rel}"])
-            return MatchResult(
-                match_key=match_key,
-                tier=MatchTier.QUARANTINE,
-                fit=False,
-                lattice_distance=_lattice_distance(s_left, s_right),
-                space_group_relation=sg_rel,
-                reasons=reasons,
-            )
 
     rms = matcher.get_rms_dist(s_left, s_right)  # type: ignore[no-untyped-call]
     # get_rms_dist returns (rms displacement, maximum distance).
@@ -241,7 +321,7 @@ def match_structures(
 
     lattice_dist = _lattice_distance(s_left, s_right)
 
-    rotation, unimodular_transform, fractional_translation, atom_mapping = (
+    rotation, unimodular_transform, fractional_translation, atom_mapping, rotation_class, kabsch_rms = (
         _rotation_between_matched_structures(matcher, s_left, s_right)
     )
 
@@ -251,6 +331,11 @@ def match_structures(
         tier = MatchTier.QUARANTINE
     else:
         tier = MatchTier.TIER_1
+
+    # If the rotation reconstruction is unresolved/deformation, downgrade to quarantine.
+    if rotation_class in ("deformation", "unresolved"):
+        reasons.append(f"rotation_unresolved:{rotation_class}")
+        tier = MatchTier.QUARANTINE
 
     return MatchResult(
         match_key=match_key,
@@ -265,6 +350,8 @@ def match_structures(
         unimodular_cell_transform=unimodular_transform.tolist() if unimodular_transform is not None else None,
         space_group_relation=sg_rel,
         reasons=reasons or None,
+        rotation_class=rotation_class,
+        kabsch_rms=kabsch_rms,
     )
 
 
@@ -283,5 +370,7 @@ def to_match_record(result: MatchResult) -> MatchRecord:
         site_distance=result.max_distance,
         space_group_relation=result.space_group_relation,
         ambiguity=result.ambiguity,
+        rotation_class=result.rotation_class,
+        kabsch_rms=result.kabsch_rms,
         pass_fail_reasons=result.reasons or [],
     )

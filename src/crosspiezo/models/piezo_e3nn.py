@@ -15,6 +15,13 @@ from e3nn.nn.models.gate_points_2101 import Network
 class PiezoE3NN(nn.Module):
     """Equivariant GNN predicting a rank-3 polar Cartesian tensor.
 
+    .. warning::
+        This model is currently marked ``invalid_nonperiodic_baseline``.  The
+        dataset exposes periodic edges, but ``PiezoE3NN`` builds a plain radius
+        graph from ``pos`` and does not consume lattice/image information.  It
+        must not be used as a correctness or PMR gate until periodic edges are
+        actually consumed.
+
     The network outputs the full 3x3x3 tensor; the last two indices are
     symmetrized so that the prediction is a valid piezoelectric stress tensor.
 
@@ -25,6 +32,8 @@ class PiezoE3NN(nn.Module):
         (n_atoms, source_token_dim) and concatenates it to the node attributes,
         enabling source-aware architectures.
     """
+
+    INVALID_NONPERIODIC_BASELINE = True
 
     def __init__(
         self,

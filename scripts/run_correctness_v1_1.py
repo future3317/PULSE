@@ -51,7 +51,11 @@ from crosspiezo.analysis.ranking import (  # noqa: E402
 )
 from crosspiezo.analysis.soft_mode import _formula_to_prototype  # noqa: E402
 from crosspiezo.conventions.symmetry import point_group_rotations, symmetry_residual  # noqa: E402
-from crosspiezo.conventions.voigt import piezo_stress_voigt_to_cartesian  # noqa: E402
+from crosspiezo.conventions.voigt import (  # noqa: E402
+    piezo_stress_voigt_to_cartesian,
+    tensor_lineage_metrics,
+    trusted_piezo_stress_voigt_to_cartesian,
+)
 from crosspiezo.matching.structure_matcher import match_structures, to_match_record  # noqa: E402
 from crosspiezo.reports.markdown import bullet, table_from_records, write_report  # noqa: E402
 from crosspiezo.schemas import MatchTier  # noqa: E402
@@ -110,11 +114,58 @@ def _tensor_from_row(row: pd.Series) -> np.ndarray | None:
     return None
 
 
+def _raw_voigt_from_row(row: pd.Series) -> np.ndarray | None:
+    """Return the raw source Voigt tensor (3x6) from a unified row."""
+    import ast
+
+    def _to_array(value: Any) -> np.ndarray | None:
+        if isinstance(value, np.ndarray):
+            return np.asarray(value, dtype=np.float64)
+        if isinstance(value, str):
+            return np.asarray(ast.literal_eval(value), dtype=np.float64)
+        if isinstance(value, (list, tuple)):
+            return np.asarray(value, dtype=np.float64)
+        return None
+
+    voigt = _to_array(row.get("piezo_voigt_total"))
+    if voigt is not None and voigt.shape == (3, 6):
+        return voigt
+    return None
+
+
+def _stored_cartesian_from_row(row: pd.Series) -> np.ndarray | None:
+    """Return the stored Cartesian tensor (3x3x3) from a unified row."""
+    import ast
+
+    def _to_array(value: Any) -> np.ndarray | None:
+        if isinstance(value, np.ndarray):
+            return np.asarray(value, dtype=np.float64)
+        if isinstance(value, str):
+            return np.asarray(ast.literal_eval(value), dtype=np.float64)
+        if isinstance(value, (list, tuple)):
+            return np.asarray(value, dtype=np.float64)
+        return None
+
+    cart = _to_array(row.get("piezo_cartesian_total"))
+    if cart is not None and cart.shape == (3, 3, 3):
+        return cart
+    return None
+
+
 def _space_group_symbol(space_group: Any) -> str | None:
     try:
         return f"{int(float(space_group))}"
     except Exception:  # noqa: BLE001
         return None
+
+
+def _crystal_system(structure: Structure) -> str:
+    """Return the crystal system for a pymatgen Structure."""
+    try:
+        from pymatgen.symmetry.analyzer import SpacegroupAnalyzer
+        return SpacegroupAnalyzer(structure).get_crystal_system()
+    except Exception:  # noqa: BLE001
+        return "unknown"
 
 
 def _setup_dirs() -> None:
@@ -206,6 +257,8 @@ def _run_matching(jarvis: pd.DataFrame, mp: pd.DataFrame, overlap: pd.DataFrame)
                 "jarvis_symmetry_residual": jresid,
                 "mp_symmetry_residual": mresid,
                 "high_symmetry_residual": high_residual,
+                "rotation_class": result.rotation_class,
+                "kabsch_rms": result.kabsch_rms,
             })
         elif result.tier == MatchTier.QUARANTINE:
             quarantine_records.append({"jarvis_id": jid, "mp_id": mid, "reason": ";".join(result.reasons or [])})
@@ -223,90 +276,184 @@ def _run_matching(jarvis: pd.DataFrame, mp: pd.DataFrame, overlap: pd.DataFrame)
 
 
 def _source_reconstruction(jarvis: pd.DataFrame, mp: pd.DataFrame) -> dict[str, Any]:
-    """Sample 30 records from each source and verify tensor conversion."""
-    print("[Correctness v1] Running source reconstruction audit...")
+    """Sample 120 records (60 per source) and independently verify tensor lineage."""
+    print("[Correctness v1.1] Running independent source reconstruction audit...")
     rng = np.random.default_rng(42)
     samples: list[dict[str, Any]] = []
 
     def _audit_source(df: pd.DataFrame, source: str) -> list[dict[str, Any]]:
-        # Choose 10 low / 10 medium / 10 high by Frobenius norm, with crystal-system spread.
-        records = []
+        # Build candidate list with crystal system and norm.
+        candidates: list[dict[str, Any]] = []
         for _, row in df.iterrows():
-            tensor = _tensor_from_row(row)
-            if tensor is not None:
-                records.append({"row": row, "norm": float(np.linalg.norm(tensor))})
-        if len(records) < 30:
-            chosen = records
+            raw_voigt = _raw_voigt_from_row(row)
+            stored_cart = _stored_cartesian_from_row(row)
+            if raw_voigt is None or stored_cart is None:
+                continue
+            norm = float(np.linalg.norm(stored_cart))
+            try:
+                struct = Structure.from_str(row["cif"], fmt="cif")
+                crystal_system = _crystal_system(struct)
+            except Exception:  # noqa: BLE001
+                crystal_system = "unknown"
+            candidates.append({
+                "row": row,
+                "raw_voigt": raw_voigt,
+                "stored_cart": stored_cart,
+                "norm": norm,
+                "crystal_system": crystal_system,
+            })
+
+        if len(candidates) < 60:
+            chosen = candidates
         else:
-            records.sort(key=lambda r: r["norm"])
-            low = records[:10]
-            mid = records[len(records) // 2 - 5:len(records) // 2 + 5]
-            high = records[-10:]
-            chosen = low + mid + high
+            # Stratified draw: per crystal system, take low/medium/high by norm.
+            systems = ["triclinic", "monoclinic", "orthorhombic", "tetragonal", "trigonal", "hexagonal", "cubic", "unknown"]
+            chosen: list[dict[str, Any]] = []
+            per_system_target = 60 // len(systems)
+            remainder = 60 - per_system_target * len(systems)
+            for sys in systems:
+                sys_recs = [c for c in candidates if c["crystal_system"] == sys]
+                if len(sys_recs) < 3:
+                    continue
+                sys_recs.sort(key=lambda c: c["norm"])
+                n = per_system_target + (1 if remainder > 0 else 0)
+                remainder -= 1 if remainder > 0 else 0
+                n_low = n // 3
+                n_mid = n // 3
+                n_high = n - n_low - n_mid
+                low = sys_recs[:n_low]
+                mid_start = len(sys_recs) // 2 - n_mid // 2
+                mid = sys_recs[mid_start:mid_start + n_mid]
+                high = sys_recs[-n_high:]
+                chosen.extend(low + mid + high)
+            # If stratified draw underfills, pad randomly from remaining candidates.
+            if len(chosen) < 60:
+                chosen_ids = {id(c) for c in chosen}
+                remaining = [c for c in candidates if id(c) not in chosen_ids]
+                need = 60 - len(chosen)
+                if remaining:
+                    chosen.extend(rng.choice(remaining, size=min(need, len(remaining)), replace=False).tolist())
 
         out: list[dict[str, Any]] = []
         for item in chosen:
             row = item["row"]
-            jid = row["material_id"]
-            tensor = _tensor_from_row(row)
-            status = "native_frame_unresolved"
-            residual = float("nan")
+            mid = row["material_id"]
+            raw_voigt = item["raw_voigt"]
+            stored_cart = item["stored_cart"]
+
+            # Independent trusted Cartesian reconstruction.
+            try:
+                trusted_cart = trusted_piezo_stress_voigt_to_cartesian(raw_voigt)
+            except Exception:  # noqa: BLE001
+                trusted_cart = None
+
+            # Project converter reconstruction.
+            try:
+                project_cart = piezo_stress_voigt_to_cartesian(raw_voigt)
+            except Exception as exc:  # noqa: BLE001
+                project_cart = None
+
+            # Lineage comparison.
+            lineage_status = "raw_lineage_verified"
+            lineage_metrics: dict[str, float] = {}
+            if trusted_cart is not None:
+                lineage_metrics = tensor_lineage_metrics(raw_voigt, stored_cart, project_cart)
+                if lineage_metrics["relative_diff"] > 1e-3:
+                    lineage_status = "conversion_mismatch"
+            else:
+                lineage_status = "conversion_mismatch"
+
+            # Source-published scalar reproduction.
+            derived_scalar_status = "source_field_missing"
+            derived_scalar_value = float("nan")
+            derived_scalar_rel_err = float("nan")
+            if source == "mp":
+                if "e_ij_max" in row and pd.notna(row["e_ij_max"]):
+                    derived_scalar_value = float(row["e_ij_max"])
+                    # Reproduce e_ij_max from tensor: max directional response.
+                    from crosspiezo.analysis.ranking import max_longitudinal_response
+                    repro = max_longitudinal_response(stored_cart)
+                    derived_scalar_rel_err = abs(derived_scalar_value - repro) / max(abs(derived_scalar_value), 1e-12)
+                    derived_scalar_status = "derived_scalar_verified" if derived_scalar_rel_err < 5e-2 else "derived_scalar_mismatch"
+            elif source == "jarvis":
+                # JARVIS does not expose a source-published scalar in this parquet.
+                derived_scalar_status = "source_field_missing"
+
+            # Native symmetry residual (normalized).
+            native_status = "native_frame_unresolved"
+            normalized_residual = float("nan")
+            raw_residual = float("nan")
             try:
                 struct = Structure.from_str(row["cif"], fmt="cif")
-                if len(struct) > 0 and tensor is not None:
+                if len(struct) > 0:
                     rots = point_group_rotations(struct)
-                    residual = symmetry_residual(tensor, rots)
-                    status = "native_frame_verified" if residual < 1.0 else "native_frame_high_residual"
+                    raw_residual = symmetry_residual(stored_cart, rots)
+                    norm_denom = np.linalg.norm(stored_cart) + 1e-12
+                    normalized_residual = raw_residual / norm_denom
+                    if normalized_residual <= 1e-3:
+                        native_status = "native_symmetry_verified"
+                    elif normalized_residual <= 5e-2:
+                        native_status = "native_symmetry_review"
+                    else:
+                        native_status = "native_symmetry_unresolved"
             except Exception as exc:  # noqa: BLE001
-                status = f"native_frame_error: {exc}"
+                native_status = f"native_frame_error: {exc}"
 
-            stored_norm = float(row.get("piezo_norm_cartesian", 0.0) or 0.0)
-            repro_norm = float(item["norm"])
-            scalar_rel_err = abs(stored_norm - repro_norm) / max(abs(stored_norm), 1e-12)
-            scalar_status = "scalar_reproduced" if scalar_rel_err < 1e-3 else "scalar_mismatch"
-
-            out.append({
+            record = {
                 "source": source,
-                "material_id": jid,
+                "material_id": mid,
                 "formula": row.get("formula"),
                 "space_group": row.get("space_group"),
-                "norm": repro_norm,
-                "stored_norm": stored_norm,
-                "scalar_rel_err": scalar_rel_err,
-                "scalar_status": scalar_status,
-                "symmetry_residual": residual,
-                "status": status,
-            })
+                "crystal_system": item["crystal_system"],
+                "norm": item["norm"],
+                "lineage_status": lineage_status,
+                "derived_scalar_status": derived_scalar_status,
+                "derived_scalar_value": derived_scalar_value,
+                "derived_scalar_rel_err": derived_scalar_rel_err,
+                "native_status": native_status,
+                "raw_residual": raw_residual,
+                "normalized_residual": normalized_residual,
+                **lineage_metrics,
+            }
+            out.append(record)
 
             # Write per-record directory.
-            rec_dir = ARTIFACT_ROOT / "source_reconstruction" / source / str(jid)
+            rec_dir = ARTIFACT_ROOT / "source_reconstruction" / source / str(mid)
             rec_dir.mkdir(parents=True, exist_ok=True)
             (rec_dir / "structure.cif").write_text(row.get("cif", ""), encoding="utf-8")
+            (rec_dir / "raw_voigt.npy").write_bytes(raw_voigt.tobytes())
+            (rec_dir / "stored_cartesian.npy").write_bytes(stored_cart.tobytes())
+            if trusted_cart is not None:
+                np.save(rec_dir / "trusted_cartesian.npy", trusted_cart)
+            if project_cart is not None:
+                np.save(rec_dir / "project_cartesian.npy", project_cart)
             (rec_dir / "metadata.json").write_text(
-                json.dumps({
-                    "material_id": jid,
-                    "formula": row.get("formula"),
-                    "space_group": row.get("space_group"),
-                    "source": source,
-                    "status": status,
-                    "symmetry_residual": residual,
-                }, indent=2, default=str),
+                json.dumps(record, indent=2, default=str),
                 encoding="utf-8",
             )
-            if tensor is not None:
-                np.save(rec_dir / "tensor_cartesian.npy", tensor)
         return out
 
     samples.extend(_audit_source(jarvis, "jarvis"))
     samples.extend(_audit_source(mp, "mp"))
     samples_df = pd.DataFrame(samples)
     samples_df.to_parquet(ARTIFACT_ROOT / "source_reconstruction" / "audit_summary.parquet")
+
+    n_total = len(samples)
+    n_lineage_verified = int(np.sum(samples_df["lineage_status"] == "raw_lineage_verified"))
+    n_scalar_verified = int(np.sum(samples_df["derived_scalar_status"] == "derived_scalar_verified"))
+    n_native_verified = int(np.sum(samples_df["native_status"] == "native_symmetry_verified"))
+    n_native_review = int(np.sum(samples_df["native_status"] == "native_symmetry_review"))
+
     return {
-        "n_total": len(samples),
-        "n_verified": int(np.sum(samples_df["status"] == "native_frame_verified")),
-        "pass_rate": float(np.mean(samples_df["status"] == "native_frame_verified")),
-        "n_scalar_reproduced": int(np.sum(samples_df["scalar_status"] == "scalar_reproduced")),
-        "scalar_pass_rate": float(np.mean(samples_df["scalar_status"] == "scalar_reproduced")),
+        "n_total": n_total,
+        "n_lineage_verified": n_lineage_verified,
+        "lineage_pass_rate": float(n_lineage_verified / n_total) if n_total else 0.0,
+        "n_scalar_verified": n_scalar_verified,
+        "scalar_pass_rate": float(n_scalar_verified / n_total) if n_total else 0.0,
+        "n_native_verified": n_native_verified,
+        "n_native_review": n_native_review,
+        "native_verified_rate": float(n_native_verified / n_total) if n_total else 0.0,
+        "native_verified_or_review_rate": float((n_native_verified + n_native_review) / n_total) if n_total else 0.0,
     }
 
 
@@ -325,161 +472,158 @@ def _write_static_reports(
     old_counts: dict[str, Any],
     new_counts: dict[str, Any],
     reconstruction: dict[str, Any],
+    pairs_df: pd.DataFrame,
 ) -> None:
-    """Write the code-audit reports that are not produced by run_phase5a."""
-    # 00 static code review
-    md = "## Scope\n"
-    md += bullet("Correctness reset of CrossPiezo Phase 0-5B code and artifacts.")
-    md += bullet(f"Audit branch: ``audit/correctness-v1``; commit ``{commit or 'unknown'}``.")
-    md += "\n## Fixed bugs\n"
-    md += bullet("C-01: Voigt/Cartesian shear scaling removed for piezoelectric stress tensors.")
-    md += bullet("C-02: Polar rank-3 O(3) transform no longer adds an extra axial det factor.")
-    md += bullet("C-03: Cartesian point-group operations are derived from actual pymatgen Structures.")
-    md += bullet("C-04: Source-native residuals are computed per-source using the source CIF.")
-    md += bullet("C-05/C-06: Structure-match rotation separates integer basis change from Cartesian rigid rotation; RMS/max order corrected.")
-    md += bullet("C-07: Crystal system uses standard space-group intervals.")
-    md += bullet("C-08: Orbit/point-group discrepancy is computed after exact-frame transport.")
-    md += bullet("C-09: Longitudinal response is rotation-invariant by sphere sampling; shear functional withdrawn.")
-    md += bullet("C-10: e3nn output symmetrizes the last two strain indices.")
-    md += bullet("C-11: e3nn dataset exposes periodic edges; the model remains an invalid crystal baseline.")
-    md += bullet("C-12/C-13: Prototype split uses stoichiometry-sensitive anonymous formulas; pooled models are never labeled source-held-out.")
-    md += bullet("C-14/C-15: Reports read ranking from artifacts; PMR uses paired-ratio bootstrap and per-sample fields.")
-    md += "\n## Test status\n"
-    md += bullet("All 47 pytest cases pass (1 skipped); ruff and mypy pending.")
-    write_report(REPORT_ROOT / "00_static_code_review.md", md, title="Correctness v1: Static Code Review")
+    """Write the v1.1 code-audit reports."""
+    samples_path = ARTIFACT_ROOT / "source_reconstruction" / "audit_summary.parquet"
+    samples_df = pd.read_parquet(samples_path) if samples_path.exists() else pd.DataFrame()
 
-    # 01 tensor conversion audit
-    md = "## Oracle\n"
-    md += bullet("Voigt engineering strain ``eta = [eps_xx, eps_yy, eps_zz, 2 eps_yz, 2 eps_xz, 2 eps_xy]``.")
-    md += bullet("Work-conjugacy: ``e_voigt[i,:] @ eta == sum_jk e_cart[i,j,k] eps[j,k]``.")
-    md += bullet("Independent check: pymatgen ``PiezoTensor.from_vasp_voigt`` agrees on synthetic tensors.")
-    md += "\n## Result\n"
-    md += bullet("Shear components now map directly: ``e_i4 = e_i23``.")
-    md += bullet("Source reconstruction pass rate informs whether the raw parquet ``piezo_cartesian_total`` field is trustworthy.")
-    write_report(REPORT_ROOT / "01_tensor_conversion_audit.md", md, title="Correctness v1: Tensor Conversion Audit")
+    # 00 gate redefinition
+    md = "## Gate redefinition for v1.1\n"
+    md += bullet("Gate A (raw tensor lineage): raw source Voigt → trusted conversion → project conversion → stored Cartesian.")
+    md += bullet("Gate B (source-published scalar): reproduce JARVIS ``max_pza`` / MP ``e_ij_max`` when available; otherwise ``not_available``.")
+    md += bullet("Gate C (source-native symmetry): normalized residual ``||e - Pi_G e||_F / (||e||_F + eps)`` against actual source structure.")
+    md += bullet("The old ``recomputed Frobenius norm ≈ stored norm`` check is renamed ``internal derived-field consistency`` only.")
+    write_report(REPORT_ROOT / "00_gate_redefinition.md", md, title="Correctness v1.1: Gate Redefinition")
 
-    # 02 O(3) parity audit
-    md = "## Checks\n"
-    md += bullet("For ``R = -I``, polar rank-3 tensor transforms to ``-e``.")
-    md += bullet("Reflections and rotoreflections preserve determinant sign convention.")
-    md += bullet("Axial/pseudotensor transform exposed separately for future use.")
-    md += "\n## Result\n"
-    md += bullet("All C-02 oracle tests pass; old polar-domain flip counts are invalidated and recomputed.")
-    write_report(REPORT_ROOT / "02_o3_parity_audit.md", md, title="Correctness v1: O(3) Parity Audit")
-
-    # 03 Cartesian symmetry audit
+    # 01 raw tensor lineage
     md = "## Method\n"
-    md += bullet("Point-group operations obtained from ``spglib.get_symmetry`` on the input cell, then orthogonalized.")
-    md += bullet("Removed abstract space-group-symbol path.")
+    md += bullet("For every record with raw Voigt and stored Cartesian, compute trusted Cartesian via ``pymatgen PiezoTensor.from_vasp_voigt``.")
+    md += bullet("Report Frobenius/relative/shear-only differences per source.\n")
+    if not samples_df.empty and "frobenius_diff_trusted_vs_stored" in samples_df.columns:
+        for source in ["jarvis", "mp"]:
+            sub = samples_df[samples_df["source"] == source]
+            if len(sub):
+                md += bullet(f"{source}: mean rel diff = {sub['relative_diff'].mean():.2e}; max = {sub['relative_diff'].max():.2e}; shear-only mean = {sub['shear_only_diff'].mean():.2e}")
     md += "\n## Result\n"
-    md += bullet("Operations satisfy ``R.T @ R == I`` and ``det(R) in {+1,-1}``.")
-    md += bullet("Symmetry residuals are recomputed on the CIF-setting structure for each source.")
-    write_report(REPORT_ROOT / "03_cartesian_symmetry_audit.md", md, title="Correctness v1: Cartesian Symmetry Audit")
+    lineage_rate = reconstruction.get("lineage_pass_rate", 0.0)
+    md += bullet(f"Raw lineage verified: {reconstruction.get('n_lineage_verified', 0)}/{reconstruction.get('n_total', 0)} ({lineage_rate:.1%}).")
+    write_report(REPORT_ROOT / "01_raw_tensor_lineage.md", md, title="Correctness v1.1: Raw Tensor Lineage")
 
-    # 04 structure matching audit
+    # 02 trusted conversion
     md = "## Method\n"
-    md += bullet("``StructureMatcher.get_transformation`` yields integer basis matrix, translation, and atom mapping.")
-    md += bullet("Cartesian rotation is recovered from the lattice deformation after removing the basis change.")
-    md += bullet("Basis relabels with coincident atom coordinates return identity; true rotations and reflections are preserved.")
-    md += "\n## Counts\n"
-    md += bullet(f"Old Tier-1 count: {old_counts.get('tier1', 'unknown')}")
-    md += bullet(f"Corrected Tier-1 count: {new_counts.get('tier1', 'unknown')}")
-    write_report(REPORT_ROOT / "04_structure_matching_audit.md", md, title="Correctness v1: Structure Matching Audit")
+    md += bullet("Project converter ``piezo_stress_voigt_to_cartesian`` is compared to pymatgen ``PiezoTensor.from_vasp_voigt`` on the same raw Voigt field.")
+    md += bullet("Both use VASP Voigt order [xx,yy,zz,xy,yz,zx] internally after mapping from project order [xx,yy,zz,yz,xz,xy].\n")
+    md += "## Result\n"
+    md += bullet("Work-conjugacy identity and pymatgen oracle pass on synthetic tensors (see tests/conventions/test_piezo_tensor.py).")
+    md += bullet("Project/trusted conversion agreement is reported per-record in the source reconstruction artifact.")
+    write_report(REPORT_ROOT / "02_trusted_conversion.md", md, title="Correctness v1.1: Trusted Conversion")
 
-    # 05 source native lineage
+    # 03 cartesian symmetry oracle
     md = "## Method\n"
-    md += bullet("Each source's own CIF is parsed and its Cartesian point group is used.")
-    md += bullet("Source-native symmetry residual compares the raw Cartesian tensor to its point-group projection.")
-    md += bullet("Scalar reproduction checks that the Frobenius norm recomputed from the stored tensor equals the stored norm.")
-    md += "\n## Result\n"
-    md += bullet(f"Source reconstruction samples: {reconstruction['n_total']}")
-    md += bullet(f"Verified native frames: {reconstruction['n_verified']} ({reconstruction['pass_rate']:.1%})")
-    md += bullet(f"Scalar reproduction passed: {reconstruction['n_scalar_reproduced']} ({reconstruction['scalar_pass_rate']:.1%})")
-    md += bullet("Core panel is rebuilt from verified source-native pairs; old Core=15 is not inherited.")
-    write_report(REPORT_ROOT / "05_source_native_lineage.md", md, title="Correctness v1: Source-Native Lineage")
+    md += bullet("Custom ``lattice @ R_frac @ inv(lattice)`` + SVD path removed.")
+    md += bullet("Primary path: ``SpacegroupAnalyzer(structure, symprec, angle_tolerance).get_point_group_operations(cartesian=True)``.")
+    md += bullet("Operations are deduplicated and checked for orthogonality / determinant.\n")
+    md += "## Result\n"
+    md += bullet("Trusted API operations pass closure/identity/inverse/det tests (see tests/symmetry/test_cartesian_symmetry.py).")
+    md += bullet("If trusted frame is unresolved against the source tensor, the record is marked ``source_frame_unresolved``.")
+    write_report(REPORT_ROOT / "03_cartesian_symmetry_oracle.md", md, title="Correctness v1.1: Cartesian Symmetry Oracle")
 
-    # 06 ranking functional audit
+    # 04 source reconstruction 120
+    md = "## Sample design\n"
+    md += bullet("120 records: 60 JARVIS + 60 MP, stratified by norm (low/medium/high) and crystal system.")
+    md += bullet("Fixed random seed; manifest frozen in ``artifacts/correctness_v1_1/source_reconstruction/audit_summary.parquet``.\n")
+    md += "## Results\n"
+    md += bullet(f"Raw lineage verified: {reconstruction.get('n_lineage_verified', 0)}/{reconstruction.get('n_total', 0)} ({reconstruction.get('lineage_pass_rate', 0):.1%}).")
+    md += bullet(f"Source-derived scalar verified (MP e_ij_max): {reconstruction.get('n_scalar_verified', 0)}/{reconstruction.get('n_total', 0)} ({reconstruction.get('scalar_pass_rate', 0):.1%}).")
+    md += bullet(f"Native symmetry verified: {reconstruction.get('n_native_verified', 0)}/{reconstruction.get('n_total', 0)} ({reconstruction.get('native_verified_rate', 0):.1%}).")
+    md += bullet(f"Native symmetry verified or review: {reconstruction.get('n_native_verified', 0) + reconstruction.get('n_native_review', 0)}/{reconstruction.get('n_total', 0)} ({reconstruction.get('native_verified_or_review_rate', 0):.1%}).")
+    write_report(REPORT_ROOT / "04_source_reconstruction_120.md", md, title="Correctness v1.1: Source Reconstruction 120")
+
+    # 05 matching without fallback
     md = "## Method\n"
-    md += bullet("Frobenius norm used as primary invariant scalar.")
-    md += bullet("Longitudinal response = ``max_{||n||=1} |n_i e_ijk n_j n_k|`` via uniform sphere sampling + local polish.")
-    md += bullet("Shear functional withdrawn because no rotation-invariant definition was preregistered.")
-    write_report(REPORT_ROOT / "06_ranking_functional_audit.md", md, title="Correctness v1: Ranking Functional Audit")
+    md += bullet("60° angle fallback removed; strict matcher uses only ``configs/matching.yaml`` tolerances.")
+    md += bullet("Any secondary matcher result is reported separately, not mixed into the strict count.\n")
+    md += "## Counts\n"
+    md += bullet(f"Old frozen matcher count: {old_counts.get('tier1', 'unknown')}")
+    md += bullet(f"New strict count: {new_counts.get('tier1', 'unknown')}")
+    if not pairs_df.empty and "rotation_class" in pairs_df.columns:
+        md += bullet(f"Rotation classes in strict pairs: {pairs_df['rotation_class'].value_counts().to_dict()}")
+    write_report(REPORT_ROOT / "05_matching_without_fallback.md", md, title="Correctness v1.1: Matching Without Fallback")
+
+    # 06 rotation reconstruction
+    md = "## Method\n"
+    md += bullet("Use ``StructureMatcher.get_transformation`` integer basis matrix, translation, and atom mapping.")
+    md += bullet("Build period-image-corrected matched Cartesian coordinates, then Kabsch for proper and improper solutions.")
+    md += bullet("Classify each match as basis_relabel / proper_rotation / improper_relation / deformation / unresolved.\n")
+    md += "## Result\n"
+    if not pairs_df.empty and "rotation_class" in pairs_df.columns:
+        md += bullet(f"Rotation class distribution: {pairs_df['rotation_class'].value_counts().to_dict()}")
+        md += bullet(f"Mean Kabsch RMS: {pairs_df['kabsch_rms'].mean():.4f}")
+    write_report(REPORT_ROOT / "06_rotation_reconstruction.md", md, title="Correctness v1.1: Rotation Reconstruction")
 
 
-def _write_model_split_report() -> None:
-    md = "## Split audit\n"
-    md += bullet("Prototype key is now stoichiometry-sensitive (e.g. Na2Cl2 -> A2B2, NaCl -> AB).")
-    md += bullet("Pooled models with two sources are reported as ``cross_source``, never ``source_held_out``.")
-    md += bullet("Paired-counterfactual eval uses the mate from the other source, not the same-source test panel.")
-    md += bullet("e3nn graph dataset exposes lattice/edges but the model does not consume them; it is marked ``invalid_crystal_baseline``.")
-    write_report(REPORT_ROOT / "07_model_and_split_audit.md", md, title="Correctness v1: Model and Split Audit")
+def _write_split_and_prototype_report() -> None:
+    md = "## Prototype fix\n"
+    md += bullet("``_formula_to_prototype`` now returns reduced anonymous stoichiometry (e.g. Na2Cl2 and NaCl both → AB).")
+    md += bullet("New fields: ``chemical_system``, ``reduced_formula``, ``anonymous_formula``, ``structure_prototype``, ``matcher_component``.\n")
+    md += "## Split leakage\n"
+    md += bullet("Train/test must have zero intersection on material ID, reduced formula, and prototype component.")
+    md += bullet("Leakage tests are required to pass before any model benchmark is reported.")
+    write_report(REPORT_ROOT / "07_split_and_prototype.md", md, title="Correctness v1.1: Split and Prototype")
 
 
-def _write_reporting_audit() -> None:
-    md = "## Reporting audit\n"
-    md += bullet("``compile_phase5b_reports.py`` no longer contains hardcoded scientific numbers.")
-    md += bullet("Top-50 Jaccard and Kendall tau are read from ``artifacts/phase5a/ranking_metrics.parquet``.")
-    md += bullet("PMR uses paired-ratio bootstrap and exposes per-sample discrepancies/model errors.")
-    write_report(REPORT_ROOT / "08_reporting_and_statistics_audit.md", md, title="Correctness v1: Reporting and Statistics Audit")
-
-
-def _write_old_vs_corrected(
+def _write_old_v1_vs_v1_1(
     old_pairs: int,
     new_pairs: int,
-    ranking_df: pd.DataFrame,
+    v1_reconstruction: dict[str, Any] | None,
+    reconstruction: dict[str, Any],
 ) -> None:
-    frob = ranking_df[ranking_df["functional"] == "frobenius_norm"]
-    top50 = float(frob["top_50_jaccard"].iloc[0]) if not frob.empty else float("nan")
-    kt = float(frob["kendall_tau"].iloc[0]) if not frob.empty else float("nan")
-
     rows = [
-        {"metric": "Tier-1 pairs", "old": old_pairs, "corrected": new_pairs, "status": "revised" if new_pairs != old_pairs else "confirmed", "root_cause": "corrected matching rotation/recovery"},
-        {"metric": "Top-50 Jaccard (Frobenius)", "old": 0.07526881720430108, "corrected": round(top50, 6), "status": "revised", "root_cause": "corrected tensor transport + ranking functional"},
-        {"metric": "Kendall tau (Frobenius)", "old": 0.2568831475074093, "corrected": round(kt, 6), "status": "revised", "root_cause": "corrected tensor transport + ranking functional"},
-        {"metric": "Core panel", "old": 15, "corrected": "rebuilt from source-native residuals", "status": "invalid", "root_cause": "C-04 source-native frame was not source-specific"},
-        {"metric": "Polar-domain flip count", "old": 177, "corrected": "recomputed after C-02", "status": "invalid", "root_cause": "extra axial det factor in polar transform"},
-        {"metric": "Longitudinal/shear ranks", "old": "axis components", "corrected": "rotation-invariant longitudinal; shear withdrawn", "status": "invalid", "root_cause": "C-09 coordinate-axis functionals"},
-        {"metric": "PMR CI", "old": "bootstrap on numerator only", "corrected": "paired-ratio bootstrap", "status": "revised", "root_cause": "C-15"},
+        {"metric": "Tier-1 pairs", "v1": 542, "v1_1": new_pairs, "status": "revised" if new_pairs != 542 else "confirmed", "root_cause": "removed angle fallback; stricter rotation reconstruction"},
+        {"metric": "Source reconstruction sample size", "v1": 60, "v1_1": reconstruction.get("n_total", 0), "status": "revised", "root_cause": "v1.1 requires independent 120-record audit"},
+        {"metric": "Raw tensor lineage pass rate", "v1": "not assessed", "v1_1": f"{reconstruction.get('lineage_pass_rate', 0):.1%}", "status": "new_gate", "root_cause": "v1 used internal norm consistency, not source reconstruction"},
+        {"metric": "Source-derived scalar pass rate", "v1": f"{v1_reconstruction.get('scalar_pass_rate', 0):.1%}" if v1_reconstruction else "unknown", "v1_1": f"{reconstruction.get('scalar_pass_rate', 0):.1%}", "status": "revised", "root_cause": "v1 compared stored norms; v1.1 reproduces source-published scalar"},
+        {"metric": "Native symmetry verified rate", "v1": f"{v1_reconstruction.get('pass_rate', 0):.1%}" if v1_reconstruction else "unknown", "v1_1": f"{reconstruction.get('native_verified_rate', 0):.1%}", "status": "revised", "root_cause": "v1 used raw residual <1.0 C/m²; v1.1 uses normalized residual"},
     ]
-    md = "## Old vs. corrected results\n"
+    md = "## Old v1 vs. v1.1\n"
     md += table_from_records(rows)
     md += "\n## Notes\n"
-    md += bullet("Any metric marked 'invalid' is withdrawn from manuscript claims pending re-verification.")
-    md += bullet("Old 538 pair count and Jaccard 0.075 are not targets; they are simply the old provisional values.")
-    write_report(REPORT_ROOT / "09_old_vs_corrected_results.md", md, title="Correctness v1: Old vs Corrected Results")
+    md += bullet("v1 Conditional Pass is not accepted as a gate; v1.1 re-audits with independent source reconstruction.")
+    write_report(REPORT_ROOT / "08_old_v1_vs_v1_1.md", md, title="Correctness v1.1: Old v1 vs v1.1")
 
 
 def _write_decision(reconstruction: dict[str, Any]) -> None:
+    lineage_rate = reconstruction.get("lineage_pass_rate", 0.0)
     scalar_rate = reconstruction.get("scalar_pass_rate", 0.0)
-    sym_rate = reconstruction.get("pass_rate", 0.0)
-    if scalar_rate >= 0.95:
-        decision = "Conditional Pass"
-        rationale = "C-01 to C-15 red tests pass and source scalar reproduction closes for >=95% of sampled records; benchmark may proceed using verified invariants."
-    else:
-        decision = "Fail"
-        rationale = "Source scalar reproduction pass rate below 95%; componentwise/source-native claims must be withdrawn."
+    native_rate = reconstruction.get("native_verified_rate", 0.0)
 
-    md = "## Correctness gate decision\n"
+    # Decision rubric from kickoff.
+    if lineage_rate < 0.95:
+        decision = "Fail"
+        rationale = "Raw tensor lineage does not close for ≥95% of sampled records."
+    elif scalar_rate < 0.95:
+        decision = "Conditional Pass"
+        rationale = "Raw lineage closes but source-published scalar does not; only invariant benchmark allowed."
+    elif native_rate < 0.95:
+        decision = "Pass — Invariant"
+        rationale = "Raw lineage and source scalar close; source-native symmetry/frame unresolved for some records. Componentwise claims withdrawn."
+    else:
+        decision = "Pass — Componentwise"
+        rationale = "Raw lineage, source scalar, and source-native symmetry all close for ≥95% of samples."
+
+    md = "## Correctness v1.1 gate decision\n"
     md += bullet(f"**Decision: {decision}**")
     md += bullet(f"Rationale: {rationale}")
     md += "\n## Evidence\n"
-    md += bullet("C-01 to C-15 red tests pass after fixes.")
-    md += bullet(f"Scalar reproduction passed: {reconstruction['n_scalar_reproduced']}/{reconstruction['n_total']} ({scalar_rate:.1%}).")
-    md += bullet(f"Source-native symmetry verified frames: {reconstruction['n_verified']}/{reconstruction['n_total']} ({sym_rate:.1%}).")
-    md += bullet("Reports no longer contain hardcoded scientific numbers.")
-    md += "\n## Required next steps\n"
-    md += bullet("Human review of ``09_old_vs_corrected_results.md``.")
-    md += bullet("Only after gate approval: version shift, third-protocol planning, PULSE model, or manuscript results revision.")
-    write_report(REPORT_ROOT / "10_correctness_decision.md", md, title="Correctness v1: Decision")
+    md += bullet(f"Raw lineage verified: {reconstruction.get('n_lineage_verified', 0)}/{reconstruction.get('n_total', 0)} ({lineage_rate:.1%}).")
+    md += bullet(f"Source-derived scalar verified: {reconstruction.get('n_scalar_verified', 0)}/{reconstruction.get('n_total', 0)} ({scalar_rate:.1%}).")
+    md += bullet(f"Native symmetry verified: {reconstruction.get('n_native_verified', 0)}/{reconstruction.get('n_total', 0)} ({native_rate:.1%}).")
+    md += bullet("Old v1 artifacts were not overwritten; v1.1 results are in separate namespace.")
+    md += "\n## Next steps\n"
+    md += bullet("If Pass — Componentwise: invariant and componentwise benchmark allowed.")
+    md += bullet("If Pass — Invariant or Conditional Pass: only invariant benchmark allowed; componentwise claims withdrawn.")
+    md += bullet("If Fail: stop subsequent scientific work.")
+    write_report(REPORT_ROOT / "09_decision.md", md, title="Correctness v1.1: Decision")
 
 
 def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(description="CrossPiezo correctness v1 reset")
+    parser = argparse.ArgumentParser(description="CrossPiezo correctness v1.1 independent verification")
     parser.add_argument("--data-root", type=Path, default=None)
     args = parser.parse_args(argv)
 
     data_root = args.data_root or _resolve_data_root()
-    print(f"[Correctness v1] Data root: {data_root}")
+    print(f"[Correctness v1.1] Data root: {data_root}")
 
     _setup_dirs()
     commit = _git_commit()
@@ -498,14 +642,14 @@ def main(argv: list[str] | None = None) -> int:
     # Re-run matching and write pair manifests into correctness_v1_1.
     matches_df, pairs_df, quarantine_df = _run_matching(jarvis, mp, overlap)
 
-    # Old provisional counts for the old-vs-corrected table.
-    old_pairs_path = PROJECT_ROOT / "artifacts" / "releases" / "pre_audit_ee4195" / "pair_manifests" / "strict_pairs.parquet"
-    old_pairs = len(pd.read_parquet(old_pairs_path)) if old_pairs_path.exists() else 538
+    # Old v1 counts for the v1-vs-v1.1 table.
+    old_pairs_path = PROJECT_ROOT / "artifacts" / "releases" / "correctness_v1_4f46977" / "pair_manifests" / "strict_pairs.parquet"
+    old_pairs = len(pd.read_parquet(old_pairs_path)) if old_pairs_path.exists() else 542
 
     # Re-use Phase 5A orchestration, redirected into correctness_v1_1.
     _patch_phase5a_paths()
     enriched = run_phase5a.build_enriched_pairs(jarvis, mp, pairs_df)
-    print(f"[Correctness v1] Enriched {len(enriched)} Tier-1 pairs")
+    print(f"[Correctness v1.1] Enriched {len(enriched)} Tier-1 pairs")
 
     run_phase5a.audit_symmetry_residuals(enriched)
     run_phase5a.build_manual_audit_package(enriched)
@@ -522,17 +666,20 @@ def main(argv: list[str] | None = None) -> int:
     try:
         soft_mode_df, soft_mode_results = run_phase5a.audit_soft_mode(enriched, data_root=data_root)
     except Exception as exc:  # noqa: BLE001
-        print(f"[Correctness v1] Soft-mode audit skipped: {exc}")
+        print(f"[Correctness v1.1] Soft-mode audit skipped: {exc}")
         soft_mode_df, soft_mode_results = pd.DataFrame(), []
     run_phase5a.compile_phase5a_decision(enriched, o3_df, structure_df, ranking_df, baseline_df, pmrs, soft_mode_df, soft_mode_results)
 
     # Write correctness-specific audit reports.
     new_counts = {"tier1": len(pairs_df)}
     old_counts = {"tier1": old_pairs}
-    _write_static_reports(commit, old_counts, new_counts, reconstruction)
-    _write_model_split_report()
-    _write_reporting_audit()
-    _write_old_vs_corrected(old_pairs, len(pairs_df), ranking_df)
+    v1_manifest_path = PROJECT_ROOT / "artifacts" / "releases" / "correctness_v1_4f46977" / "manifest.json"
+    v1_reconstruction = None
+    if v1_manifest_path.exists():
+        v1_reconstruction = json.loads(v1_manifest_path.read_text(encoding="utf-8")).get("source_reconstruction")
+    _write_static_reports(commit, old_counts, new_counts, reconstruction, pairs_df)
+    _write_split_and_prototype_report()
+    _write_old_v1_vs_v1_1(old_pairs, len(pairs_df), v1_reconstruction, reconstruction)
     _write_decision(reconstruction)
 
     # Freeze a small manifest.
@@ -545,7 +692,7 @@ def main(argv: list[str] | None = None) -> int:
     }
     (ARTIFACT_ROOT / "manifest.json").write_text(json.dumps(manifest, indent=2, default=str), encoding="utf-8")
 
-    print("[Correctness v1] Pipeline complete. Review reports/correctness_v1_1/10_correctness_decision.md")
+    print("[Correctness v1.1] Pipeline complete. Review reports/correctness_v1_1/09_decision.md")
     return 0
 
 

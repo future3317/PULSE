@@ -1,16 +1,16 @@
 """Point-group symmetry projection for third-rank polar tensors.
 
 All Cartesian symmetry operations are derived from an actual pymatgen
-``Structure`` using ``SpacegroupAnalyzer``.  Using an abstract space-group
-symbol or fractional matrices is no longer supported because they ignore the
-real lattice setting and orientation.
+``Structure`` using ``SpacegroupAnalyzer.get_point_group_operations(cartesian=True)``.
+Using an abstract space-group symbol or fractional matrices is no longer supported
+because they ignore the real lattice setting and orientation.
 """
 
 from __future__ import annotations
 
 import numpy as np
-import spglib
 from pymatgen.core.structure import Structure
+from pymatgen.symmetry.analyzer import SpacegroupAnalyzer
 
 
 def structure_point_group_rotations(
@@ -20,55 +20,35 @@ def structure_point_group_rotations(
 ) -> list[np.ndarray]:
     """Return the Cartesian point-group rotation matrices for a structure.
 
-    The operations are obtained from spglib for the *input* cell and then
-    converted to the Cartesian basis defined by ``structure.lattice.matrix``.
-    This guarantees Euclidean orthogonality and preserves the source's actual
-    setting/orientation.
+    Uses ``SpacegroupAnalyzer(...).get_point_group_operations(cartesian=True)``,
+    which returns operations in the Cartesian basis of the input structure.
+    No custom lattice conjugation or SVD orthogonalization is applied.
 
     Parameters
     ----------
     structure:
         The pymatgen ``Structure`` whose actual setting is used.
     symprec, angle_tolerance:
-        Spglib precision parameters.
+        Spglib precision parameters passed to ``SpacegroupAnalyzer``.
 
     Returns
     -------
     rotations:
         Unique 3x3 orthogonal matrices (det = +/-1) in Cartesian coordinates.
     """
-    lattice = np.asarray(structure.lattice.matrix, dtype=np.float64)
-    positions = np.asarray(structure.frac_coords, dtype=np.float64)
-    numbers = np.asarray(structure.atomic_numbers, dtype=np.int32)
-    cell = (lattice, positions, numbers)
-
-    # Use spglib.get_symmetry (not get_symmetry_dataset) because the latter
-    # returns rotations in the standardized conventional cell.  get_symmetry
-    # returns rotations in the input cell, which convert cleanly to the input
-    # Cartesian basis.
-    symmetry = spglib.get_symmetry(cell, symprec=symprec, angle_tolerance=angle_tolerance)
-    if symmetry is None:
+    analyzer = SpacegroupAnalyzer(structure, symprec=symprec, angle_tolerance=angle_tolerance)
+    operations = analyzer.get_point_group_operations(cartesian=True)
+    if not operations:
         return [np.eye(3, dtype=np.float64)]
 
-    inv_lattice = np.linalg.inv(lattice)
     seen: list[np.ndarray] = []
-    for r_frac in symmetry["rotations"]:
-        rot = lattice @ np.asarray(r_frac, dtype=np.float64) @ inv_lattice
-        # Orthogonalize the Cartesian matrix; spglib's input-cell rotations can
-        # be slightly non-orthogonal for low-symmetry/distorted cells.
-        u, _, vh = np.linalg.svd(rot)
-        rot_ortho = u @ vh
-        det_raw = np.linalg.det(rot)
-        det_ortho = np.linalg.det(rot_ortho)
-        # Preserve the intended determinant sign of the original spglib rotation.
-        if det_raw * det_ortho < 0.0:
-            rot_ortho = -rot_ortho
-            det_ortho = -det_ortho
-        det = float(det_ortho)
+    for op in operations:
+        rot = np.asarray(op.rotation_matrix, dtype=np.float64)
+        det = float(np.linalg.det(rot))
         if not (abs(det - 1.0) < 1e-5 or abs(det + 1.0) < 1e-5):
             continue
-        if not any(np.allclose(rot_ortho, existing, atol=1e-6) for existing in seen):
-            seen.append(rot_ortho)
+        if not any(np.allclose(rot, existing, atol=1e-6) for existing in seen):
+            seen.append(rot)
     return seen if seen else [np.eye(3, dtype=np.float64)]
 
 

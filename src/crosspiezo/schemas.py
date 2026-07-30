@@ -97,6 +97,8 @@ class MatchRecord(BaseModel):
     site_distance: float | None = None
     space_group_relation: str | None = None
     ambiguity: str | None = None
+    rotation_class: str | None = None
+    kabsch_rms: float | None = None
     pass_fail_reasons: list[str] = Field(default_factory=list)
 
 

@@ -232,6 +232,7 @@ def main() -> int:
     parser.add_argument("--max-atoms", type=int, default=200, help="skip structures with more atoms")
     parser.add_argument("--device", type=str, default="cuda" if torch.cuda.is_available() else "cpu")
     parser.add_argument("--skip-e3nn", action="store_true", help="train only fast baselines, skip e3nn")
+    parser.add_argument("--allow-invalid-e3nn", action="store_true", help="override the non-periodic baseline guard and train PiezoE3NN")
     args = parser.parse_args()
 
     device = torch.device(args.device)
@@ -258,6 +259,14 @@ def main() -> int:
     eval_mp_recs = [r for r in mp_records if r["id"] in test_mids]
 
     # Build PyTorch datasets only if e3nn models are requested.
+    if not args.skip_e3nn and not args.allow_invalid_e3nn:
+        print(
+            "PiezoE3NN is marked invalid_nonperiodic_baseline because it does not "
+            "consume periodic edges. Use --allow-invalid-e3nn to override. "
+            "Defaulting to --skip-e3nn."
+        )
+        args.skip_e3nn = True
+
     if not args.skip_e3nn:
         def _build_dataset(df: pd.DataFrame, source: str) -> list[PiezoRecord]:
             ds = PiezoGraphDataset(df, source=source)

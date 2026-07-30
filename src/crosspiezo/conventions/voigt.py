@@ -8,6 +8,9 @@ coefficients.
 
 Both source Voigt and converted Cartesian tensors are retained in the
 ``TensorRecord``.
+
+Trusted-library cross-checks are provided via pymatgen's
+``PiezoTensor.from_vasp_voigt`` for independent source reconstruction.
 """
 
 from __future__ import annotations
@@ -114,3 +117,68 @@ def cartesian_to_voigt(cart: np.ndarray, engineering_shear: bool = True) -> np.n
 def round_trip_voigt(voigt: np.ndarray, engineering_shear: bool = True) -> np.ndarray:
     """Voigt -> Cartesian -> Voigt, for algebraic tests."""
     return cartesian_to_voigt(voigt_to_cartesian(voigt, engineering_shear), engineering_shear)
+
+
+# -----------------------------------------------------------------------------
+# Trusted-library oracles for independent source reconstruction
+# -----------------------------------------------------------------------------
+
+# VASP Voigt order used by pymatgen.analysis.piezo.PiezoTensor.
+_VASP_VOIGT_ORDER = [0, 1, 2, 5, 3, 4]  # xx, yy, zz, xy, yz, zx
+
+
+def _internal_voigt_to_vasp_voigt(internal_voigt: np.ndarray) -> np.ndarray:
+    """Convert internal order [xx,yy,zz,yz,xz,xy] to VASP [xx,yy,zz,xy,yz,zx]."""
+    internal_voigt = np.asarray(internal_voigt, dtype=np.float64)
+    if internal_voigt.shape != (3, 6):
+        raise ValueError(f"Expected internal Voigt shape (3, 6), got {internal_voigt.shape}")
+    return internal_voigt[:, _VASP_VOIGT_ORDER]
+
+
+def trusted_piezo_stress_voigt_to_cartesian(voigt: np.ndarray) -> np.ndarray:
+    """Trusted Cartesian reconstruction from Voigt using pymatgen.
+
+    This is independent of the project converter and should agree with
+    ``piezo_stress_voigt_to_cartesian`` for physically valid input.
+    """
+    from pymatgen.analysis.piezo import PiezoTensor
+
+    vasp = _internal_voigt_to_vasp_voigt(voigt)
+    return np.asarray(PiezoTensor.from_vasp_voigt(vasp), dtype=np.float64)
+
+
+def tensor_lineage_metrics(
+    raw_voigt: np.ndarray,
+    stored_cartesian: np.ndarray,
+    project_cartesian: np.ndarray | None = None,
+) -> dict[str, float]:
+    """Compare raw-Voigt-derived Cartesian tensors to the stored Cartesian field.
+
+    Returns Frobenius norm differences and relative differences, plus a
+    shear-only diagnostic.  ``project_cartesian`` defaults to the trusted
+    pymatgen reconstruction.
+    """
+    raw_voigt = np.asarray(raw_voigt, dtype=np.float64)
+    stored_cartesian = np.asarray(stored_cartesian, dtype=np.float64)
+    if project_cartesian is None:
+        project_cartesian = trusted_piezo_stress_voigt_to_cartesian(raw_voigt)
+    else:
+        project_cartesian = np.asarray(project_cartesian, dtype=np.float64)
+
+    diff_trusted = np.linalg.norm(project_cartesian - stored_cartesian)
+    diff_project = np.linalg.norm(project_cartesian - stored_cartesian)  # same as trusted when None
+    denom = max(np.linalg.norm(stored_cartesian), 1e-12)
+
+    # Shear-only difference (off-diagonal strain components in Voigt indices 3,4,5).
+    trusted_voigt = _cart_to_voigt_direct(project_cartesian)
+    stored_voigt = _cart_to_voigt_direct(stored_cartesian)
+    shear_diff = np.linalg.norm(trusted_voigt[:, 3:6] - stored_voigt[:, 3:6])
+
+    return {
+        "frobenius_diff_trusted_vs_stored": float(diff_trusted),
+        "frobenius_diff_project_vs_stored": float(diff_project),
+        "relative_diff": float(diff_trusted / denom),
+        "shear_only_diff": float(shear_diff),
+        "stored_norm": float(np.linalg.norm(stored_cartesian)),
+        "trusted_norm": float(np.linalg.norm(project_cartesian)),
+    }
