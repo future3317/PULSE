@@ -10,9 +10,11 @@ from scipy.spatial.transform import Rotation
 
 from crosspiezo.analysis.ranking import (
     frobenius_norm_score,
+    kelvin_operator_norm,
     max_longitudinal_modulus,
     max_longitudinal_response,
     max_shear_response,
+    mp_reported_svd_scalar,
 )
 
 
@@ -117,4 +119,56 @@ def test_max_longitudinal_modulus_matches_dense_oracle():
     expected = _brute_force_longitudinal(tensor, n_points=100000)
     assert np.isclose(ours, expected, rtol=1e-3), (
         f"deterministic modulus {ours} != dense oracle {expected}"
+    )
+
+
+def test_kelvin_operator_norm_is_rotation_invariant():
+    """F4 Kelvin/Mandel operator norm must be a coordinate invariant."""
+    rng = np.random.default_rng(604)
+    tensor = rng.normal(size=(3, 3, 3))
+    tensor = 0.5 * (tensor + tensor.transpose(0, 2, 1))
+    q = _random_rotation_matrix(rng)
+    rotated = _apply_rotation(tensor, q)
+    assert np.isclose(
+        kelvin_operator_norm(tensor),
+        kelvin_operator_norm(rotated),
+        atol=1e-6,
+    ), "kelvin_operator_norm is not rotation invariant"
+
+
+def test_kelvin_operator_norm_positive_and_bounded():
+    """For a non-zero tensor the Kelvin norm is positive and equals its SVD."""
+    tensor = np.zeros((3, 3, 3), dtype=np.float64)
+    tensor[0, 0, 0] = 3.0
+    assert kelvin_operator_norm(tensor) == pytest.approx(3.0, abs=1e-9)
+
+
+def test_mp_reported_svd_scalar_is_plain_svd():
+    """The MP-reported scalar reproduces the largest singular value."""
+    rng = np.random.default_rng(605)
+    voigt = rng.normal(size=(3, 6))
+    expected = np.linalg.svd(voigt, compute_uv=False).max()
+    assert np.isclose(mp_reported_svd_scalar(voigt), expected, atol=1e-9)
+
+
+def test_mp_reported_svd_scalar_is_not_cartesian_rotation_invariant():
+    """Plain 3x6 SVD is a property of the Voigt matrix, not the Cartesian tensor.
+
+    Rotating the Cartesian tensor and re-expressing it in Voigt form can change
+    the singular values.  This test documents that limitation; the scalar is
+    therefore only usable as a source-native field, not as a cross-source
+    physical invariant.
+    """
+    rng = np.random.default_rng(606)
+    tensor = rng.normal(size=(3, 3, 3))
+    tensor = 0.5 * (tensor + tensor.transpose(0, 2, 1))
+    q = _random_rotation_matrix(rng)
+    rotated = _apply_rotation(tensor, q)
+    from crosspiezo.conventions.voigt import piezo_stress_cartesian_to_voigt
+
+    v1 = mp_reported_svd_scalar(piezo_stress_cartesian_to_voigt(tensor))
+    v2 = mp_reported_svd_scalar(piezo_stress_cartesian_to_voigt(rotated))
+    # Plain SVD of the Voigt matrix is NOT invariant under arbitrary rotations.
+    assert not np.isclose(v1, v2, atol=1e-3), (
+        "mp_reported_svd_scalar unexpectedly invariant; re-check test tensor"
     )

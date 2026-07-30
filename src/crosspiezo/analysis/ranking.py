@@ -36,12 +36,61 @@ class RankingResult:
 
 
 def frobenius_norm_score(tensor: np.ndarray) -> float:
-    """Symmetry-adapted Frobenius norm of a Cartesian tensor."""
+    """F1: full Cartesian Frobenius norm ||e||_F.
+
+    This is a coordinate-invariant scalar for any rank-3 Cartesian tensor.
+    """
     return float(np.linalg.norm(np.asarray(tensor, dtype=np.float64)))
 
 
+def mp_reported_svd_scalar(voigt: np.ndarray) -> float:
+    """F2: MP-reported plain Voigt SVD scalar.
+
+    MP publishes ``e_ij_max`` as the largest singular value of the 3x6 Voigt
+    matrix.  This value is source-field-native to MP and is only guaranteed to
+    be a property of the MP-reported Voigt matrix, not necessarily a physical
+    coordinate invariant of the full Cartesian tensor.  Do not call it the
+    "maximum longitudinal modulus" unless equivalence to the directional
+    maximum is proven.
+    """
+    a = np.asarray(voigt, dtype=np.float64)
+    if a.shape != (3, 6):
+        raise ValueError(f"Expected Voigt shape (3, 6), got {a.shape}")
+    return float(np.linalg.svd(a, compute_uv=False).max())
+
+
+def kelvin_operator_norm(tensor: np.ndarray) -> float:
+    """F4: Kelvin/Mandel operator norm of the piezoelectric tensor.
+
+    Treats the tensor as the linear map
+    ``E in Sym(3) -> D_i = e_{ijk} E_{jk}``.  In Kelvin/Mandel basis the
+    matrix representation is
+
+        A_K = [e_{i11}, e_{i22}, e_{i33},
+               sqrt(2) e_{i23}, sqrt(2) e_{i13}, sqrt(2) e_{i12}]
+
+    and the operator norm is the largest singular value of A_K.  This is a
+    coordinate-invariant induced matrix norm.
+    """
+    t = np.asarray(tensor, dtype=np.float64)
+    if t.shape != (3, 3, 3):
+        raise ValueError(f"Expected Cartesian tensor shape (3, 3, 3), got {t.shape}")
+    # Enforce minor symmetry in the strain indices.
+    t = 0.5 * (t + t.transpose(0, 2, 1))
+    a_k = np.zeros((3, 6), dtype=np.float64)
+    a_k[:, 0] = t[:, 0, 0]
+    a_k[:, 1] = t[:, 1, 1]
+    a_k[:, 2] = t[:, 2, 2]
+    a_k[:, 3] = np.sqrt(2.0) * t[:, 1, 2]
+    a_k[:, 4] = np.sqrt(2.0) * t[:, 0, 2]
+    a_k[:, 5] = np.sqrt(2.0) * t[:, 0, 1]
+    return float(np.linalg.svd(a_k, compute_uv=False).max())
+
+
 def max_longitudinal_response(tensor: np.ndarray, n_samples: int = 20000, seed: int = 42) -> float:
-    """Maximum directional piezoelectric response, max_{||n||=1} |n_i e_ijk n_j n_k|.
+    """F3 (stochastic estimate): true directional longitudinal maximum.
+
+    Computes ``max_{||n||=1} |n_i e_ijk n_j n_k|``.
 
     This is a rotation-invariant scalar functional.  It is evaluated by uniform
     sphere sampling followed by a small local polish using the largest sample as
@@ -108,7 +157,7 @@ def max_longitudinal_modulus(
     cross_check: bool = True,
     cross_check_tol: float = 1e-4,
 ) -> float:
-    """Deterministic maximum longitudinal piezoelectric modulus.
+    """F3 (deterministic): true maximum longitudinal piezoelectric modulus.
 
     Computes ``max_{||n||=1} | n_i e_ijk n_j n_k |`` with:
 
