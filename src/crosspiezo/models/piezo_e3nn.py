@@ -17,6 +17,13 @@ class PiezoE3NN(nn.Module):
 
     The network outputs the full 3x3x3 tensor; the last two indices are
     symmetrized so that the prediction is a valid piezoelectric stress tensor.
+
+    Parameters
+    ----------
+    source_token_dim:
+        If > 0, the forward pass expects ``data.source_token`` of shape
+        (n_atoms, source_token_dim) and concatenates it to the node attributes,
+        enabling source-aware architectures.
     """
 
     def __init__(
@@ -27,10 +34,13 @@ class PiezoE3NN(nn.Module):
         max_radius: float = 4.0,
         num_basis: int = 8,
         lmax: int = 2,
+        source_token_dim: int = 0,
     ) -> None:
         super().__init__()
         self.num_atom_types = num_atom_types
         self.max_radius = max_radius
+        self.hidden_dim = hidden_dim
+        self.source_token_dim = source_token_dim
         self.ct = CartesianTensor("ijk")
 
         # Atomic number embedding as scalar node attributes.
@@ -38,7 +48,12 @@ class PiezoE3NN(nn.Module):
 
         irreps_hidden = (o3.Irreps.spherical_harmonics(lmax) * hidden_dim).simplify()
         irreps_edge_attr = o3.Irreps.spherical_harmonics(lmax)
-        irreps_node_attr = o3.Irreps(f"{hidden_dim}x0e")
+        node_attr_dim = hidden_dim
+        self.node_attr_proj = FullyConnectedNet(
+            [hidden_dim, hidden_dim, hidden_dim - source_token_dim],
+            torch.nn.functional.silu,
+        )
+        irreps_node_attr = o3.Irreps(f"{node_attr_dim}x0e")
         irreps_output = CartesianTensor("ijk")  # rank-3 polar tensor
 
         self.network = Network(
@@ -53,14 +68,8 @@ class PiezoE3NN(nn.Module):
             radial_layers=1,
             radial_neurons=32,
             num_neighbors=12.0,
-            num_nodes=20.0,
+            num_nodes=30.0,
             reduce_output=True,
-        )
-
-        # Project scalar embedding to node_attr.
-        self.node_attr_proj = FullyConnectedNet(
-            [hidden_dim, hidden_dim, hidden_dim],
-            torch.nn.functional.silu,
         )
 
     def forward(self, data: Any) -> torch.Tensor:
@@ -75,6 +84,11 @@ class PiezoE3NN(nn.Module):
         # Node attributes from atom type embedding.
         node_attr = self.atom_embed(z)
         node_attr = self.node_attr_proj(node_attr)
+        if self.source_token_dim > 0:
+            token = getattr(data, "source_token", None)
+            if token is None:
+                raise ValueError("source_token_dim > 0 but data has no source_token")
+            node_attr = torch.cat([node_attr, token], dim=-1)
 
         # e3nn.Network builds the radius graph internally and expects a dict/Data
         # with ``pos``, ``x``, ``z``, and ``batch``.
