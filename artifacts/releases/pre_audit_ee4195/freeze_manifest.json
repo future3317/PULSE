@@ -1,0 +1,2403 @@
+{
+  "commit": "ee419516f8641fba18e99266c3288349f96e2785",
+  "branch": "audit/correctness-v1",
+  "created_utc": "2026-07-30T03:48:49.828275+00:00",
+  "python": "3.11.13 | packaged by Anaconda, Inc. | (main, Jun  5 2025, 13:03:15) [MSC v.1929 64 bit (AMD64)]",
+  "files": [
+    {
+      "path": "configs/data_sources.yaml",
+      "size": 1543,
+      "sha256": "23e9ca19903e73aae36341b8f90022e7e5c6d6315ed066e141df11544a17f172"
+    },
+    {
+      "path": "configs/feasibility.yaml",
+      "size": 1275,
+      "sha256": "aacc6d3d804baee45908d19cb3701e6d99c5abea252a5f402106b40f1dd62c72"
+    },
+    {
+      "path": "configs/matching.yaml",
+      "size": 1468,
+      "sha256": "3e883e28b74bf6f9330f795ba959beb8404de33b2ecd55d84c5f3488a710d956"
+    },
+    {
+      "path": "configs/third_protocol_plan.yaml",
+      "size": 1407,
+      "sha256": "32eaa4f5bfec7c20a7ea3f26dae166e9903caca440d0766656202cc5f2eace95"
+    },
+    {
+      "path": "pair_manifests/all_matches.json",
+      "size": 748732,
+      "sha256": "8045e3da9a88167a761a55ba87e3150ebcb0db751b14783933ebeec8e1a93e26"
+    },
+    {
+      "path": "pair_manifests/all_matches.parquet",
+      "size": 70493,
+      "sha256": "364b266cfc73fa47826758f244c5edbcce1b93ef36476e43464a672ef2f16bc0"
+    },
+    {
+      "path": "pair_manifests/quarantined_pairs.parquet",
+      "size": 4464,
+      "sha256": "af7986b5d1f9ae5fb8132493b2f4d5dd8ff399852913752f50f9fbdcf2fbbe9e"
+    },
+    {
+      "path": "pair_manifests/strict_pairs.json",
+      "size": 348326,
+      "sha256": "0130d3dc7d8e752c43438dab2b5221c70fba032ec090463c6cc35f417df22580"
+    },
+    {
+      "path": "pair_manifests/strict_pairs.parquet",
+      "size": 78212,
+      "sha256": "1c788e7efdddf8c40f7c7f9fcd26131aeca6bd266dda9fd53050b2c8a6db34bd"
+    },
+    {
+      "path": "phase5a/baseline_metrics.parquet",
+      "size": 8326,
+      "sha256": "d1da5c2ee9a7bef739c68b8dcd49ae8fa7b5962ba54dc58c8ae9c9cacb715c10"
+    },
+    {
+      "path": "phase5a/discrepancy_variants.parquet",
+      "size": 85136,
+      "sha256": "2ead25f49402167b7b12468a6995a11211245cd1ac217db6ef7873ab7b0e61ea"
+    },
+    {
+      "path": "phase5a/frozen_summary.json",
+      "size": 594,
+      "sha256": "60a20054129033a58c4ea963afbcb0f7cca05149825e01b9a17547179ccecdd1"
+    },
+    {
+      "path": "phase5a/manual_audit_summary.parquet",
+      "size": 7589,
+      "sha256": "e737124d1e4cb898ad0d943f32f98ea4bc74a364f057e3d61745f1e60de358c8"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-10155__mp-7688/common_frame_structure.cif",
+      "size": 92,
+      "sha256": "e65dbaf8288eca0b5edb32272663a6f3a2628275405c2c691581bd05ea315359"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-10155__mp-7688/comparison.md",
+      "size": 551,
+      "sha256": "3d1cc559a8598145d473b98bb4af38516800b8b4eabd91f04ed4a289f160bb81"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-10155__mp-7688/jarvis_structure.cif",
+      "size": 1492,
+      "sha256": "9ea25fcae6d724130605c33fe659c2792c51c83873e63e8217103adc47637d81"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-10155__mp-7688/mapping.json",
+      "size": 757,
+      "sha256": "f7d4f3e8daa4dc4212caea5e53ddae3406f25379377ad8d961bf3585b37f423a"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-10155__mp-7688/mp_structure.cif",
+      "size": 1524,
+      "sha256": "20450a8c5f49da8626576017b11f40fb7ef0f0a6d4abd73b82fbf38ae113dda1"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-10155__mp-7688/tensors.json",
+      "size": 2407,
+      "sha256": "9c8a32ee80684fa0689c8c5e215f0fcfbf27217b398b9d1cbc15e54e0ea21709"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-1023__mp-19/common_frame_structure.cif",
+      "size": 92,
+      "sha256": "e65dbaf8288eca0b5edb32272663a6f3a2628275405c2c691581bd05ea315359"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-1023__mp-19/comparison.md",
+      "size": 538,
+      "sha256": "9dd32d4303dd8b64364b4c6213c5c9b70cceed6c5bd87fd5f17b41954a4090a2"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-1023__mp-19/jarvis_structure.cif",
+      "size": 800,
+      "sha256": "7f63d662234d83458bb216a716c4defd0402c94c0f3374acdaa7e0ee747d9a04"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-1023__mp-19/mapping.json",
+      "size": 517,
+      "sha256": "1aa4183390ac071b874f03c619713ce8a4b2a418490cdca56f589650cf173187"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-1023__mp-19/mp_structure.cif",
+      "size": 807,
+      "sha256": "9638987f1536de35a2476d9d241711016a43e42ce5adb2a20879b36b1bbdaf7c"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-1023__mp-19/tensors.json",
+      "size": 2039,
+      "sha256": "8f5b02568be742bfed8b55212c94f5ab9f2e2b21f1680b591f6d60a2d7bfed12"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-10479__mp-9062/common_frame_structure.cif",
+      "size": 92,
+      "sha256": "e65dbaf8288eca0b5edb32272663a6f3a2628275405c2c691581bd05ea315359"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-10479__mp-9062/comparison.md",
+      "size": 548,
+      "sha256": "71f90a850ede370817c0208ada27d8f5cc2904d247a6ac5d5d4322284aaff907"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-10479__mp-9062/jarvis_structure.cif",
+      "size": 1265,
+      "sha256": "156286d964ea00cc17e8597714e84af0b749b4a1a1fcd92586059799fc2edbfe"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-10479__mp-9062/mapping.json",
+      "size": 728,
+      "sha256": "ead8a29f84a7a3e90c514d9db37fba88876fff798a5486c2d2989575ed7012e8"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-10479__mp-9062/mp_structure.cif",
+      "size": 1296,
+      "sha256": "28b26759c67c5cb0c45111acbb06c8ce8b1458d4b4cbd97337879017254e12ab"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-10479__mp-9062/tensors.json",
+      "size": 2402,
+      "sha256": "534169914cbc19c6494920b9e78ad9c168319b0594699bfbe03543b90f3d4ad7"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-10591__mp-9946/common_frame_structure.cif",
+      "size": 92,
+      "sha256": "e65dbaf8288eca0b5edb32272663a6f3a2628275405c2c691581bd05ea315359"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-10591__mp-9946/comparison.md",
+      "size": 545,
+      "sha256": "9bdcfcf82dd195eb5ba44944db0fe6c98769369a97b55eb1a03538eaaa6f5c08"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-10591__mp-9946/jarvis_structure.cif",
+      "size": 1266,
+      "sha256": "501b6cdeddeb164ff190615a67d131c839fcfd89f943f07c698d90d8bd2aef78"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-10591__mp-9946/mapping.json",
+      "size": 731,
+      "sha256": "36aba4acf188b92e2c0ccf030f1a45ee0e405bfc97a395a79697d51aeb34f768"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-10591__mp-9946/mp_structure.cif",
+      "size": 1296,
+      "sha256": "eab2bc69d6343eace7706f6a0f4dceb5070642cef675ad56c07a65d22915a531"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-10591__mp-9946/tensors.json",
+      "size": 2456,
+      "sha256": "c3ab03b15f0352dccf86da12e613a55f11218ae2422ada22266f4d320a46ad25"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-107__mp-11714/common_frame_structure.cif",
+      "size": 92,
+      "sha256": "e65dbaf8288eca0b5edb32272663a6f3a2628275405c2c691581bd05ea315359"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-107__mp-11714/comparison.md",
+      "size": 544,
+      "sha256": "e23cf151fe7e2c16cc047614dccc03bedd2afa894e3acdb0f6364417bd389b61"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-107__mp-11714/jarvis_structure.cif",
+      "size": 1059,
+      "sha256": "332ae783cfbe37af74ca00e2245aadb401364e0b94d6df4a2bd00f7fd9b49064"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-107__mp-11714/mapping.json",
+      "size": 596,
+      "sha256": "3b552035aea9edf83871ebad31a6b32ff92e11b87bc2dc2c030c11fd0181eef8"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-107__mp-11714/mp_structure.cif",
+      "size": 1079,
+      "sha256": "b089af0cd42175a2faa128cf91150821b5508ddcbf60a2f3a7d0606ad8e77bc8"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-107__mp-11714/tensors.json",
+      "size": 2154,
+      "sha256": "0e835fff824c48f88596e7f1d47252b9d700198a6c319d5e82414408d97f59fa"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-10883__mp-12011/common_frame_structure.cif",
+      "size": 92,
+      "sha256": "e65dbaf8288eca0b5edb32272663a6f3a2628275405c2c691581bd05ea315359"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-10883__mp-12011/comparison.md",
+      "size": 548,
+      "sha256": "d959096fbb3391ba96181d5a2afae0e0da717fc3478b8d0132c4a8ca06a8afa7"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-10883__mp-12011/jarvis_structure.cif",
+      "size": 1378,
+      "sha256": "07fb2db95fc4c6aefcd86afbb431adca330aa45d08fd1e1f3b1b82d094a60dbd"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-10883__mp-12011/mapping.json",
+      "size": 604,
+      "sha256": "15e8b810fec77b9693e7a3f8fd871838d6211b2494ac58f843b0f7f282e13b71"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-10883__mp-12011/mp_structure.cif",
+      "size": 1405,
+      "sha256": "c2a3fc603628fbc3dff913bfdeab16f01eda880ad0d9d8a2c644db6e425926f7"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-10883__mp-12011/tensors.json",
+      "size": 2248,
+      "sha256": "1a33a7834583031616408da810ab47502785902c1fe0476e4d87df1b53a5e2d6"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-11724__mp-18953/common_frame_structure.cif",
+      "size": 92,
+      "sha256": "e65dbaf8288eca0b5edb32272663a6f3a2628275405c2c691581bd05ea315359"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-11724__mp-18953/comparison.md",
+      "size": 550,
+      "sha256": "eaa3f4262b4b1544d911724501b8e23bd41e9745273699e475529c216703b952"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-11724__mp-18953/jarvis_structure.cif",
+      "size": 1273,
+      "sha256": "3ae179c75253672eb646f5506e60ff737ad3b69f85a0952a6d51269b60dc2f23"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-11724__mp-18953/mapping.json",
+      "size": 590,
+      "sha256": "47a410a91ba68ac344b8f4b49b4d15bee421898aef3485ee97391d657e1f33fe"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-11724__mp-18953/mp_structure.cif",
+      "size": 1297,
+      "sha256": "daa8e1c2a26910994f9e82876f3ba600698b595eb0e4f9017971c17990c30665"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-11724__mp-18953/tensors.json",
+      "size": 2270,
+      "sha256": "7806da48fa058fdfb7f8dcf5bdb91480bb4f53ad13ed147ca4e488b616264cdc"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-1195__mp-2133/common_frame_structure.cif",
+      "size": 92,
+      "sha256": "e65dbaf8288eca0b5edb32272663a6f3a2628275405c2c691581bd05ea315359"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-1195__mp-2133/comparison.md",
+      "size": 544,
+      "sha256": "ea536931f176941a6947fe1ea7e848698def63db4bcef17ba9eca7a9e6cd08af"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-1195__mp-2133/jarvis_structure.cif",
+      "size": 854,
+      "sha256": "5b0a12fd7eeefbb4ab8e6c5d9e99d5fe2b69ceac9dd97adae2659190dd0cc3e2"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-1195__mp-2133/mapping.json",
+      "size": 678,
+      "sha256": "8e573ce34b959a90905cf3e9405840a3b6b63d8646b2db46af7e4654b5e6b910"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-1195__mp-2133/mp_structure.cif",
+      "size": 862,
+      "sha256": "0988e26a382eb096c41557997b62b3dfd9073cacd5f802eb9544be444607ff70"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-1195__mp-2133/tensors.json",
+      "size": 2443,
+      "sha256": "a5cf6a9886201450f9bcb190d5c914bbd307dfdce5e1e9a538507077b6f6484d"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-12562__mp-23719/common_frame_structure.cif",
+      "size": 93,
+      "sha256": "bc43940bd9239456f705da9a5966ca74519d33ff647ac982487406350184ba15"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-12562__mp-23719/comparison.md",
+      "size": 567,
+      "sha256": "5079ed625fc3333f3c0131a69a61a16dbbff8f9a3f172407856367a835d5f906"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-12562__mp-23719/jarvis_structure.cif",
+      "size": 1413,
+      "sha256": "57070f6ca674cd20b6f001c947c41def0e32cc25dfd93b1c779b02b805d835b9"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-12562__mp-23719/mapping.json",
+      "size": 643,
+      "sha256": "fa7b79d5e6b7ee843efd7118089a9dda29c54cf2e35a427d0e50c762dce6d8bb"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-12562__mp-23719/mp_structure.cif",
+      "size": 1441,
+      "sha256": "efc49ae8c411fa8f79e38bdc5750947d0dbca2f1096ebf31048b61003cc667a8"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-12562__mp-23719/tensors.json",
+      "size": 2274,
+      "sha256": "a7962a42bd5d627c6f2cdb86477181473c1378fe4b4139816d72116b95df5946"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-12567__mp-23764/common_frame_structure.cif",
+      "size": 93,
+      "sha256": "bc43940bd9239456f705da9a5966ca74519d33ff647ac982487406350184ba15"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-12567__mp-23764/comparison.md",
+      "size": 568,
+      "sha256": "190f7e0cf5b3f77ba25fcf50cc14797094132d0ce6b84207fca31643938b3b75"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-12567__mp-23764/jarvis_structure.cif",
+      "size": 1634,
+      "sha256": "98f0275c73b1d16116864ee87d5fd9988ba112d2f97e5f8183fd324c2eb01a3c"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-12567__mp-23764/mapping.json",
+      "size": 688,
+      "sha256": "789fa279b26025fe3291d9968d54300c0ebd2f59674523eb8782250bfcbc136f"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-12567__mp-23764/mp_structure.cif",
+      "size": 1670,
+      "sha256": "8ea39f908e4efa204da16164cba55bc47f250f140bb5e946dad63e1a45c66cad"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-12567__mp-23764/tensors.json",
+      "size": 2351,
+      "sha256": "fe59831b3458f0bc6d2095f3f1f95b97c23fb439352a026df2ae719aee93bcad"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-12575__mp-23904/common_frame_structure.cif",
+      "size": 93,
+      "sha256": "bc43940bd9239456f705da9a5966ca74519d33ff647ac982487406350184ba15"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-12575__mp-23904/comparison.md",
+      "size": 565,
+      "sha256": "fb8a30269b82d065e01b3b5ffe217634dbf65b7faa8dedd5f4271638164ff1cd"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-12575__mp-23904/jarvis_structure.cif",
+      "size": 1511,
+      "sha256": "ac83dbde555441c7625e29c4a8437e26b0f10c72ab60e38ac818f61a93bce940"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-12575__mp-23904/mapping.json",
+      "size": 666,
+      "sha256": "886047a1d8cd9f8f315d25a23cdbcfa919f542e9c6b0374f88f27e7bdbbaef56"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-12575__mp-23904/mp_structure.cif",
+      "size": 1543,
+      "sha256": "bd46cb54cd159e5eebf4b100c2db9e756b06e3f9106f58a1c704c14e02c7eef6"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-12575__mp-23904/tensors.json",
+      "size": 2210,
+      "sha256": "a24e010031d61b29de5ebf092478ac104f8101ec1ff930f181fec867dfad0a09"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-12751__mp-27367/common_frame_structure.cif",
+      "size": 92,
+      "sha256": "e65dbaf8288eca0b5edb32272663a6f3a2628275405c2c691581bd05ea315359"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-12751__mp-27367/comparison.md",
+      "size": 547,
+      "sha256": "7abc2abc91f761ca71b3fd88741b6b4f1b6eaed1ea0f94d114d5140af383b532"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-12751__mp-27367/jarvis_structure.cif",
+      "size": 1471,
+      "sha256": "4fa772f9781a217f612decd15ab73fddccf77821b14f545ba4efa0ef66e58773"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-12751__mp-27367/mapping.json",
+      "size": 617,
+      "sha256": "46973d1b434b183e20d5b6f664d8ab63fc37928f223e9116e5a73ef84c9944cd"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-12751__mp-27367/mp_structure.cif",
+      "size": 1503,
+      "sha256": "aa88594d117782a4d10ea211b9fb3882f0c06fe9ff80790bcc21ff2f6d06cfc8"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-12751__mp-27367/tensors.json",
+      "size": 2047,
+      "sha256": "7ff5972a8b71cae2eb337cdf056fe88b7ba7cc70cfc4fccea57936c769eebd25"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-12978__mp-28989/common_frame_structure.cif",
+      "size": 92,
+      "sha256": "e65dbaf8288eca0b5edb32272663a6f3a2628275405c2c691581bd05ea315359"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-12978__mp-28989/comparison.md",
+      "size": 553,
+      "sha256": "647a7d97a350f448222a4a9e8a8fa4919af877e4ab1cf9894581c45dc320eca8"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-12978__mp-28989/jarvis_structure.cif",
+      "size": 1392,
+      "sha256": "3685b7bedbb2968b09fec625bcb69a4decf9735b7deb81b307462e240553d4df"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-12978__mp-28989/mapping.json",
+      "size": 648,
+      "sha256": "c5e2ae06a9ad227887d03c43ce3c70f84d4b4c372acb505695e069fa5e2ab331"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-12978__mp-28989/mp_structure.cif",
+      "size": 1426,
+      "sha256": "9b609ae91f1cc4a366ee4693732403ac9f0886366696058fa2c3f8ee91e2c2f8"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-12978__mp-28989/tensors.json",
+      "size": 2043,
+      "sha256": "5446c0b71f67d497db73d8279e1bb6f85fcb6abb200441eea658ac909838b29f"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-13367__mp-37657/common_frame_structure.cif",
+      "size": 92,
+      "sha256": "e65dbaf8288eca0b5edb32272663a6f3a2628275405c2c691581bd05ea315359"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-13367__mp-37657/comparison.md",
+      "size": 550,
+      "sha256": "d266b591beb58d15ac34e3355968d0ee745b1b2445025d3694e184e46766a5d3"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-13367__mp-37657/jarvis_structure.cif",
+      "size": 1588,
+      "sha256": "620059eb71d980bd8360f8e1db09ce771fcfbb311fd855b8f413bae461b5077a"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-13367__mp-37657/mapping.json",
+      "size": 674,
+      "sha256": "4fa0b3abe4cf868ac2e03b605daba86a9a5ff1f844e9b79f1c53e0329572797d"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-13367__mp-37657/mp_structure.cif",
+      "size": 1624,
+      "sha256": "b5e1af91f74f570166e394ff2a15e9cdb6a70bcafa38cb1ca98154b5563b08c1"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-13367__mp-37657/tensors.json",
+      "size": 2173,
+      "sha256": "cd50afe916ef3a0888d8bd0a85c05be0e3c78628078782429f5014d21eda9c70"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-21263__mp-5055/common_frame_structure.cif",
+      "size": 92,
+      "sha256": "e65dbaf8288eca0b5edb32272663a6f3a2628275405c2c691581bd05ea315359"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-21263__mp-5055/comparison.md",
+      "size": 550,
+      "sha256": "ff83c2a92caa198bbdfd16c2f2fff82ba7c896e85bb1d125ee3ac4d0b4c325eb"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-21263__mp-5055/jarvis_structure.cif",
+      "size": 1804,
+      "sha256": "7613bee1736737c1766eaa32f235de17bfe8f76301f5dba2adb09619ea1a5525"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-21263__mp-5055/mapping.json",
+      "size": 742,
+      "sha256": "36471bae627b03f580f3bea5215316f1171fe8fd56caa18aba60660233772a4f"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-21263__mp-5055/mp_structure.cif",
+      "size": 1848,
+      "sha256": "1865a504b0e7c8a2517240846c4cfae538d62de2c614c5f00b3d0e5357835f05"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-21263__mp-5055/tensors.json",
+      "size": 2162,
+      "sha256": "8a7a69a88558500ebd01fb198f7e12fb48aaae95a3f41997ebfff444d4662dec"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-21974__mp-13978/common_frame_structure.cif",
+      "size": 92,
+      "sha256": "e65dbaf8288eca0b5edb32272663a6f3a2628275405c2c691581bd05ea315359"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-21974__mp-13978/comparison.md",
+      "size": 552,
+      "sha256": "d97516260363b2cc588dc43e7db8b315d07946d5cf72f3be25b1ba45de7b4cb6"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-21974__mp-13978/jarvis_structure.cif",
+      "size": 1119,
+      "sha256": "d6aa22eaba8ebd00f4ce55b50b62b08984ba679fa3a2410748c8be967da511d1"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-21974__mp-13978/mapping.json",
+      "size": 631,
+      "sha256": "d9e8a3962b7ab087174e96bc955dbdcc7ae6069e9ed438642cad8bfdd3183db1"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-21974__mp-13978/mp_structure.cif",
+      "size": 1142,
+      "sha256": "d8c2d7c1dd42860cfe4689e28bd0e26df18971b0a2eeb95ddc5d899d04e219ff"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-21974__mp-13978/tensors.json",
+      "size": 2015,
+      "sha256": "03eb0145ceb3c9854272ef64b09d4b1f642f73407aff4a1684da73dc1a67025d"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-24650__mp-28007/common_frame_structure.cif",
+      "size": 92,
+      "sha256": "e65dbaf8288eca0b5edb32272663a6f3a2628275405c2c691581bd05ea315359"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-24650__mp-28007/comparison.md",
+      "size": 549,
+      "sha256": "845ccb109a6b81bcabeab169959a329add114ffd5c2cf8673a417021aeb23111"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-24650__mp-28007/jarvis_structure.cif",
+      "size": 1483,
+      "sha256": "8b872e445854ea42e2d44f05ee69a850db2f112e5989926b055fa94eeddf3890"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-24650__mp-28007/mapping.json",
+      "size": 623,
+      "sha256": "06b2215abcbf8ba245ba2134e316168d62978a96b48529a0769df708282ace91"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-24650__mp-28007/mp_structure.cif",
+      "size": 1518,
+      "sha256": "7fa3b0d9032c53bb058b337a423ab0193a5f7b6907113d85f146724267835e6f"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-24650__mp-28007/tensors.json",
+      "size": 2062,
+      "sha256": "a759c1f659485d711627e30d402395b0d4418f0adbd62be686ce60e5574adc23"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-25875__mp-556422/common_frame_structure.cif",
+      "size": 92,
+      "sha256": "e65dbaf8288eca0b5edb32272663a6f3a2628275405c2c691581bd05ea315359"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-25875__mp-556422/comparison.md",
+      "size": 554,
+      "sha256": "4e9b623286363ee66d0ed88bea7dd1f31d703b14d4f1a21a4cc27ba3b91909a6"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-25875__mp-556422/jarvis_structure.cif",
+      "size": 1705,
+      "sha256": "0f2146d54663928c3f234a31ec77934b808ab138f4571eea3072db45d1eb5e0f"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-25875__mp-556422/mapping.json",
+      "size": 793,
+      "sha256": "78f70b986f6699aa7aa8efc53ab78e1410a0c53dfc9c014d950af55da4919e30"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-25875__mp-556422/mp_structure.cif",
+      "size": 1745,
+      "sha256": "3df81b050155c81356870c7eb6b5320b84f8b83b16446223dff6cf1c61377781"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-25875__mp-556422/tensors.json",
+      "size": 2201,
+      "sha256": "9e3c73bb3ae94254db24e88a273f4f8401ac7ed81edbae25527965c76893cb35"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-27269__mp-541040/common_frame_structure.cif",
+      "size": 92,
+      "sha256": "e65dbaf8288eca0b5edb32272663a6f3a2628275405c2c691581bd05ea315359"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-27269__mp-541040/comparison.md",
+      "size": 554,
+      "sha256": "1e09385416754ed30a5e8b0a2b5ce281ce76da8978d38bbc7c57d8a2d547f280"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-27269__mp-541040/jarvis_structure.cif",
+      "size": 1896,
+      "sha256": "c609085fd5e89dbf60217f10ce62a607f705bcd37dc6dabe5d5d6bc76ab09ea6"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-27269__mp-541040/mapping.json",
+      "size": 785,
+      "sha256": "e3b4f92d5694609ec48ea49e4d6c1086031846a0c8b8b2afb908116604a29c6e"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-27269__mp-541040/mp_structure.cif",
+      "size": 1944,
+      "sha256": "53e8b5fb8a1809e0a5538ee48ca5f8347e529ce06e3085a8477a5a3c0bde85df"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-27269__mp-541040/tensors.json",
+      "size": 2394,
+      "sha256": "4ceba82d9a1ad2e766ca23d1770095509c244c618b171bde3f9fab5c788c943b"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-27495__mp-6853/common_frame_structure.cif",
+      "size": 92,
+      "sha256": "e65dbaf8288eca0b5edb32272663a6f3a2628275405c2c691581bd05ea315359"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-27495__mp-6853/comparison.md",
+      "size": 557,
+      "sha256": "e5740a184c33ee1a048595cec4036acd72d327b930dd4afb66fc789a085e4455"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-27495__mp-6853/jarvis_structure.cif",
+      "size": 1869,
+      "sha256": "7684eb65c2300ae074c33fbd4480131a37b5af0da4e936e5fdbfde809930e037"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-27495__mp-6853/mapping.json",
+      "size": 686,
+      "sha256": "4e94881d928a6a49e23c88cb0987f9eabb57bb4181f32d2b97ce43f862aeffe2"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-27495__mp-6853/mp_structure.cif",
+      "size": 1915,
+      "sha256": "0de0ae994bf1b7c601010a26287d2324f3fd50517553eec685514642bd9cd3be"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-27495__mp-6853/tensors.json",
+      "size": 2095,
+      "sha256": "dcd671a3d69e63ca4b53f818d3540322d71f306f47129ab977f51ab892998f44"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-29377__mp-550998/common_frame_structure.cif",
+      "size": 92,
+      "sha256": "e65dbaf8288eca0b5edb32272663a6f3a2628275405c2c691581bd05ea315359"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-29377__mp-550998/comparison.md",
+      "size": 542,
+      "sha256": "720bb2a79a012e393b39e7dde6cd6688d2814e486c045e3fad5556ea32d1a140"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-29377__mp-550998/jarvis_structure.cif",
+      "size": 1182,
+      "sha256": "f1dd5f05a61c03450f38ea0a6287dccd429cf098c0221df0020e57e03013c410"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-29377__mp-550998/mapping.json",
+      "size": 579,
+      "sha256": "7f4a183e43d6f3e66c989944745dc0ccbbe4a073b8a5a4ec45a0c732d66b804d"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-29377__mp-550998/mp_structure.cif",
+      "size": 1202,
+      "sha256": "2143dc0007098bef20b7e438862f74a97214277621d053eb70fff34b78a45ec6"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-29377__mp-550998/tensors.json",
+      "size": 1921,
+      "sha256": "63e38b660ebfa1fcd256dfd2ed051f018ed80c2440d1bbccee39c778fcb743e9"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-29385__mp-554002/common_frame_structure.cif",
+      "size": 92,
+      "sha256": "e65dbaf8288eca0b5edb32272663a6f3a2628275405c2c691581bd05ea315359"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-29385__mp-554002/comparison.md",
+      "size": 518,
+      "sha256": "b43a6773c456187bcd78fd21b1cbe45d014e31241e2078401dd0c323b59a4a43"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-29385__mp-554002/jarvis_structure.cif",
+      "size": 1371,
+      "sha256": "951fbabe318b74f9aa4fb9645e38393e8ace0c406a32fb1a2390bf6476119c93"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-29385__mp-554002/mapping.json",
+      "size": 605,
+      "sha256": "5677729dd7f2abd08190c2b647a93377f1ebfbc7fb32fca7302b19b2e0de6514"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-29385__mp-554002/mp_structure.cif",
+      "size": 1399,
+      "sha256": "ff7ef551b11e9a890fef365bc8c2e147ffd314f6937c9a2ce76a6c82efbbd15a"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-29385__mp-554002/tensors.json",
+      "size": 2740,
+      "sha256": "dcc7ce8d7d741785a70b6a33d681a53c8fe8936a9fd3ee983265b7d90685253a"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-29539__mp-567503/common_frame_structure.cif",
+      "size": 92,
+      "sha256": "e65dbaf8288eca0b5edb32272663a6f3a2628275405c2c691581bd05ea315359"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-29539__mp-567503/comparison.md",
+      "size": 551,
+      "sha256": "6baafe6fb2e6553d8a255aa217471ca69fa35786fa9c2a7d2db0ea8dc67db0ae"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-29539__mp-567503/jarvis_structure.cif",
+      "size": 958,
+      "sha256": "4d7032174ed8045214dab709fd48595fa90c43ac95f8885df348279498f6d298"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-29539__mp-567503/mapping.json",
+      "size": 637,
+      "sha256": "1adabaad6fda86888337a3211f0d1d8a0a8d784f71103ed109530dd2786400ff"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-29539__mp-567503/mp_structure.cif",
+      "size": 972,
+      "sha256": "cdfd9d92fc2e231f9d87558c6f493fd99a98fc813fe23b521c10b7a2c24ee5b5"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-29539__mp-567503/tensors.json",
+      "size": 2411,
+      "sha256": "f899fb8beaf899610b44e3a2dca925ffa0b142f3e865cbd1243b9fc55d59f043"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-29542__mp-567542/common_frame_structure.cif",
+      "size": 92,
+      "sha256": "e65dbaf8288eca0b5edb32272663a6f3a2628275405c2c691581bd05ea315359"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-29542__mp-567542/comparison.md",
+      "size": 549,
+      "sha256": "9ff9f52af881c16071a87c0c01b96cb09721acfe593ce072de49b361997f2feb"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-29542__mp-567542/jarvis_structure.cif",
+      "size": 1264,
+      "sha256": "a4a4ca4e6cff7dd0caff21e492495d57e43463d5cb3536e55939ae8c8508d705"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-29542__mp-567542/mapping.json",
+      "size": 701,
+      "sha256": "d17b87bf78f8483261cb22558038bbe703a9e1ed83868af58c8eae830248868e"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-29542__mp-567542/mp_structure.cif",
+      "size": 1294,
+      "sha256": "8babbe43fc9939fd541cbff46afc8d305b1e3923c9eb61713d502e8aa95aca74"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-29542__mp-567542/tensors.json",
+      "size": 2432,
+      "sha256": "bc13e8fffcc5c90b46940b824baef98ea3f0374c54d746948a83363877989353"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-29604__mp-569994/common_frame_structure.cif",
+      "size": 92,
+      "sha256": "e65dbaf8288eca0b5edb32272663a6f3a2628275405c2c691581bd05ea315359"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-29604__mp-569994/comparison.md",
+      "size": 551,
+      "sha256": "b927298904791bb0288fee821dc032ee9ad935481fbe8521f3474528a87bad53"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-29604__mp-569994/jarvis_structure.cif",
+      "size": 1264,
+      "sha256": "9eb2394431499bf7335c2bfcccb14a919af888fdbdae4432ba17c1a0e500639e"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-29604__mp-569994/mapping.json",
+      "size": 702,
+      "sha256": "25efe7bfc53b465c714ddd7cdce084f707a38fdfe7d62de96529d92edcbb6c04"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-29604__mp-569994/mp_structure.cif",
+      "size": 1291,
+      "sha256": "829e4f287e70c794e7244ad2f735c1ef2c01f15c382f9997ae5a6a2a5d947794"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-29604__mp-569994/tensors.json",
+      "size": 2410,
+      "sha256": "a050dd9d71745f07e4da7d4c3633cb0348c2844c7d0d68222a67375254234cd6"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-29613__mp-570136/common_frame_structure.cif",
+      "size": 92,
+      "sha256": "e65dbaf8288eca0b5edb32272663a6f3a2628275405c2c691581bd05ea315359"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-29613__mp-570136/comparison.md",
+      "size": 549,
+      "sha256": "cdc3f9d00f95a9f90e6239275c19eab643b0fa3dc5232710400ecb5ca56c1b9c"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-29613__mp-570136/jarvis_structure.cif",
+      "size": 1266,
+      "sha256": "be942bd319340364a20c56ddb6e134c3b9c13a9e3852025679613232c17479bf"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-29613__mp-570136/mapping.json",
+      "size": 719,
+      "sha256": "1d2ce8c4b85b4bf1a57cd2381660486fa5eb1293626c14d34e93eeaad14a5d44"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-29613__mp-570136/mp_structure.cif",
+      "size": 1294,
+      "sha256": "de7ca7462d3cbdb3d320475f14ffa57e87f06b3ddada19c8efc52b1ef990528e"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-29613__mp-570136/tensors.json",
+      "size": 2499,
+      "sha256": "460f39eab09b5c356b3221f352209cfb5b53ab2e73ec05ef085e087e5b0c8117"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-29625__mp-570437/common_frame_structure.cif",
+      "size": 92,
+      "sha256": "e65dbaf8288eca0b5edb32272663a6f3a2628275405c2c691581bd05ea315359"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-29625__mp-570437/comparison.md",
+      "size": 551,
+      "sha256": "3aa4a7be8aad88eb591a00a38dea48e1b8f2e3d19f190fcba81a92b7412ebafb"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-29625__mp-570437/jarvis_structure.cif",
+      "size": 1110,
+      "sha256": "372e6a6468c7226b2e3c1b3238c7845d95d872e0595479a5b0e62892d3e484da"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-29625__mp-570437/mapping.json",
+      "size": 564,
+      "sha256": "03467b7c90229bcb593108bff2c080801761a29a31a22d346301e310b42539d7"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-29625__mp-570437/mp_structure.cif",
+      "size": 1134,
+      "sha256": "421f9ba560ffbae023fe43eb131f77a1d3ad95256419d9de27c3b8e3b907d252"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-29625__mp-570437/tensors.json",
+      "size": 2039,
+      "sha256": "6c6d767fd17cc161b3316fa125e541a6a3f379aa366fe40d9d11cb06542ae5f1"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-29673__mp-571558/common_frame_structure.cif",
+      "size": 92,
+      "sha256": "e65dbaf8288eca0b5edb32272663a6f3a2628275405c2c691581bd05ea315359"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-29673__mp-571558/comparison.md",
+      "size": 551,
+      "sha256": "300aed3bed4f5e233a69be62368b4b3972859bf74f6b84589ad66c778434cc51"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-29673__mp-571558/jarvis_structure.cif",
+      "size": 1124,
+      "sha256": "8811f26a8439c38686bf11b9d70596b7b1066765118c181eac9770dc7257185a"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-29673__mp-571558/mapping.json",
+      "size": 644,
+      "sha256": "de3bb5af364a5aab062ceb98763b003cbef8dc94ba3236a9df43c723aea9db01"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-29673__mp-571558/mp_structure.cif",
+      "size": 1142,
+      "sha256": "ae2f1f0662f60f3a319a675eabb0b2142f61c16f1c46370efb0286e252ef3ac0"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-29673__mp-571558/tensors.json",
+      "size": 2429,
+      "sha256": "b1fe9a47837069a60f3238ba35dcd5f76b6205233a3c7c534ea3b98a947bf3f0"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-29722__mp-583463/common_frame_structure.cif",
+      "size": 92,
+      "sha256": "e65dbaf8288eca0b5edb32272663a6f3a2628275405c2c691581bd05ea315359"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-29722__mp-583463/comparison.md",
+      "size": 549,
+      "sha256": "adccaa2554205094ce033504a5b5679c559b259f1a21817152c13d487aaa40ad"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-29722__mp-583463/jarvis_structure.cif",
+      "size": 1920,
+      "sha256": "93bdb9c593b6136054894b8538b89eb517c7202ec9684713973598701bddd628"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-29722__mp-583463/mapping.json",
+      "size": 683,
+      "sha256": "8604d2b6ef654774d9b2fa3401dea101808cd06f2dfae13ce89c1a0a6be985b5"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-29722__mp-583463/mp_structure.cif",
+      "size": 1971,
+      "sha256": "5d9a4adb5203ccdd513f86ed668a6e6802c5958f9bb10d954efa331093d63224"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-29722__mp-583463/tensors.json",
+      "size": 2038,
+      "sha256": "682e7bf1bf72afa3bbf2862f2adcdc1fb7708159d4e71d1b1b21bb2b06ea3f03"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-29993__mp-680111/common_frame_structure.cif",
+      "size": 92,
+      "sha256": "e65dbaf8288eca0b5edb32272663a6f3a2628275405c2c691581bd05ea315359"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-29993__mp-680111/comparison.md",
+      "size": 550,
+      "sha256": "1850385f6ee84fc6096893426525baa6999dd31041fe205137d16af051f74087"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-29993__mp-680111/jarvis_structure.cif",
+      "size": 1264,
+      "sha256": "46a5a4d6ecf3d69b4337ec41ce4b6e2f51897bc1c622df3196da47dc0e14a6a9"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-29993__mp-680111/mapping.json",
+      "size": 587,
+      "sha256": "5794dfae03357601f25f3bb83c4579d8825a9aa6a139afcb5d31f068273d557b"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-29993__mp-680111/mp_structure.cif",
+      "size": 1290,
+      "sha256": "4b78ba8d97bc9530b93dbc6bce7aad6e0d0127b7da052e07064a872c7659e2fe"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-29993__mp-680111/tensors.json",
+      "size": 2177,
+      "sha256": "d655525ef015433d344004d92d00c473c3086fab4adf9bc96b8e128193289b13"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-3075__mp-9919/common_frame_structure.cif",
+      "size": 92,
+      "sha256": "e65dbaf8288eca0b5edb32272663a6f3a2628275405c2c691581bd05ea315359"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-3075__mp-9919/comparison.md",
+      "size": 546,
+      "sha256": "21bbe23c45b98357d756de4c0a0b9de0e674a6157496556ceabcc0e3c583423d"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-3075__mp-9919/jarvis_structure.cif",
+      "size": 974,
+      "sha256": "6f7c75b363cfcc77a72d0e71dca955e5f86d2b645994b22c8c7e937b664f1dcd"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-3075__mp-9919/mapping.json",
+      "size": 595,
+      "sha256": "02a9f9f0aeb49dfd8ca486db1e80a9a01ad6c043ad715e94edd15be89e40a719"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-3075__mp-9919/mp_structure.cif",
+      "size": 988,
+      "sha256": "66291d2c5b9cb6a251ae49281106c57b9dacfc9cbf79c206b4717c29af64927c"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-3075__mp-9919/tensors.json",
+      "size": 2141,
+      "sha256": "bbd8fde88a5cc920334ead67a53c3ba1bfb9a0e13c7b1e8664a7d1fe138294f0"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-33818__mp-864928/common_frame_structure.cif",
+      "size": 92,
+      "sha256": "e65dbaf8288eca0b5edb32272663a6f3a2628275405c2c691581bd05ea315359"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-33818__mp-864928/comparison.md",
+      "size": 549,
+      "sha256": "3d42b6b46cbaa854cb929ae964eea793add9ca2ff945cea2edd2d1977c121a11"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-33818__mp-864928/jarvis_structure.cif",
+      "size": 862,
+      "sha256": "831e346411fa094ddbd4112a875a2271d1cd7e3ee188af325b1bf144a27a7cc4"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-33818__mp-864928/mapping.json",
+      "size": 531,
+      "sha256": "fcd4980a3b798de701fee9374b1640f2f369a1196f052109c44d88363a207668"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-33818__mp-864928/mp_structure.cif",
+      "size": 870,
+      "sha256": "e423e5939ddb47977577be478546801f7b8aff1d07704c511fbce40921aee2d9"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-33818__mp-864928/tensors.json",
+      "size": 2037,
+      "sha256": "d0abbdb92846bedc2b0b3d0f97d19b1eb32787b8755c7e763805184958d75084"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-34197__mp-546787/common_frame_structure.cif",
+      "size": 92,
+      "sha256": "e65dbaf8288eca0b5edb32272663a6f3a2628275405c2c691581bd05ea315359"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-34197__mp-546787/comparison.md",
+      "size": 532,
+      "sha256": "44a58397f29268b7b25d836b82aeef82ab0f7407e8090c51e2c9b2bc00ec9fc4"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-34197__mp-546787/jarvis_structure.cif",
+      "size": 853,
+      "sha256": "e598702fdd012bf5ff562129ed62f4e283364ad03ad40229c90df4dc66a89941"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-34197__mp-546787/mapping.json",
+      "size": 531,
+      "sha256": "2a30f4ada7bb1552a6c7b1940ead7ab1289224ad5065397eb7057621604be5d4"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-34197__mp-546787/mp_structure.cif",
+      "size": 861,
+      "sha256": "0bd87ab4e205e718d8d37503f9494e1bcd73b42aa996659e2c1e95fd0b260c00"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-34197__mp-546787/tensors.json",
+      "size": 2357,
+      "sha256": "5e217dadba0684245b4a4032f687d2db2f0cec047bf4ace4396d16f80e7d4f31"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-34284__mp-552941/common_frame_structure.cif",
+      "size": 92,
+      "sha256": "e65dbaf8288eca0b5edb32272663a6f3a2628275405c2c691581bd05ea315359"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-34284__mp-552941/comparison.md",
+      "size": 549,
+      "sha256": "bf22377cff7251bab59486f2f28a1f3cd203628692f47073d0929b440f2e9cad"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-34284__mp-552941/jarvis_structure.cif",
+      "size": 1117,
+      "sha256": "f3b65b5f1cf091889a39fde2e5b652c5741d77ac3e81fd4ed36641377d5e8eeb"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-34284__mp-552941/mapping.json",
+      "size": 572,
+      "sha256": "c0e98f59769fec92db9f73b6187d0f1ac2ac0b0cbc1ad5ad3ef09d57c440bb0f"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-34284__mp-552941/mp_structure.cif",
+      "size": 1135,
+      "sha256": "8b7f497d460c386f1abef2b56a246164cb03e638feb0722f9cae6f3d1f9e7357"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-34284__mp-552941/tensors.json",
+      "size": 2519,
+      "sha256": "57913bb40a62af5c079cba2a869bc5ca6b472619a838106b814c98a46a65086d"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-34330__mp-554243/common_frame_structure.cif",
+      "size": 92,
+      "sha256": "e65dbaf8288eca0b5edb32272663a6f3a2628275405c2c691581bd05ea315359"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-34330__mp-554243/comparison.md",
+      "size": 539,
+      "sha256": "0ee04e6c23cf7562b866a00256cda623e7ff58355912aef14a6a3a1e3c602776"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-34330__mp-554243/jarvis_structure.cif",
+      "size": 1574,
+      "sha256": "2bd5e30dcdfbd4cc91d0545de7bcc21b8b1017cf9453caafea4247738a2de913"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-34330__mp-554243/mapping.json",
+      "size": 638,
+      "sha256": "68dbe448064266aa4b84413f4efd1bb5150f1301fb82a9bb83c5c9914ccaa36a"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-34330__mp-554243/mp_structure.cif",
+      "size": 1612,
+      "sha256": "8f63bf4ae044e5cedf37f2452e0a6a35967e9cec809c3940c30850f97633c0ca"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-34330__mp-554243/tensors.json",
+      "size": 1868,
+      "sha256": "b7a57fb60cc445153771871338fb8a987ded15b2a29bbc2833bb37a9c8337b79"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-3450__mp-20459/common_frame_structure.cif",
+      "size": 92,
+      "sha256": "e65dbaf8288eca0b5edb32272663a6f3a2628275405c2c691581bd05ea315359"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-3450__mp-20459/comparison.md",
+      "size": 541,
+      "sha256": "9793dd8f5a19a8bda8271fb81896ec61956de504bac7f6621eb285e14bca4df8"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-3450__mp-20459/jarvis_structure.cif",
+      "size": 913,
+      "sha256": "31ee3f8bb7ab0a1b395d463569ad76b9027af3a36ae3735db1f3f14b6849cefb"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-3450__mp-20459/mapping.json",
+      "size": 625,
+      "sha256": "53426cc183eba5a447a3c35964ed1ce5473b07f04dc6472e2f805e713a427337"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-3450__mp-20459/mp_structure.cif",
+      "size": 925,
+      "sha256": "1521d32f1ee7dd9016dfeb71a654a7fb3abd1cf6c74c6e2e5b4375263ee4c2a3"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-3450__mp-20459/tensors.json",
+      "size": 2193,
+      "sha256": "351f0079fb0a1b8a67ba53e5f8a0d3d60217d24090ef546198f48ff5254afd1e"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-35097__mp-1019323/common_frame_structure.cif",
+      "size": 92,
+      "sha256": "e65dbaf8288eca0b5edb32272663a6f3a2628275405c2c691581bd05ea315359"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-35097__mp-1019323/comparison.md",
+      "size": 550,
+      "sha256": "7030c5422c34887abd149f911d8e0d5bf3d2d0b17630b207fb5da60f821c7982"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-35097__mp-1019323/jarvis_structure.cif",
+      "size": 963,
+      "sha256": "e6a5a0a7271609f8d3510d78d6fee5e02091a3a54dafad38c1b4757dd9f13f75"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-35097__mp-1019323/mapping.json",
+      "size": 619,
+      "sha256": "9d8f5b00b674a1862955768ee6bfe79f9bc17e98aa156f112c7e771322fc5c5e"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-35097__mp-1019323/mp_structure.cif",
+      "size": 975,
+      "sha256": "02608e4fc3ee5c68a4bcf23cb76ee4fb7f3b094eb38c2ec4bc4ae48dbf991012"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-35097__mp-1019323/tensors.json",
+      "size": 2374,
+      "sha256": "1e7990d9e89ecc2f0c76825ca8a770407977f85e3690002c66285d6962f1c2bf"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-36529__mp-1014244/common_frame_structure.cif",
+      "size": 92,
+      "sha256": "e65dbaf8288eca0b5edb32272663a6f3a2628275405c2c691581bd05ea315359"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-36529__mp-1014244/comparison.md",
+      "size": 549,
+      "sha256": "ebcdf5cba549173d06032c89e95adb5eb256516e8d20c77d994cad3417e72638"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-36529__mp-1014244/jarvis_structure.cif",
+      "size": 864,
+      "sha256": "a7de876d5fc8bc2ee640a8f35a1cca7b01a45e305e433df8d1d68f49e1047915"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-36529__mp-1014244/mapping.json",
+      "size": 534,
+      "sha256": "a3336105309b98ec17b5e665bb7bb21d448f9497b701849f41516d34c56e902d"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-36529__mp-1014244/mp_structure.cif",
+      "size": 873,
+      "sha256": "ced856578522220cf5d639edb2188e0c65c043c2f6c9f94cc90bbb16890df4e8"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-36529__mp-1014244/tensors.json",
+      "size": 2163,
+      "sha256": "a062e74b7d676b5bcde75fc30f40a435d4ae1a824fc79b97d36587d886b4f768"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-36531__mp-1014251/common_frame_structure.cif",
+      "size": 92,
+      "sha256": "e65dbaf8288eca0b5edb32272663a6f3a2628275405c2c691581bd05ea315359"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-36531__mp-1014251/comparison.md",
+      "size": 549,
+      "sha256": "3e89c8ac70f14fbf55d0e07630468f3009cd42cc36f9cca727374335c8567698"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-36531__mp-1014251/jarvis_structure.cif",
+      "size": 864,
+      "sha256": "b43016ea7e65e6446dd9c262ce56dea4ada45a434e62762332c30f54f8c5df8c"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-36531__mp-1014251/mapping.json",
+      "size": 597,
+      "sha256": "39c823656fad23c923b31da509cc37ac49506760881f14ed37afdf01d998c14a"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-36531__mp-1014251/mp_structure.cif",
+      "size": 873,
+      "sha256": "bc9ad83082cdec48a46bc091f2c5a4d0dc2dddc072ffe50c2ea9193438ebe47c"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-36531__mp-1014251/tensors.json",
+      "size": 2377,
+      "sha256": "2893c67841685675da145bd3876c7e498d51ed72cf29a77d43c7cbeb06b5479a"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-36671__mp-1017551/common_frame_structure.cif",
+      "size": 92,
+      "sha256": "e65dbaf8288eca0b5edb32272663a6f3a2628275405c2c691581bd05ea315359"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-36671__mp-1017551/comparison.md",
+      "size": 543,
+      "sha256": "1fec97db2fffc1ecc96bfa8c300e4b01ae4ae61e5802d03ab5343da045fb3c75"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-36671__mp-1017551/jarvis_structure.cif",
+      "size": 907,
+      "sha256": "b1e97ad35af641d90de0e53b0a44a04c8cd501a5cc36e062479dd7e4bfbc3c6f"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-36671__mp-1017551/mapping.json",
+      "size": 544,
+      "sha256": "0c8833e8aad14c4cb2f83c8e25c5f6f74645ac384e27e0a2b7a2575a5692f2ad"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-36671__mp-1017551/mp_structure.cif",
+      "size": 917,
+      "sha256": "53b94df262807da368decc6d0489247ed2433d5e73719f3ae2681a3dc8824657"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-36671__mp-1017551/tensors.json",
+      "size": 1973,
+      "sha256": "569d54888b692d29e8bbf7baf1a1fea41f3c16abf473b0dfcb01c7b7c29ea626"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-36889__mp-998193/common_frame_structure.cif",
+      "size": 92,
+      "sha256": "e65dbaf8288eca0b5edb32272663a6f3a2628275405c2c691581bd05ea315359"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-36889__mp-998193/comparison.md",
+      "size": 517,
+      "sha256": "63c0fca67c89a596ff65e7524124bb657475e0f128b3e73a75065bc127ad73be"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-36889__mp-998193/jarvis_structure.cif",
+      "size": 914,
+      "sha256": "2982b37ef758ac9093881f00618b7c433084bcfb932b3f0176f60974162b8173"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-36889__mp-998193/mapping.json",
+      "size": 535,
+      "sha256": "03aa8bcc5cceec4597813cbbd03aee51b453b1568f85404e5b74d8aa4c401a77"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-36889__mp-998193/mp_structure.cif",
+      "size": 924,
+      "sha256": "63032a0b1489f74a79f0f17b3a97e8f3be46b920ba0043381b00ef4a02fa9c57"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-36889__mp-998193/tensors.json",
+      "size": 2774,
+      "sha256": "81ee4aec5d3ceb1d363a7ff02bfe0c0a01f6bca81170bfdae66a42cd955f0a9f"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-3906__mp-27934/common_frame_structure.cif",
+      "size": 92,
+      "sha256": "e65dbaf8288eca0b5edb32272663a6f3a2628275405c2c691581bd05ea315359"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-3906__mp-27934/comparison.md",
+      "size": 551,
+      "sha256": "0d2203b92c2cc8aa72d21d74a4c55ce5445f6bc529fbfa872b4ca35275e4bf43"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-3906__mp-27934/jarvis_structure.cif",
+      "size": 969,
+      "sha256": "02d9cd3eb91c112fae872d1ef8259b62491d3bba264c00a1b25791ea3ff64478"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-3906__mp-27934/mapping.json",
+      "size": 607,
+      "sha256": "381d30af022de83b539804d7fe45be1c1ec99affc8f8f618c8540fcb09e60e84"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-3906__mp-27934/mp_structure.cif",
+      "size": 981,
+      "sha256": "734e99ab5391885ef4555f19ccb34d6b1988341f8719efcd0d8065974701b533"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-3906__mp-27934/tensors.json",
+      "size": 1944,
+      "sha256": "c68ad1e7a89f3bddd6a992207703c457859737275d06293c6a1476f12ef19c9b"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-4273__mp-23280/common_frame_structure.cif",
+      "size": 92,
+      "sha256": "e65dbaf8288eca0b5edb32272663a6f3a2628275405c2c691581bd05ea315359"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-4273__mp-23280/comparison.md",
+      "size": 533,
+      "sha256": "9296549e3be8e03116b63f1561ee65a582284dcefe8a25f92ec54dd002a44fbe"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-4273__mp-23280/jarvis_structure.cif",
+      "size": 1495,
+      "sha256": "8cbe5f2fc7090168a6d12a8659705f062ee69e4d7fb7bf69b02e9d21bc0b59c9"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-4273__mp-23280/mapping.json",
+      "size": 618,
+      "sha256": "8444f5b7b128964b98c67525784ff1127d6ed5b8ac12df685f0e929eef699d24"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-4273__mp-23280/mp_structure.cif",
+      "size": 1527,
+      "sha256": "dec652310eb4475e6122ad1f2d6629cd9b2b573ce7d86add14ccdaaa093a2b98"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-4273__mp-23280/tensors.json",
+      "size": 2057,
+      "sha256": "749b8405bbb647db0c0f12bc3b2cde447198fc2a7e54e35ddbe4b6ac951e6291"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-45297__mp-12171/common_frame_structure.cif",
+      "size": 93,
+      "sha256": "bc43940bd9239456f705da9a5966ca74519d33ff647ac982487406350184ba15"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-45297__mp-12171/comparison.md",
+      "size": 567,
+      "sha256": "332dfc6fd132ff3b126049689ce3eaaf4a41bfa35cc8b4a99480b88691ab7189"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-45297__mp-12171/jarvis_structure.cif",
+      "size": 1825,
+      "sha256": "29d2053954d8bc5aeec1a5d52ec0d29c7f3680f1155ac68c9f87da6a499ca7ec"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-45297__mp-12171/mapping.json",
+      "size": 721,
+      "sha256": "b27a9b135fb0dc0ad5306dabb6c3ecca4c85a1ed3a446ef2f1f8945cdaecc929"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-45297__mp-12171/mp_structure.cif",
+      "size": 1869,
+      "sha256": "de72d107395837e6d128a4f8728309d435e1e63e6d4a1e59624cafd3598837a5"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-45297__mp-12171/tensors.json",
+      "size": 2228,
+      "sha256": "26ceab1a064348f8f8f41269e15082ca408682d8a1a62372a0e373d181889f3a"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-45320__mp-8491/common_frame_structure.cif",
+      "size": 93,
+      "sha256": "bc43940bd9239456f705da9a5966ca74519d33ff647ac982487406350184ba15"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-45320__mp-8491/comparison.md",
+      "size": 567,
+      "sha256": "5929cd91bf2fe7c2c72a9096ba4a2b3de9d34fe4ac5321c7084e4f55a4033f30"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-45320__mp-8491/jarvis_structure.cif",
+      "size": 1837,
+      "sha256": "b5dcef3f5e8e307d5df7a9e8c82333f629e89378fbcc959945d411df78b4aace"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-45320__mp-8491/mapping.json",
+      "size": 752,
+      "sha256": "68ef1f45d401fdba1ac7be4dae279cfd0835d7aa4b14e1fcec68ddeb01292719"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-45320__mp-8491/mp_structure.cif",
+      "size": 1880,
+      "sha256": "b1565f1aa155b126adee2b051cee6711dce3194a5c0c31ba6107220085f8c90b"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-45320__mp-8491/tensors.json",
+      "size": 2611,
+      "sha256": "40f3af5202ea870b4f08cae4b1c7d49b32e553cd5b92a93676ea55f482df3434"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-46065__mp-769025/common_frame_structure.cif",
+      "size": 92,
+      "sha256": "e65dbaf8288eca0b5edb32272663a6f3a2628275405c2c691581bd05ea315359"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-46065__mp-769025/comparison.md",
+      "size": 555,
+      "sha256": "51d47f59d62aee6b8d37f33449ab3c37d358cf68097b808dd1a5578f6103f88c"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-46065__mp-769025/jarvis_structure.cif",
+      "size": 2097,
+      "sha256": "08377fbb108fd6faf402f1a909e4bf8acbafadf1559b7844b7d401b474f05d49"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-46065__mp-769025/mapping.json",
+      "size": 721,
+      "sha256": "9de37206aaa322a2549774316e097faa6b29f9299788c4502fc4656c1bef64e6"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-46065__mp-769025/mp_structure.cif",
+      "size": 2153,
+      "sha256": "042195550854d2717d752a3d16562d7fabd9ec9a36b38071a992b4a0b892ffd6"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-46065__mp-769025/tensors.json",
+      "size": 1947,
+      "sha256": "bb224755e011ee120fb9bad92f331529afbde8ca4e1c82680d16a17b8ba83353"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-47639__mp-761842/common_frame_structure.cif",
+      "size": 93,
+      "sha256": "bc43940bd9239456f705da9a5966ca74519d33ff647ac982487406350184ba15"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-47639__mp-761842/comparison.md",
+      "size": 567,
+      "sha256": "7c184dbd1ffddd914d352f2df1e38b67f02d9f1df69f6e9c8fabcb585946de6e"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-47639__mp-761842/jarvis_structure.cif",
+      "size": 1310,
+      "sha256": "7664b737d2a1544546024bf86cf0357a0097d3997505489bc3ceec730e4fd488"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-47639__mp-761842/mapping.json",
+      "size": 630,
+      "sha256": "b63b3e7b3f493a6555e55e8c4f820184f83fa24913bb110e314ca481658982fe"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-47639__mp-761842/mp_structure.cif",
+      "size": 1334,
+      "sha256": "a6f5c529cff3f6293e9b3a76c4f44373440621e4e78fe013dda25e3944630a78"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-47639__mp-761842/tensors.json",
+      "size": 2314,
+      "sha256": "0cc0cf82d996f6486f2aab2b7064564ed3a34ba0ebe523a537d5b30668ddd7b1"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-47677__mp-762018/common_frame_structure.cif",
+      "size": 93,
+      "sha256": "bc43940bd9239456f705da9a5966ca74519d33ff647ac982487406350184ba15"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-47677__mp-762018/comparison.md",
+      "size": 567,
+      "sha256": "e3deecb7242907c9e898c606b437c28dcff27518a449ca4eced51efd1b9e45e6"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-47677__mp-762018/jarvis_structure.cif",
+      "size": 1417,
+      "sha256": "3c7e11bc4ae4a522443ac366daef03bcc3172fb2dfaa489986879eec6a5c373d"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-47677__mp-762018/mapping.json",
+      "size": 742,
+      "sha256": "df36214a0fc465d156aac8c98561b139fd428333f1f765005982e44aa4faaca4"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-47677__mp-762018/mp_structure.cif",
+      "size": 1445,
+      "sha256": "52eb5371cc5e5c3933f6c2f7dc1eb1e0ec3d6be08296d3adf9be8d49b336811c"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-47677__mp-762018/tensors.json",
+      "size": 2675,
+      "sha256": "0e815acc4c6228dac5b97d23fdb55825e520554d35e0c246aa25f73a0f7bb986"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-48187__mp-763507/common_frame_structure.cif",
+      "size": 93,
+      "sha256": "bc43940bd9239456f705da9a5966ca74519d33ff647ac982487406350184ba15"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-48187__mp-763507/comparison.md",
+      "size": 567,
+      "sha256": "4ba379b9484c3f2dd30292a07d93f0607eb6d580101a3362858440e1644dd63a"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-48187__mp-763507/jarvis_structure.cif",
+      "size": 1425,
+      "sha256": "6825288827e948efa3a14ba50ab68b57c82a97cf647f792faad2776c556b91eb"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-48187__mp-763507/mapping.json",
+      "size": 651,
+      "sha256": "c593d1503c11c35a34498888b3dfbe66aeb53dfd90cf460606433e7bc4f12019"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-48187__mp-763507/mp_structure.cif",
+      "size": 1452,
+      "sha256": "4096c44e95fd0c61d51a870989c3e8b38ebbc64ae056254f4dc524f6862f9820"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-48187__mp-763507/tensors.json",
+      "size": 2395,
+      "sha256": "6f3474f8ec94e40bf529c816d36e6471b0b7868af20f32d9184c95880bb6f2d6"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-49179__mp-14058/common_frame_structure.cif",
+      "size": 93,
+      "sha256": "bc43940bd9239456f705da9a5966ca74519d33ff647ac982487406350184ba15"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-49179__mp-14058/comparison.md",
+      "size": 570,
+      "sha256": "1b203a6ec8e096b1af34b71c830f0c793576e3a873996b72340a2ca11598cc7e"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-49179__mp-14058/jarvis_structure.cif",
+      "size": 2146,
+      "sha256": "59b880e364069e33c37974c27c3bc16aaefc24c9f9ffc562bfa4e83ee6c2efc9"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-49179__mp-14058/mapping.json",
+      "size": 841,
+      "sha256": "75686d6155dc40a0e5e647865a634f143f7713f06bfcbed84221f1227c7dfa48"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-49179__mp-14058/mp_structure.cif",
+      "size": 2202,
+      "sha256": "c0f4369c0603174891f7e568ccbc7151bfe96439fc4c2634504cdeecdc9d6164"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-49179__mp-14058/tensors.json",
+      "size": 2187,
+      "sha256": "54ef38d7111ee60a528178df17baf4af455dbc023a4626512d071d37b2f6d196"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-49194__mp-14420/common_frame_structure.cif",
+      "size": 92,
+      "sha256": "e65dbaf8288eca0b5edb32272663a6f3a2628275405c2c691581bd05ea315359"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-49194__mp-14420/comparison.md",
+      "size": 555,
+      "sha256": "4ac594e46251cc5933eac8cfd28a448d664030e462100bf2fd3465b537636eca"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-49194__mp-14420/jarvis_structure.cif",
+      "size": 1907,
+      "sha256": "a93f8125fe7ff399fc86e52015691f34e7e7adb2feecf7950422c7ca17259535"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-49194__mp-14420/mapping.json",
+      "size": 783,
+      "sha256": "54693e1cb38eec96fccb5f39e066322baf1a0ae3a852795cafcd04365c23c72c"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-49194__mp-14420/mp_structure.cif",
+      "size": 1955,
+      "sha256": "7e0023dd08b379125a717c3de30e759dd42f06c60e0455c7ba4952b0d0993662"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-49194__mp-14420/tensors.json",
+      "size": 2326,
+      "sha256": "4b41c5c53d3309092880afef11fd1fe474dc51ed196c56dd85bbdb9e2aa48073"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-49240__mp-16136/common_frame_structure.cif",
+      "size": 92,
+      "sha256": "e65dbaf8288eca0b5edb32272663a6f3a2628275405c2c691581bd05ea315359"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-49240__mp-16136/comparison.md",
+      "size": 556,
+      "sha256": "f8498d7d5bc45e5decf3cd29484c465b32272d3c036e07936ccdc34ee31a14d8"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-49240__mp-16136/jarvis_structure.cif",
+      "size": 1869,
+      "sha256": "16ec4737d19cf409038c059ad5e1d50f2a8e14e9f4c7ece0cf7ea4802d053f3b"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-49240__mp-16136/mapping.json",
+      "size": 748,
+      "sha256": "6b234bb9f0c3f2556cf09331503b7b44c113b299e4c7ca13800432853335db2f"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-49240__mp-16136/mp_structure.cif",
+      "size": 1915,
+      "sha256": "23126a597ef1e781e88afe4429cd52f65ea2e7a64e32350f715d1ce551ec1bcd"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-49240__mp-16136/tensors.json",
+      "size": 2155,
+      "sha256": "978664eab4a6af38ee2d5d35ba93817e6775ec2d422b4653683255c3c9e28a61"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-50047__mp-755132/common_frame_structure.cif",
+      "size": 92,
+      "sha256": "e65dbaf8288eca0b5edb32272663a6f3a2628275405c2c691581bd05ea315359"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-50047__mp-755132/comparison.md",
+      "size": 551,
+      "sha256": "e52dc9b1d03625c48d506a1c15dab3a95706b510c58f094906242ad48d9e3ea1"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-50047__mp-755132/jarvis_structure.cif",
+      "size": 1481,
+      "sha256": "de87567cfcc4c38b95ccface4837eec060ee508de502759aec3c11aa3d6663f6"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-50047__mp-755132/mapping.json",
+      "size": 772,
+      "sha256": "303a577935a9c85a0886ae36287a34a86c2c4eb038ec8f51981ed3bc54451577"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-50047__mp-755132/mp_structure.cif",
+      "size": 1512,
+      "sha256": "edf95df67dbc4d24fbb57c86e69036a7cc4cc39779220544d96d501673d78c77"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-50047__mp-755132/tensors.json",
+      "size": 2547,
+      "sha256": "32440df31deaa60836fe70c5d82b02ef6e33e54cfcc50b8ac9e421db2d89ef48"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-53094__mp-676464/common_frame_structure.cif",
+      "size": 92,
+      "sha256": "e65dbaf8288eca0b5edb32272663a6f3a2628275405c2c691581bd05ea315359"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-53094__mp-676464/comparison.md",
+      "size": 553,
+      "sha256": "c1d2ed50a992e61724d57e358b61af2e0eb64bb92019074d95b558312222be30"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-53094__mp-676464/jarvis_structure.cif",
+      "size": 1020,
+      "sha256": "8738cad01b5726ff8e7420e0b26cfbc57ad45bdea53c8ad4a4dcb62e8774b941"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-53094__mp-676464/mapping.json",
+      "size": 705,
+      "sha256": "67bcb6184c27e269d1afe01a227590d57d49f7626de2e3c4ce7c03c8e45615fc"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-53094__mp-676464/mp_structure.cif",
+      "size": 1035,
+      "sha256": "3105b71f30fb291d8c82d3b61e644c7fe01874f7750dc8742448ccb45d5884da"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-53094__mp-676464/tensors.json",
+      "size": 2544,
+      "sha256": "b5aaa9d690c1867116677cfec73a1e909cd331b6d5e887466173fb69db33bdd9"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-5353__mp-27462/common_frame_structure.cif",
+      "size": 92,
+      "sha256": "e65dbaf8288eca0b5edb32272663a6f3a2628275405c2c691581bd05ea315359"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-5353__mp-27462/comparison.md",
+      "size": 533,
+      "sha256": "a20332f07674e35a14381d4dcc7a87b0f58226104b50703a17642f10700eab72"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-5353__mp-27462/jarvis_structure.cif",
+      "size": 1263,
+      "sha256": "a1316e9f720f560a302206c697c36f625e7f287a084f150cedd4016da9db2492"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-5353__mp-27462/mapping.json",
+      "size": 586,
+      "sha256": "d9b3e2b2ac0a8d589033def5a008627d13d73f67f0493f9ef06700b67519bc41"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-5353__mp-27462/mp_structure.cif",
+      "size": 1290,
+      "sha256": "e42409df11857026385e91af55fd71d69c9203437a0378881946d6ff5985c68a"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-5353__mp-27462/tensors.json",
+      "size": 2037,
+      "sha256": "e3146fea2571260ca81d71d1eb8f642d9e250ef6799f1891a334ffbbc76c3faa"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-54769__mp-626149/common_frame_structure.cif",
+      "size": 92,
+      "sha256": "e65dbaf8288eca0b5edb32272663a6f3a2628275405c2c691581bd05ea315359"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-54769__mp-626149/comparison.md",
+      "size": 551,
+      "sha256": "e2d8d0086a87d39677e03e45db536afd1797e06ccb18a19c9163e099448099f3"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-54769__mp-626149/jarvis_structure.cif",
+      "size": 913,
+      "sha256": "31bcdfaa8880a1910a37668659f8eda05e589426a35e25385213dddb8f5dd758"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-54769__mp-626149/mapping.json",
+      "size": 538,
+      "sha256": "4b6de8935dad0402f4bb458574b5e143cf4c4baa19c533e76508f8decbe8b22a"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-54769__mp-626149/mp_structure.cif",
+      "size": 923,
+      "sha256": "a286660f4d590bef4e7ad836bbfbfab002454d3ca6925f366b3765a361dec9f8"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-54769__mp-626149/tensors.json",
+      "size": 2212,
+      "sha256": "d7687c9d6e6a9bc568098351fe0b076e56febab1e793a5f24628144a971c3915"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-5485__mp-28248/common_frame_structure.cif",
+      "size": 92,
+      "sha256": "e65dbaf8288eca0b5edb32272663a6f3a2628275405c2c691581bd05ea315359"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-5485__mp-28248/comparison.md",
+      "size": 549,
+      "sha256": "c03a480bf2c63ab58861ff08e616b471b2614a93d1261d4b11a5b7b9c3e39e8f"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-5485__mp-28248/jarvis_structure.cif",
+      "size": 958,
+      "sha256": "30d8ca903fc3e851d8676e8819a36d76fd53de5fa3d0c59d176bcf64e2781b1a"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-5485__mp-28248/mapping.json",
+      "size": 682,
+      "sha256": "48b0a0de552fd11d574b4e67a72f8177b24341abb2affc370b267a5993ca7aea"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-5485__mp-28248/mp_structure.cif",
+      "size": 974,
+      "sha256": "cb621bbb437fc4da00a9f8c53427ccd63d4906c23d48dfb38d74951779dd0886"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-5485__mp-28248/tensors.json",
+      "size": 2450,
+      "sha256": "6ae48a7df4470111b3b1fd30d6198bd6f609feebabb458c191a363512e725fbf"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-55536__mp-20778/common_frame_structure.cif",
+      "size": 92,
+      "sha256": "e65dbaf8288eca0b5edb32272663a6f3a2628275405c2c691581bd05ea315359"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-55536__mp-20778/comparison.md",
+      "size": 554,
+      "sha256": "93ae0c6b32ac957fc7867ee8a678e8854b36d67f3b08c58716be851360d22df4"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-55536__mp-20778/jarvis_structure.cif",
+      "size": 1907,
+      "sha256": "e4e5bf9bada9184e942dac851b5c09a10be243d532059dfd119452bcbcb4ba06"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-55536__mp-20778/mapping.json",
+      "size": 693,
+      "sha256": "28319467de2b900e01f7b18cc68f3794d2e1b1e13d648d33bfab2a54c644ca80"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-55536__mp-20778/mp_structure.cif",
+      "size": 1955,
+      "sha256": "e5124b34992c6842cb0662619b2dc4ef578df63d03e57a0a269c2ed2ac753536"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-55536__mp-20778/tensors.json",
+      "size": 2030,
+      "sha256": "334b20813ee80ef155ed63b045de96bfb5a4e2d5ad763c3c5ea0bf7a2ccb30ab"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-57456__mp-558828/common_frame_structure.cif",
+      "size": 92,
+      "sha256": "e65dbaf8288eca0b5edb32272663a6f3a2628275405c2c691581bd05ea315359"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-57456__mp-558828/comparison.md",
+      "size": 553,
+      "sha256": "78bcd6de89526c920e48cff350c98ed0308aa0c5be74d561e11d36d88487a5bd"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-57456__mp-558828/jarvis_structure.cif",
+      "size": 1690,
+      "sha256": "b62e7921ab1d27c47e79f7aa750555c4792acaf7e27c3775a38c858933fd2eac"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-57456__mp-558828/mapping.json",
+      "size": 662,
+      "sha256": "ed261a191ad9f35e74660b994458290788791b6660281add3b0f88a831525c08"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-57456__mp-558828/mp_structure.cif",
+      "size": 1730,
+      "sha256": "c389d5b8c6874b169504c2c6ba8fa328d8ab46cb5e29ddd1d0af2989fe1c5624"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-57456__mp-558828/tensors.json",
+      "size": 2205,
+      "sha256": "b73d283fc2ad14ed32f0fc225996cd43328f62b5f57246aac37fa5838cd86791"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-58385__mp-8059/common_frame_structure.cif",
+      "size": 92,
+      "sha256": "e65dbaf8288eca0b5edb32272663a6f3a2628275405c2c691581bd05ea315359"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-58385__mp-8059/comparison.md",
+      "size": 546,
+      "sha256": "95764732868779fdf406e4571d9ba11488848e3673ed25e7ef52b991c538bc23"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-58385__mp-8059/jarvis_structure.cif",
+      "size": 1883,
+      "sha256": "1f40799dad31120f821aa5bf2c5d21a1b74186d01c15d3c082091eeadb20e121"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-58385__mp-8059/mapping.json",
+      "size": 680,
+      "sha256": "9787227d890bf09dfd987696870af86db02ee66274c0b68ac2979775d356a85b"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-58385__mp-8059/mp_structure.cif",
+      "size": 1931,
+      "sha256": "d512935339b282732831e71f984b878b45a3cd3117a4330dfdb2f07b5853d45b"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-58385__mp-8059/tensors.json",
+      "size": 2041,
+      "sha256": "8449f2b8eb2902c0fdec321a963bc9e3074652d3e6a9c72a6fd5f23d6d501a69"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-59062__mp-29927/common_frame_structure.cif",
+      "size": 92,
+      "sha256": "e65dbaf8288eca0b5edb32272663a6f3a2628275405c2c691581bd05ea315359"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-59062__mp-29927/comparison.md",
+      "size": 552,
+      "sha256": "2b15b79fd8d4d5a6d63bacc5e29b4f10d0cb5ef3eedd5e89aa7ffca24dfbd998"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-59062__mp-29927/jarvis_structure.cif",
+      "size": 1751,
+      "sha256": "18663f6f083974e2c0cd20d4ad8c5c9419b36a1572747b6adf1bbd16279f3328"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-59062__mp-29927/mapping.json",
+      "size": 807,
+      "sha256": "0a22d959d0ea56e432925468e1edc6e51023068e188388c46b55746306b3f44d"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-59062__mp-29927/mp_structure.cif",
+      "size": 1799,
+      "sha256": "70f88752c50b3e7abbaed2d7f0161fbd48d7652cfb8bae4b6d06df273ac646a8"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-59062__mp-29927/tensors.json",
+      "size": 2429,
+      "sha256": "9ecb63c196bc1d5e1c8173bc2d721d176bb0bfbfba52a53fd6a670282c9a3402"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-7640__mp-10161/common_frame_structure.cif",
+      "size": 92,
+      "sha256": "e65dbaf8288eca0b5edb32272663a6f3a2628275405c2c691581bd05ea315359"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-7640__mp-10161/comparison.md",
+      "size": 548,
+      "sha256": "0ddadbb2ba3adf63811ca589a8ba3bd66731c07618bf4f3cfa9dc9d878386d4f"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-7640__mp-10161/jarvis_structure.cif",
+      "size": 812,
+      "sha256": "4691b8cedd1c7ecc87b67ed45e3a55ebdb4e1553efe7b454b2feac1f54c2f8a4"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-7640__mp-10161/mapping.json",
+      "size": 563,
+      "sha256": "5ec6d6717360dea35526d28aa058426549687a3b2fc6657647875715a1fc0885"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-7640__mp-10161/mp_structure.cif",
+      "size": 820,
+      "sha256": "82785ec14d040f23c0ef49a299d1daae5bbdf1efa90f2317e43f48501d6fb8d4"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-7640__mp-10161/tensors.json",
+      "size": 2038,
+      "sha256": "7565e571933ef585a5d4d14861d0dfc750e24a3c6f4367e99532eac453651dfa"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-7773__mp-13108/common_frame_structure.cif",
+      "size": 92,
+      "sha256": "e65dbaf8288eca0b5edb32272663a6f3a2628275405c2c691581bd05ea315359"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-7773__mp-13108/comparison.md",
+      "size": 542,
+      "sha256": "2e536e137b1b2b378f8c4b380d2ecbf04beaeca09e2351325e5b06260f4d685a"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-7773__mp-13108/jarvis_structure.cif",
+      "size": 913,
+      "sha256": "303b409a5548d9daf59d4601f3155c393f5918b7faff5c98de4744cb6482beb0"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-7773__mp-13108/mapping.json",
+      "size": 537,
+      "sha256": "174df14ba7ec69899df7638c4783942d57165b7961acb1fbb716569d2282a747"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-7773__mp-13108/mp_structure.cif",
+      "size": 923,
+      "sha256": "96418932d1a10953a4957daaad7658e27cc106ea7bb02db58121764cfad443ab"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-7773__mp-13108/tensors.json",
+      "size": 1992,
+      "sha256": "dfd640ac27ba802ef509a95d5aa873f00d5a7c2585fab583f8a81b6e9f181759"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-7878__mp-19128/common_frame_structure.cif",
+      "size": 92,
+      "sha256": "e65dbaf8288eca0b5edb32272663a6f3a2628275405c2c691581bd05ea315359"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-7878__mp-19128/comparison.md",
+      "size": 544,
+      "sha256": "682e19de021d9c1d3a9db6d17a81db17b2f39b2a1c8859ebb539b61225b94f92"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-7878__mp-19128/jarvis_structure.cif",
+      "size": 854,
+      "sha256": "57947f2f8276e95afd4ce187d0303469cab76c7ba4f1360d828e8f15cfc741ca"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-7878__mp-19128/mapping.json",
+      "size": 600,
+      "sha256": "c1969c097834f530ee06abe8b89b493c798666e5874b4cebce3a4dbc22d2bd9e"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-7878__mp-19128/mp_structure.cif",
+      "size": 862,
+      "sha256": "36cfc25ff28b6d90d6af73ee8e9a4926a067a07adaaf0cf736788bf41cd698ef"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-7878__mp-19128/tensors.json",
+      "size": 2179,
+      "sha256": "c1cb4d3729510daf91f0b71cc969a695cf20b9adba4c888a78677f3cda5927ab"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-8561__mp-22894/common_frame_structure.cif",
+      "size": 92,
+      "sha256": "e65dbaf8288eca0b5edb32272663a6f3a2628275405c2c691581bd05ea315359"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-8561__mp-22894/comparison.md",
+      "size": 546,
+      "sha256": "002c2ac7454c225db30f22733bfe9dc492a01b54ae9133907a91ef4c22af3eeb"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-8561__mp-22894/jarvis_structure.cif",
+      "size": 855,
+      "sha256": "b970c9fa5b0d00fb050f831f118186ff67730b077c4854c4d532c457c0bbc3e8"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-8561__mp-22894/mapping.json",
+      "size": 598,
+      "sha256": "099e9a5943a8929e248825e9bae41c87a6b376bb1a2af77abbffc9422cb5b7c1"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-8561__mp-22894/mp_structure.cif",
+      "size": 863,
+      "sha256": "e3d8354f7e6997cc636652e26c7e609d453db986990f272e0cfdac7f71a1a10f"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-8561__mp-22894/tensors.json",
+      "size": 2191,
+      "sha256": "0f1301979c71d82b4d6bde1016905004e6413474ebf6fb4af953ce7fe67d0b48"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-8603__mp-24093/common_frame_structure.cif",
+      "size": 92,
+      "sha256": "e65dbaf8288eca0b5edb32272663a6f3a2628275405c2c691581bd05ea315359"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-8603__mp-24093/comparison.md",
+      "size": 546,
+      "sha256": "8bbb6d45ea2348b52964bad6ab379785a8fade95b3702b888f41081d3a1c3969"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-8603__mp-24093/jarvis_structure.cif",
+      "size": 854,
+      "sha256": "d823066beb88d70341f0e09e3ded50ac05409afe8e01c714c6df028aea5ce601"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-8603__mp-24093/mapping.json",
+      "size": 567,
+      "sha256": "08d0c067116ba00625605b6dd2c5a41fda6ad6c5828a7be19e2076fed5c7f7f8"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-8603__mp-24093/mp_structure.cif",
+      "size": 862,
+      "sha256": "fc4a9c568482ffefd2bff651af8d7a5c3971347c985dcf6a2322e538c76ff351"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-8603__mp-24093/tensors.json",
+      "size": 2175,
+      "sha256": "a3bee2aa5d67c5c98e7dbe4228377072720565273653de8cdba2937d98285218"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-8703__mp-30148/common_frame_structure.cif",
+      "size": 92,
+      "sha256": "e65dbaf8288eca0b5edb32272663a6f3a2628275405c2c691581bd05ea315359"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-8703__mp-30148/comparison.md",
+      "size": 546,
+      "sha256": "935c741bc379d98965d83cfbac3f5708a83bd66c77620ed236823b8ee5c4bd00"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-8703__mp-30148/jarvis_structure.cif",
+      "size": 1053,
+      "sha256": "24d04f01a0fb8725ee796bff3db8484b117d113e4f6d23488897a0745361bed5"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-8703__mp-30148/mapping.json",
+      "size": 695,
+      "sha256": "f0e259a5a4df8a2f4cd19190f76ce88f8d1eb530553fff5e433fca4c9edde7e6"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-8703__mp-30148/mp_structure.cif",
+      "size": 1069,
+      "sha256": "184df0da21ba6a8992b5fead3b49f5a1ca0ba7247383569631c3fda8056d31e7"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-8703__mp-30148/tensors.json",
+      "size": 2374,
+      "sha256": "d8b44dfe079bac969eb7927dfc6d09acf06a9e883989b2529649ef2c4e77bbd2"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-8781__mp-33723/common_frame_structure.cif",
+      "size": 92,
+      "sha256": "e65dbaf8288eca0b5edb32272663a6f3a2628275405c2c691581bd05ea315359"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-8781__mp-33723/comparison.md",
+      "size": 548,
+      "sha256": "dc03cc2c770f5fccc5c2a9baa988dbca1315b0e85c9ff91b2353229d47044a43"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-8781__mp-33723/jarvis_structure.cif",
+      "size": 818,
+      "sha256": "64635003959cf7ccd0309137e6133d856f95e62d34dfba02f02456a144c241ae"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-8781__mp-33723/mapping.json",
+      "size": 522,
+      "sha256": "77d1b1fb4575403450c8538088d5bbac36fa21ba0f9d3aad1c7c4252336d15e4"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-8781__mp-33723/mp_structure.cif",
+      "size": 824,
+      "sha256": "a5a9764906e0e1cea739ced62ef85f30ef72830b2643ded455fb5587b7e573db"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-8781__mp-33723/tensors.json",
+      "size": 2186,
+      "sha256": "b299bd1e3d192319a9495d6a75cf02209dbfa749e9c70026d218d2e29fdbc0c4"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-9097__mp-1554/common_frame_structure.cif",
+      "size": 92,
+      "sha256": "e65dbaf8288eca0b5edb32272663a6f3a2628275405c2c691581bd05ea315359"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-9097__mp-1554/comparison.md",
+      "size": 546,
+      "sha256": "8b50458a3a0ff8ec7071d8770b41c017666aba538999d15983b3f3ee2567c093"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-9097__mp-1554/jarvis_structure.cif",
+      "size": 1265,
+      "sha256": "36172df29d0196b64d02e10820ad9d2dd5834349b3eda900a778dbc5b3c77ac5"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-9097__mp-1554/mapping.json",
+      "size": 584,
+      "sha256": "6b758bbf2b428bc8f91e92fb8652e608e858b326f10b277a69431354a4aeccee"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-9097__mp-1554/mp_structure.cif",
+      "size": 1295,
+      "sha256": "3f806f3a8456c3156f41b0ce9a2aaab10374ea4d54c044ae2e73a58b1671eece"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-9097__mp-1554/tensors.json",
+      "size": 1945,
+      "sha256": "9ed48d93fa8d2443b2cb09aae2838b1a902f5d0f36c59d4d375c46134b0ecdf5"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-9170__mp-690/common_frame_structure.cif",
+      "size": 93,
+      "sha256": "bc43940bd9239456f705da9a5966ca74519d33ff647ac982487406350184ba15"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-9170__mp-690/comparison.md",
+      "size": 561,
+      "sha256": "bbe953f53cf28a192358cb7c77008d98e4dab75d6fada965bed5ee7a84ed33ca"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-9170__mp-690/jarvis_structure.cif",
+      "size": 1606,
+      "sha256": "cbe8e29003b2007d7237317439f344864328e07940f00ec2c210bb12c422d882"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-9170__mp-690/mapping.json",
+      "size": 675,
+      "sha256": "f09de7d38bda1ed4697298a40cd0e504ea9bbe38ee7e65fcf67aa9719a754303"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-9170__mp-690/mp_structure.cif",
+      "size": 1642,
+      "sha256": "85bfcf91d1068f293c5311014149ff7ee0cf2b5f3d3ae5599b59497f92ae3c63"
+    },
+    {
+      "path": "phase5a/manual_pair_audit/JVASP-9170__mp-690/tensors.json",
+      "size": 2319,
+      "sha256": "1ad240896bda872e56481c107fe9686a0f4bdf0c52456f8f9f63ce64a5acfeda"
+    },
+    {
+      "path": "phase5a/ranking_metrics.parquet",
+      "size": 8092,
+      "sha256": "a09bed74c2c57d1ca943ea35423f302ab5d9c436d9142229af2f9863ff81cfb6"
+    },
+    {
+      "path": "phase5a/soft_mode_metrics.parquet",
+      "size": 86993,
+      "sha256": "52ea563e31ec8d310d69d88de7300baf2d1e0eed80505d6292e53954ae85fc77"
+    },
+    {
+      "path": "phase5a/structure_mediated_shift.parquet",
+      "size": 51947,
+      "sha256": "20645a96861015aaa4bc0fccad2f93aa12199c7d95b532a936059062615f6f08"
+    },
+    {
+      "path": "phase5a/symmetry_residuals.parquet",
+      "size": 43317,
+      "sha256": "3d5854c2319c2ff150d512daa94e6451e8310f33dfbf5da47e62b2ad5e771bf5"
+    },
+    {
+      "path": "phase5b/core_exclusions.parquet",
+      "size": 79968,
+      "sha256": "6675ef359a4d116b526d595321d551734e074b028d6863c26aa2fb45ccc6ed28"
+    },
+    {
+      "path": "phase5b/core_pairs.parquet",
+      "size": 14145,
+      "sha256": "1ed951d6e03600b4edbea1f0ce9c7265479a642799059a4052799a6c0a0c3e07"
+    },
+    {
+      "path": "phase5b/discrepancy_hierarchy.parquet",
+      "size": 107816,
+      "sha256": "88f9b10ecb303623dbd3b3029c124c9bd3009ed20bd286294ef038b6daadc9a7"
+    },
+    {
+      "path": "phase5b/discrepancy_hierarchy_by_sublayer.parquet",
+      "size": 4378,
+      "sha256": "813eb32871daabc36d3bdba05a0af4217c2dbd1db6a8e158925574212d410115"
+    },
+    {
+      "path": "phase5b/discrepancy_hierarchy_summary.parquet",
+      "size": 9981,
+      "sha256": "72b4deebf184c040bd76c5fa021e46b3aadb04542ffb4f95273a4afec5da0794"
+    },
+    {
+      "path": "phase5b/extended_pairs.parquet",
+      "size": 74325,
+      "sha256": "806d7291a78dddd9535279853f6c6e418827c66219a0e26099b386dfe89f250c"
+    },
+    {
+      "path": "phase5b/leaderboard.parquet",
+      "size": 10007,
+      "sha256": "5eb38a785711ba53d7d2b76c77992a07a2803fb74b7a365dd28365539f1b71a9"
+    },
+    {
+      "path": "phase5b/model_metrics.json",
+      "size": 18375,
+      "sha256": "62cb17f39356f82c0c53e079587d3a600c64a34feee769f4cc63e178c25daa2c"
+    },
+    {
+      "path": "phase5b/model_metrics.parquet",
+      "size": 9956,
+      "sha256": "ff44780f04f63b44fbab46f739a4797cb1eb00669a3a74f7a119020a69ee175c"
+    },
+    {
+      "path": "phase5b/rank_inversion.parquet",
+      "size": 4697,
+      "sha256": "bef369becce1898a2cf8aaddf43d2178d2bee0ed47a5fce1b5078ed92f276848"
+    },
+    {
+      "path": "phase5b/source_native_residuals.parquet",
+      "size": 78261,
+      "sha256": "4cde17513a0fc79f1cc149dcbbbd0d0cc26b3aba40ea323b2acbf33a2f4300dd"
+    },
+    {
+      "path": "phase5b/test_panel.parquet",
+      "size": 28581,
+      "sha256": "76185e9230e36cb0262febf94c8903a87eb6de48a41fba7bc7525410243a201a"
+    },
+    {
+      "path": "phase5b/train_config.json",
+      "size": 184,
+      "sha256": "615fd8fb44d31c98cba49c2b2ae659fd14f5db64efa8f7cbf2749230854ffabc"
+    },
+    {
+      "path": "phase5b/valid_models.parquet",
+      "size": 7773,
+      "sha256": "c028f00f65d7ee66bf36205b4a4d7f32e93732f69ac3c09dc68977c1af364c3a"
+    },
+    {
+      "path": "phase5b/valid_pmr.parquet",
+      "size": 1012,
+      "sha256": "d4e0b8af5913de6cb41bde996b0ba83b5a4cafad3c7eba865056b3b3da076a56"
+    },
+    {
+      "path": "reports/00_environment_and_scope.md",
+      "size": 5560,
+      "sha256": "ad6c49f0aa89a86172c6fcfbc995ca95dbfae78b35e47ae45d6a7c3a2f14d2e9"
+    },
+    {
+      "path": "reports/01_data_inventory.md",
+      "size": 3270,
+      "sha256": "dc1dc6e5aafe4209086e27b825e78d6266469bdbfd8db87b2ddb80e712004d49"
+    },
+    {
+      "path": "reports/02_convention_audit.md",
+      "size": 632,
+      "sha256": "7ddb3be283f8e1a85b1117d0d4fd3775620bbedf3e5377ccf693f6de8355b905"
+    },
+    {
+      "path": "reports/03_pairing_audit.md",
+      "size": 3788,
+      "sha256": "d4b9d2f91e4d2b6bec14f34bc6ec06dc05ceeb406a9d9805af740e05ebef1488"
+    },
+    {
+      "path": "reports/04_feasibility_results.md",
+      "size": 3925,
+      "sha256": "52b531f32494dda8b8775b71d77df65232288f1a684cd238328ee4d825d9defd"
+    },
+    {
+      "path": "reports/05_go_no_go.md",
+      "size": 3925,
+      "sha256": "e5971a83153cbcf126f01e91a3daa072fa07fb6ce1ad2411dec04e35b8af695a"
+    },
+    {
+      "path": "reports/06_phase0_4_freeze.md",
+      "size": 2557,
+      "sha256": "e30358c4adfb36bdbc4b4f1546e88ff3c16f3627596b93db48b19bcb7f77cd54"
+    },
+    {
+      "path": "reports/07_symmetry_residual_audit.md",
+      "size": 2833,
+      "sha256": "45ef109c6d553fe27b065f8cc92db370a83b9ff9fd8cb53fc2809fae0803b363"
+    },
+    {
+      "path": "reports/08_manual_pair_audit.md",
+      "size": 8985,
+      "sha256": "61733e584d76d061de841a0babccfc336009b75d71c502cbf6e6abb3add890d8"
+    },
+    {
+      "path": "reports/09_domain_and_o3_transport.md",
+      "size": 1633,
+      "sha256": "6c2cee84da8aec11b51799ce93d424c03f41674e0ea41172438c07c3bc9a65f8"
+    },
+    {
+      "path": "reports/10_structure_mediated_shift.md",
+      "size": 1153,
+      "sha256": "f3eadf2a52c9da2a162f74b4958039954dee626d5227970e29d64a9e8c896fa2"
+    },
+    {
+      "path": "reports/11_ranking_revalidation.md",
+      "size": 1792,
+      "sha256": "97b05d7dd48181749e21cd7f5abb9205bca1a84b7562ea918902d677129f64e5"
+    },
+    {
+      "path": "reports/12_in_source_and_pmr.md",
+      "size": 3536,
+      "sha256": "aded881dd1585df8347016c0bd8263ae3fde5ece09deeb0e81d762a2d2a557b8"
+    },
+    {
+      "path": "reports/13_soft_mode_feasibility.md",
+      "size": 1655,
+      "sha256": "ab80b2bad546355b906d5d63dc0dcf4815089de37034e526c13c2fd728caee9c"
+    },
+    {
+      "path": "reports/14_phase5a_decision.md",
+      "size": 821,
+      "sha256": "978a72442719e1853ea1fe84e79a82d8486e3a4d8a9db8a5eef9b1ef2bf93012"
+    },
+    {
+      "path": "reports/15_phase5a_corrections.md",
+      "size": 2832,
+      "sha256": "06f40357ffa7c8e707338961cfcae6082f62b36751c72f78b406ccac95c8f194"
+    },
+    {
+      "path": "reports/16_core_extended_panels.md",
+      "size": 1716,
+      "sha256": "3bb10a4f331cb68856d570cad1e7ece0a97e132d93bb185ed406358f0178714a"
+    },
+    {
+      "path": "reports/17_source_native_frame_audit.md",
+      "size": 1879,
+      "sha256": "c22cb06422dd7a3ecb1e174ef7054f4b0f9bfe8526119757da0f3185194b5639"
+    },
+    {
+      "path": "reports/18_discrepancy_hierarchy.md",
+      "size": 5190,
+      "sha256": "1bfcddf76b0252449f895f8750532cb33342e33f389c6169cb531d62887565e8"
+    },
+    {
+      "path": "reports/19_equivariant_baselines.md",
+      "size": 4683,
+      "sha256": "6a23b6737fe982c914479ab0a200cb30034da55c62408ceee90868e97754e923"
+    },
+    {
+      "path": "reports/20_valid_pmr.md",
+      "size": 735,
+      "sha256": "33196bb90da2c8c173db578b70561f8c1d06ed09960aadbbd3cc282a3ffcd044"
+    },
+    {
+      "path": "reports/21_leaderboard_stress_test.md",
+      "size": 4440,
+      "sha256": "d524741e463da2c61c2dafaa0a4e1e05a9a4d36d44fb288b0792dbd9b0143caa"
+    },
+    {
+      "path": "reports/22_lightweight_calibration.md",
+      "size": 233,
+      "sha256": "28895d60f008332fee08d292923c45e769a0b1d664ab893d78fdc4179978fa46"
+    },
+    {
+      "path": "reports/23_full_lambda_recovery_audit.md",
+      "size": 1547,
+      "sha256": "8ae3e32b17d26808f69b73b8f77584592c0582d5326de6e7a70603b602569565"
+    },
+    {
+      "path": "reports/24_adjudication_options.md",
+      "size": 876,
+      "sha256": "5a463a064ee4d98c778df879ddf3754eb3e0e3f5714c5bb5ef162cd822e3934f"
+    },
+    {
+      "path": "reports/25_phase5b_decision.md",
+      "size": 1241,
+      "sha256": "7cecbb85bd8687f246c1505013e75f5f1ff7180cbd33ebc4e3db88e0a71d4d61"
+    },
+    {
+      "path": "reports/open_questions.md",
+      "size": 2478,
+      "sha256": "3a1351036605e50e74854ea082e1ba180cd8275b51c8d0c9d0a65981888a5f19"
+    }
+  ]
+}
