@@ -12,7 +12,12 @@ import numpy as np
 import pytest
 from pymatgen.analysis.piezo import PiezoTensor
 
-from crosspiezo.conventions.voigt import cartesian_to_voigt, voigt_to_cartesian
+from crosspiezo.conventions.voigt import (
+    cartesian_to_voigt,
+    piezo_stress_voigt_to_cartesian,
+    trusted_piezo_stress_voigt_to_cartesian,
+    voigt_to_cartesian,
+)
 
 
 def _random_symmetric_piezo_tensor(rng: np.random.Generator) -> np.ndarray:
@@ -75,6 +80,16 @@ def test_pymatgen_voigt_oracle():
     assert np.allclose(ours, expected, atol=1e-9), "pymatgen oracle mismatch"
 
 
+def test_trusted_converter_agrees_with_project_converter():
+    """pymatgen PiezoTensor.from_vasp_voigt agrees with our piezo_stress converter."""
+    rng = np.random.default_rng(104)
+    cart = _random_symmetric_piezo_tensor(rng)
+    internal = cartesian_to_voigt(cart, engineering_shear=True)
+    project = piezo_stress_voigt_to_cartesian(internal)
+    trusted = trusted_piezo_stress_voigt_to_cartesian(internal)
+    assert np.allclose(project, trusted, atol=1e-9), "trusted/project converter mismatch"
+
+
 def test_round_trip_does_not_imply_correctness():
     """A self-consistent but wrong converter can still round-trip; test identity."""
     rng = np.random.default_rng(103)
@@ -84,3 +99,14 @@ def test_round_trip_does_not_imply_correctness():
     # This assertion is expected to pass even before the fix; the real oracle is
     # work conjugacy above.  We keep it as a sanity check.
     assert np.allclose(cart, recovered)
+
+
+def test_tensor_lineage_reports_zero_diff_for_consistent_tensors():
+    """When stored Cartesian equals trusted reconstruction, lineage diff is zero."""
+    rng = np.random.default_rng(105)
+    cart = _random_symmetric_piezo_tensor(rng)
+    internal = cartesian_to_voigt(cart, engineering_shear=True)
+    from crosspiezo.conventions.voigt import tensor_lineage_metrics
+    metrics = tensor_lineage_metrics(internal, cart)
+    assert metrics["frobenius_diff_trusted_vs_stored"] < 1e-9
+    assert metrics["relative_diff"] < 1e-9
