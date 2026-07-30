@@ -1,0 +1,48 @@
+# CrossPiezo / PULSE data source configuration
+# All paths are read-only relative to the external data root.
+
+data_root: E:/DATA
+
+sources:
+  t2c_flow:
+    name: T2C-Flow
+    root: E:/DATA/T2C-Flow
+    manifest: E:/DATA/T2C-Flow/MANIFEST.json
+    readme: E:/DATA/T2C-Flow/README.md
+    records:
+      jarvis_piezo: processed/jarvis_piezo.parquet
+      mp_piezo: processed/materials_project_piezo.parquet
+      unified_piezo: processed/piezo_unified.parquet
+      jarvis_mp_overlap: processed/jarvis_mp_piezo_overlap.parquet
+      mp_quarantine: processed/materials_project_piezo_quarantine.jsonl
+    role: primary_cross_protocol_piezo
+    license: ODC-BY / original database terms
+
+  piezojet:
+    name: PiezoJet
+    root: E:/DATA/PiezoJet
+    manifest: E:/DATA/PiezoJet/processed/jarvis_dfpt_v9_full_public/manifest.json
+    migration_manifest: E:/DATA/PiezoJet/MIGRATION_MANIFEST.json
+    strict_factors:
+      root: E:/DATA/PiezoJet/processed/jarvis_dfpt_v9_full_public
+      manifest: E:/DATA/PiezoJet/processed/jarvis_dfpt_v9_full_public/manifest.json
+    role: microscopic_factors_and_strict_completions
+    license: original database terms
+
+  mp_dielectric:
+    name: MP Dielectric
+    root: E:/DATA/Tpami/mp_dielectric
+    role: coupled_dielectric
+
+  mp_elastic:
+    name: MP Elastic
+    root: E:/DATA/Tpami/mp_elastic
+    role: coupled_elastic
+
+  ai4materials_report:
+    name: AI4Materials Dataset Report
+    path: E:/DATA/AI4Materials_Dataset_Report.md
+    role: high_level_inventory
+
+output_root: ./artifacts
+report_root: ./reports

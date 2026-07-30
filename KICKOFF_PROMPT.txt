@@ -1,0 +1,42 @@
+请先完整读取当前目录中的：
+
+- CLAUDE.md
+- CROSSPIEZO_TASKBOOK.md
+- PiezoProtocol_Draft_v0.1.tex
+- PiezoProtocol_references.bib
+
+数据集、manifest、审计报告和 split 均位于 `E:/DATA`。将 `E:/DATA` 视为永久只读目录。
+
+你现在只执行 CROSSPIEZO_TASKBOOK.md 的 Phase 0–Phase 4：
+
+1. 审计运行环境和 LaTeX 科学合同；
+2. 对 `E:/DATA` 做只读 dry-run 扫描并建立资产 inventory；
+3. 建立 schema、张量 convention、单位、旋转和点群测试；
+4. 构建 JARVIS–MP 严格结构配对与 tensor transport；
+5. 完成最小 feasibility audit：
+   - strict pair 数量；
+   - 跨协议张量差异；
+   - 协议差异与模型误差尺度；
+   - top-k 排名稳定性；
+   - PiezoJet strict-factor 子集上的 soft-mode sensitivity；
+6. 给出 Go / Narrow / No-Go 报告。
+
+执行约束：
+
+- 不修改 `E:/DATA`；
+- 不复制大型文件；
+- 不联网；
+- 不训练完整 PULSE；
+- 不修改 LaTeX 中的结果性 TBD；
+- 不根据张量差异调结构匹配容差；
+- convention 不明确时 quarantine，不猜测；
+- 每个 Phase 运行 lint、type check 和 tests；
+- 完成 Phase 4 后停止。
+
+开始前先输出：
+- 你对科学目标和 claim boundary 的理解；
+- 预计读取的文件；
+- 非破坏性执行计划；
+- 当前需要人工确认的问题。
+
+然后再开始创建或修改文件。

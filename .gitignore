@@ -1,0 +1,25 @@
+# Python caches
+__pycache__/
+*.py[cod]
+*.egg-info/
+
+# Tool caches
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+
+# Virtual environments
+.venv/
+venv/
+
+# Generated artifacts (keep only source-controlled configs and scripts)
+artifacts/
+reports/*.html
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Editor settings (unless intentionally shared)
+.vscode/
+.idea/

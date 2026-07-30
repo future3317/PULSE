@@ -1,0 +1,38 @@
+# Frozen strict structure-matching configuration for CrossPiezo Phase 3.
+# Do not tune these tolerances after inspecting tensor discrepancies.
+
+matcher:
+  # pymatgen StructureMatcher tolerances
+  ltol: 0.2          # fractional length tolerance
+  stol: 0.3          # site tolerance (Angstrom)
+  angle_tol: 5.0     # angle tolerance (degrees)
+  primitive: true    # try primitive cells
+  scale: true
+
+# Tier assignment rules
+tiers:
+  tier_0:
+    name: exact_provenance_pair
+    requirement: shared upstream structure identifier and verified atom mapping
+  tier_1:
+    name: strict_relaxed_structure_match
+    requirement: same composition and atom count, species-aware periodic match below frozen tolerances, compatible space group
+  tier_2:
+    name: prototype_preserving_relaxed_shift
+    requirement: same prototype and species mapping but non-negligible geometry difference
+  tier_3:
+    name: formula_only_relation
+    requirement: same reduced formula without verified structure mapping
+
+# Quarantine reasons that prevent a pair from entering the primary benchmark
+quarantine_reasons:
+  - ambiguous_atom_mapping
+  - incompatible_space_group
+  - multiple_candidate_matches
+  - structure_match_failure
+  - tensor_convention_conflict
+  - symmetry_residual_exceeds_threshold
+  - missing_coupled_labels
+
+# Symmetry residual threshold for quarantine (Frobenius norm of raw minus projected)
+symmetry_residual_threshold: 1.0  # C/m^2, generous for raw converted tensors

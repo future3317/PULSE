@@ -1,0 +1,612 @@
+\documentclass[11pt]{article}
+
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amssymb,amsfonts,bm}
+\usepackage{booktabs,multirow,array}
+\usepackage{graphicx}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\usepackage{cleveref}
+\usepackage{siunitx}
+\usepackage{enumitem}
+\usepackage{microtype}
+\usepackage{authblk}
+\usepackage{mathtools}
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+\usepackage{tabularx}
+
+\hypersetup{
+  colorlinks=true,
+  linkcolor=blue!60!black,
+  citecolor=blue!60!black,
+  urlcolor=blue!60!black
+}
+
+\newcommand{\TBD}[1]{\textcolor{red!75!black}{\textbf{[TBD: #1]}}}
+\newcommand{\draftnote}[1]{\par\noindent\colorbox{yellow!25}{\parbox{0.96\linewidth}{\textbf{Draft note.} #1}}\par}
+\newcommand{\E}{\mathbf{e}}
+\newcommand{\Cten}{\mathbf{C}}
+\newcommand{\epsT}{\boldsymbol{\epsilon}}
+\newcommand{\Zstar}{\mathbf{Z}^{\ast}}
+\newcommand{\PhiFC}{\boldsymbol{\Phi}}
+\newcommand{\Lam}{\boldsymbol{\Lambda}}
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\PULSE}{\textsc{Pulse}}
+\newcommand{\CrossPiezo}{\textsc{CrossPiezo}}
+\newcommand{\norm}[1]{\left\lVert #1 \right\rVert}
+\newcommand{\tr}{\operatorname{tr}}
+\newcommand{\vecop}{\operatorname{vec}}
+\newcommand{\Prob}{\mathbb{P}}
+\newcommand{\Exp}{\mathbb{E}}
+
+\title{\textbf{Protocol-Induced Uncertainty Limits AI Screening of Piezoelectric Materials}}
+
+\author[1]{Anonymous Author(s)}
+\affil[1]{Anonymous Institution}
+\date{Prospective manuscript draft v0.1 --- 29 July 2026}
+
+\begin{document}
+\maketitle
+
+\draftnote{This is a prospective manuscript scaffold. It contains no fabricated numerical results. All red \TBD{placeholders} must be replaced by preregistered analyses or removed. The preferred high-impact version includes a small third-protocol adjudication set; the core cross-database study can proceed without it but supports a narrower claim.}
+
+\begin{abstract}
+Machine-learning studies of crystalline response tensors commonly treat a single high-throughput density-functional-theory database as ground truth. This assumption is especially fragile for piezoelectricity, whose relaxed-ion contribution depends on the inverse optical force-constant matrix and can therefore amplify small protocol-dependent changes in relaxed structure, phonon frequencies, Born charges, and internal-strain couplings. Here we introduce \CrossPiezo, a structure-matched and versioned benchmark spanning Materials Project and JARVIS piezoelectric calculations, with coupled dielectric and elastic labels where available. We first quantify a \emph{protocol uncertainty floor}: the disagreement between independently generated tensors for the same matched material after rigorous cell, coordinate, Voigt, and point-group alignment. We then derive and test a mode-resolved sensitivity model connecting this disagreement to soft optical modes and microscopic electromechanical factors. Finally, we propose \PULSE{} (Protocol-Uncertainty Learning for Symmetry-Equivariant tensors), a source-conditional probabilistic tensor model with symmetry-compatible calibrated prediction regions and decision-theoretic robust screening. The study is designed to test whether architecture-level improvements reported on conventional random splits remain meaningful under source, version, chemistry, and prototype shifts, and whether high-performing candidates remain highly ranked across plausible computational protocols. \TBD{Insert the principal quantitative findings only after all frozen analyses are complete.}
+\end{abstract}
+
+\section{Introduction}
+
+High-throughput density-functional theory (DFT) databases have become foundational infrastructure for materials discovery. They provide standardized crystal structures and computed labels that are widely used to train graph neural networks, equivariant tensor models, and generative materials systems. Piezoelectricity is a particularly important use case because full third-rank response tensors are expensive to compute and sparse relative to scalar properties. The Materials Project (MP) established an early open database of nearly one thousand piezoelectric tensors \cite{dejong2015}, while JARVIS later reported density-functional perturbation theory (DFPT) calculations for approximately five thousand insulating crystals \cite{choudhary2020}. Recent equivariant architectures such as GMTNet, EATGNN, GoeCTP, and CEITNet have substantially improved symmetry-consistent tensor prediction \cite{yan2024,dong2025,hua2026,jin2026}.
+
+However, improved agreement with a held-out subset of one database does not establish agreement with the physical response, or even with another high-throughput DFT protocol. High-throughput databases differ in exchange--correlation functional, pseudopotentials, structural relaxation, convergence settings, cell conventions, stability filters, tensor symmetrization, and post-processing. A systematic comparison of AFLOW, MP, and OQMD showed that nominally identical materials can exhibit database-to-database discrepancies comparable to DFT--experiment discrepancies for several scalar properties \cite{hegde2023}. Piezoelectric response may be more protocol-sensitive than many scalar labels because the ionic response contains an inverse force-constant operator \cite{wuvanderbilt2005,choudhary2020}. Database versions also matter: response collections and tensor-fitting pipelines can change after bug fixes and revised post-processing, so a database name without a frozen version is not a complete scientific label.
+
+The central problem is therefore not merely data noise. It is \emph{structured protocol uncertainty}: the target distribution changes with the computational and post-processing protocol, and the magnitude of this shift depends on the material. Treating all labels as exchangeable observations from one ground-truth function can make random-split errors optimistic, render model uncertainty miscalibrated, and destabilize high-performance screening.
+
+This work asks four questions:
+\begin{enumerate}[leftmargin=1.5em]
+    \item How large is cross-protocol disagreement for complete piezoelectric tensors after strict structure and convention alignment?
+    \item Is disagreement mechanistically amplified by soft optical modes and large ionic-response sensitivity?
+    \item Can a symmetry-equivariant probabilistic model predict both source-conditional tensors and their protocol disagreement with calibrated uncertainty?
+    \item How does protocol uncertainty alter model leaderboards and the ranking of candidate materials?
+\end{enumerate}
+
+We make the following planned contributions:
+\begin{enumerate}[leftmargin=1.5em]
+    \item \textbf{\CrossPiezo benchmark.} A versioned, provenance-preserving benchmark of matched and unmatched MP and JARVIS piezoelectric records, with exact tensor convention conversion, structural match tiers, and frozen source/version/OOD splits.
+    \item \textbf{Mechanistic protocol sensitivity.} A first-order perturbation analysis of the ionic piezoelectric response and a mode-resolved sensitivity score tested against observed cross-protocol discrepancies.
+    \item \textbf{\PULSE model.} A source-conditional equivariant distributional model in symmetry-adapted tensor coordinates, separating a computational center from protocol contrast without claiming an unobservable ``true'' tensor.
+    \item \textbf{Symmetry-compatible calibration and robust screening.} Source-stratified calibrated tensor regions and lower-confidence-bound screening of coupled electromechanical metrics.
+    \item \textbf{Leaderboard stress test.} A comparison of modern tensor models under conventional in-source splits, cross-source counterfactual tests, database-version shifts, chemistry/prototype OOD, and high-sensitivity strata.
+\end{enumerate}
+
+\section{Scientific Scope and Claim Boundary}
+
+The study distinguishes five uncertainty layers:
+\begin{enumerate}[leftmargin=1.5em]
+    \item \textbf{Representation uncertainty}: cell basis, Cartesian frame, Voigt ordering, engineering shear, unit, and symmetry projection.
+    \item \textbf{Structure uncertainty}: different relaxed cells, internal coordinates, or space groups assigned to nominally the same material.
+    \item \textbf{Protocol uncertainty}: functional, pseudopotential, convergence, DFPT implementation, stability filtering, and response boundary conditions.
+    \item \textbf{Version uncertainty}: database reconstruction, tensor fitting, symmetrization, deprecation, or bug-fix changes.
+    \item \textbf{Model uncertainty}: finite training data, architecture misspecification, and optimization variability.
+\end{enumerate}
+
+The paper does \emph{not} claim that the arithmetic mean of two databases is experimental truth. With two protocols alone, absolute protocol bias is not identifiable. The primary target is the source-conditional predictive distribution and the cross-protocol disagreement. A latent physical truth is discussed only if a separately generated third-protocol or experimental adjudication set is available.
+
+\section{Data}
+
+\subsection{\CrossPiezo data assets}
+
+The local frozen inventory contains 5,000 JARVIS and 3,316 MP piezoelectric records, giving 8,316 source-tagged entries and 1,266 preliminary JARVIS--MP overlaps before strict structure matching. The same inventory includes 6,281 MP dielectric and 11,225 MP elastic records. A separate audited JARVIS DFPT cache contains 4,995 parsed records and 1,638 strict internal-strain completions with force constants, Born charges, dielectric response, and internal-strain factors.
+
+\begin{table}[t]
+\centering
+\caption{Planned data roles. Counts are local snapshot inventories and must be replaced by hash-bound post-filter counts. ``Paired'' means strict structure matching, not formula matching.}
+\label{tab:data}
+\begin{tabularx}{\linewidth}{lrrX}
+\toprule
+Asset & Inventory & Paired/strict & Role \\
+\midrule
+JARVIS piezoelectric & 5,000 & \TBD{strict matched count} & Source A labels; microscopic factors on audited subset \\
+MP piezoelectric & 3,316 & 1,266 preliminary overlaps & Source B labels; source/version comparison \\
+Unified piezoelectric & 8,316 & \TBD{after matching} & Multi-source model training \\
+PiezoJet strict factors & 1,638 & \TBD{with MP pair} & Mechanistic sensitivity analysis \\
+MP dielectric & 6,281 & \TBD{cross-source overlap} & Coupled observable and derived metrics \\
+MP elastic & 11,225 & \TBD{cross-source overlap} & Coupled observable and $d=eC^{-1}$ propagation \\
+MP 2015 snapshot & 941 reported & \TBD{old--new match} & Database-version shift \\
+Third-protocol anchor & \TBD{48--96} & preregistered & Optional adjudication and high-impact validation \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\subsection{Frozen source and version identifiers}
+
+Every record must retain:
+\begin{itemize}[leftmargin=1.5em]
+    \item database and collection name;
+    \item release/version date;
+    \item material identifier and upstream structure identifier;
+    \item raw and normalized structure hashes;
+    \item functional, code, pseudopotential family, cutoffs, $k$-point policy, and known convergence metadata;
+    \item tensor type, boundary condition, ionic/electronic decomposition, units, Voigt convention, and transformation history;
+    \item parser version and artifact SHA256.
+\end{itemize}
+
+No source is silently promoted to higher fidelity. MP and JARVIS are treated as different protocols, not as low- and high-fidelity labels.
+
+\subsection{Structure matching tiers}
+
+Tensor comparison is only meaningful after a physical structure correspondence is established. We define:
+\begin{description}[leftmargin=2.4em,style=nextline]
+    \item[Tier 0: exact provenance pair] Shared upstream structure identifier and verified atom mapping.
+    \item[Tier 1: strict relaxed-structure match] Same composition and atom count, species-aware periodic match below frozen lattice and site tolerances, and compatible space group.
+    \item[Tier 2: prototype-preserving relaxed shift] Same prototype and species mapping but non-negligible relaxed geometry difference.
+    \item[Tier 3: formula-only relation] Same reduced formula without a verified structure mapping.
+\end{description}
+Only Tiers 0--1 enter the primary tensor discrepancy benchmark. Tier 2 is used to study structure-mediated disagreement. Tier 3 is never treated as a paired tensor observation.
+
+\subsection{Tensor normalization and symmetry projection}
+
+Each source tensor is converted exactly once to a common Cartesian tensor
+\begin{equation}
+e_{\alpha jk}=e_{\alpha kj},
+\end{equation}
+using the source-declared engineering-strain convention. Let $G_i$ denote the crystal point group of the common matched structure and $\Pi_{G_i}$ its Reynolds projector. We store both the raw converted tensor and
+\begin{equation}
+\E_{i,s}^{\mathrm{sym}}=\Pi_{G_i}\E_{i,s}.
+\end{equation}
+Primary analyses use the projected tensor only after reporting the raw symmetry residual. Records with incompatible source symmetry, ambiguous atom mapping, or unexplained sign/convention disagreement are quarantined rather than repaired.
+
+\section{Protocol Disagreement Metrics}
+
+For a paired material $i$ with sources $a$ and $b$, define the normalized tensor discrepancy
+\begin{equation}
+D_i^{(a,b)}
+=
+\frac{\norm{\E_{i,a}-\E_{i,b}}_F}
+{\frac{1}{2}\left(\norm{\E_{i,a}}_F+\norm{\E_{i,b}}_F\right)+\varepsilon}.
+\end{equation}
+We additionally report:
+\begin{itemize}[leftmargin=1.5em]
+    \item absolute Frobenius discrepancy;
+    \item irreducible-channel discrepancy;
+    \item cosine and principal-response-direction disagreement;
+    \item amplitude ratio and sign disagreement;
+    \item source disagreement in electronic and ionic contributions where both are available;
+    \item disagreement in derived $d=eC^{-1}$, dielectric, and elastic quantities;
+    \item top-$k$ Jaccard overlap, Kendall rank correlation, and rank-flip probability.
+\end{itemize}
+
+A model's in-source test error is compared with the paired-source disagreement. We define a protocol-to-model ratio
+\begin{equation}
+\mathrm{PMR}
+=
+\frac{\operatorname{median}_{i\in\mathcal P}\norm{\E_{i,a}-\E_{i,b}}_F}
+{\frac{1}{2}\left(
+\operatorname{MAE}_{a\rightarrow a}
++
+\operatorname{MAE}_{b\rightarrow b}
+\right)+\varepsilon}.
+\end{equation}
+A PMR above one would indicate that source disagreement exceeds the typical model error reported within a single database. This is a preregistered diagnostic, not an assumed result.
+
+\section{Mechanistic Origin of Protocol Sensitivity}
+
+\subsection{DFPT factorization}
+
+For a dynamically stable insulating crystal, the relaxed-ion piezoelectric response can be written schematically as
+\begin{equation}
+\E
+=
+\E_{\mathrm{el}}
++
+\E_{\mathrm{ion}},
+\qquad
+\E_{\mathrm{ion}}
+=
+\frac{1}{\Omega}
+(\Zstar)^\mathsf{T}
+Q\Phi_o^{-1}Q^\mathsf{T}
+\Lam,
+\label{eq:factor}
+\end{equation}
+where $Q$ removes the three translational modes and $\Phi_o=Q^\mathsf{T}\PhiFC Q$ is the optical force-constant block.
+
+For two nearby protocols, a first-order perturbation gives
+\begin{align}
+\delta \E_{\mathrm{ion}}
+\approx&
+-\frac{\delta\Omega}{\bar\Omega}\bar\E_{\mathrm{ion}}
++\frac{1}{\bar\Omega}
+\Big[
+(\delta \Zstar)^\mathsf{T}\bar Q\bar\Phi_o^{-1}\bar Q^\mathsf{T}\bar\Lam
+\nonumber\\
+&-
+(\bar{\Zstar})^\mathsf{T}\bar Q\bar\Phi_o^{-1}
+(\delta\Phi_o)
+\bar\Phi_o^{-1}\bar Q^\mathsf{T}\bar\Lam
++
+(\bar{\Zstar})^\mathsf{T}\bar Q\bar\Phi_o^{-1}\bar Q^\mathsf{T}
+(\delta\Lam)
+\Big],
+\label{eq:perturb}
+\end{align}
+plus basis and projector perturbations that are explicitly retained in numerical evaluation. The middle term contains two inverse force-constant factors and predicts strong amplification near soft optical modes.
+
+\subsection{Mode-resolved sensitivity}
+
+Let $\lambda_m$ and $v_m$ be optical eigenpairs, with mode effective charge $z_m=(\Zstar)^\mathsf{T}Qv_m$ and internal-strain coupling $\ell_m=v_m^\mathsf{T}Q^\mathsf{T}\Lam$. Then
+\begin{equation}
+\E_{\mathrm{ion}}
+=
+\frac{1}{\Omega}
+\sum_m
+\frac{z_m\otimes \ell_m}{\lambda_m}.
+\end{equation}
+We define a protocol-sensitivity proxy
+\begin{equation}
+S_{\mathrm{soft}}
+=
+\frac{1}{\Omega}
+\sum_m
+\frac{\norm{z_m}\norm{\ell_m}}
+{(\lvert\lambda_m\rvert+\delta)^2},
+\label{eq:ssoft}
+\end{equation}
+motivated by the derivative of $1/\lambda_m$. Alternative operator-norm and signed versions are preregistered. The hypothesis is that $S_{\mathrm{soft}}$, ionic fraction, structure mismatch, and symmetry change explain cross-protocol disagreement more effectively than composition-only descriptors.
+
+\subsection{Falsifiable mechanistic tests}
+
+\begin{enumerate}[leftmargin=1.5em]
+    \item Compare correlations of discrepancy with minimum optical eigenvalue, $S_{\mathrm{soft}}$, Born-charge norm, internal-strain norm, ionic fraction, volume mismatch, and structure-matcher distance.
+    \item Fit nested models with chemistry-only, structure-only, and microscopic-factor descriptors.
+    \item Test whether the soft-mode relationship survives formula/prototype-grouped cross-validation.
+    \item Repeat after excluding near-unstable materials to determine whether the effect is entirely tail-driven.
+    \item Use source/version as interventions only descriptively; do not claim causal attribution when protocol factors are confounded.
+\end{enumerate}
+
+\section{\PULSE: Protocol-Conditional Equivariant Tensor Distributions}
+
+\subsection{Symmetry-adapted coordinates}
+
+For each matched structure, let $B_i\in\R^{18\times r_i}$ be an orthonormal basis of the point-group-allowed piezoelectric subspace. The reduced tensor coordinates are
+\begin{equation}
+z_{i,s}=B_i^\mathsf{T}\vecop(\E_{i,s}).
+\end{equation}
+This representation removes forbidden components exactly while preserving a reversible map to the full Cartesian tensor.
+
+\subsection{Computational center and protocol contrast}
+
+For two principal sources $a$ and $b$, define
+\begin{equation}
+c_i=\frac{1}{2}(z_{i,a}+z_{i,b}),
+\qquad
+\Delta_i=\frac{1}{2}(z_{i,a}-z_{i,b}).
+\end{equation}
+The center $c_i$ is a reference-free computational center, not physical truth. \PULSE{} predicts
+\begin{equation}
+\mu_{i,s}
+=
+\mu_c(x_i)+\eta_s\mu_\Delta(x_i),
+\qquad
+\eta_a=+1,\quad \eta_b=-1.
+\label{eq:pulsemean}
+\end{equation}
+For more than two sources or versions, source contrasts obey a zero-sum identifiability constraint.
+
+\subsection{Distributional output}
+
+The source-conditional label model is
+\begin{equation}
+p(z_{i,s}\mid x_i,s)
+=
+\mathcal N\!\left(
+\mu_{i,s},
+\Sigma_{\mathrm{ep}}(x_i)
++
+\Sigma_{\mathrm{protocol},s}(x_i)
+\right).
+\label{eq:likelihood}
+\end{equation}
+Covariance is parameterized in symmetry-adapted or irreducible blocks so that the induced tensor distribution transforms consistently under rotations. The model must distinguish:
+\begin{itemize}[leftmargin=1.5em]
+    \item epistemic uncertainty from ensembles or posterior approximations;
+    \item protocol spread learned from paired observations;
+    \item source-specific residual uncertainty;
+    \item structural-match uncertainty, evaluated separately rather than folded into labels.
+\end{itemize}
+
+The backbone can be instantiated with GMTNet, CEITNet, PiezoJet features, or another audited O(3)-equivariant architecture. The paper's method claim is the protocol-conditional distribution and calibration framework, not a marginal architecture change.
+
+\subsection{Training objective}
+
+For paired and unpaired records,
+\begin{align}
+\mathcal L
+=&
+-\sum_{(i,s)\in\mathcal D}
+\log p(z_{i,s}\mid x_i,s)
++
+\lambda_{\mathrm{pair}}
+\sum_{i\in\mathcal P}
+\norm{\widehat\Delta_i-\Delta_i}_{W_i}^{2}
+\nonumber\\
+&+
+\lambda_{\mathrm{phys}}
+\mathcal L_{\mathrm{soft}}
++
+\lambda_{\mathrm{coupled}}
+\mathcal L_{e,C,\epsilon},
+\end{align}
+where $\mathcal L_{\mathrm{soft}}$ tests consistency between predicted protocol spread and the mechanistic sensitivity prior without forcing a deterministic relation.
+
+\subsection{Symmetry-compatible calibration}
+
+On a frozen calibration set, define the Mahalanobis nonconformity score
+\begin{equation}
+r_i
+=
+\left[
+(z_{i,s}-\mu_{i,s})^\mathsf{T}
+\Sigma_{i,s}^{-1}
+(z_{i,s}-\mu_{i,s})
+\right]^{1/2}.
+\end{equation}
+A source-stratified quantile $q_{1-\alpha,s}$ gives the prediction ellipsoid
+\begin{equation}
+\mathcal C_{\alpha}(x,s)
+=
+\left\{
+z:
+(z-\mu_s)^\mathsf{T}\Sigma_s^{-1}(z-\mu_s)
+\le q_{1-\alpha,s}^{2}
+\right\}.
+\end{equation}
+Because calibration uses symmetry-adapted coordinates and invariant norms, rotating a crystal and tensor together should not change the nonconformity score. Marginal coverage is reported separately for source, chemistry, prototype, sensitivity, and version strata. No conditional coverage guarantee is claimed without additional assumptions.
+
+\section{Robust Materials Screening}
+
+\subsection{Coupled electromechanical metrics}
+
+Screening based only on $\max |e_{ij}|$ is incomplete. Where coupled labels are available, we propagate uncertainty to
+\begin{equation}
+\mathbf d = \E\Cten^{-1},
+\end{equation}
+and to preregistered orientation-dependent scalar functionals $F(\E,\Cten,\epsT)$. For each source and candidate, posterior samples preserve cross-property covariance where modeled.
+
+\subsection{Protocol-robust score}
+
+For a performance functional $F$, define
+\begin{equation}
+R_{\alpha}(x)
+=
+\min_{s\in\mathcal S}
+\inf_{T\in\mathcal C_{\alpha}(x,s)}
+F(T).
+\label{eq:robustscore}
+\end{equation}
+This lower-confidence score rewards candidates whose performance remains high across source-conditioned uncertainty regions. We also report:
+\begin{equation}
+P_{\mathrm{all}}(x;\tau)
+=
+\Prob\left[
+F(T_s)>\tau
+\;\; \forall s\in\mathcal S
+\right].
+\end{equation}
+Candidates are categorized as:
+\begin{itemize}[leftmargin=1.5em]
+    \item high-performance / high-consensus;
+    \item high-performance / high-disagreement;
+    \item moderate-performance / high-confidence;
+    \item low-confidence or out-of-domain.
+\end{itemize}
+
+\section{Experimental Design}
+
+\subsection{Frozen splits}
+
+\begin{table}[t]
+\centering
+\caption{Required evaluation axes.}
+\label{tab:splits}
+\begin{tabularx}{\linewidth}{lX}
+\toprule
+Split & Scientific question \\
+\midrule
+Legacy in-source random & Compatibility with prior tensor-prediction papers; not the main reliability claim \\
+Formula-disjoint & Generalization to new compositions \\
+Prototype-disjoint & Generalization to new structural families \\
+Source-held-out & Can a model trained on one protocol predict another? \\
+Paired counterfactual & For a known structure, can the model predict the alternate-source tensor? \\
+Version-held-out & Does calibration survive database post-processing changes? \\
+High-sensitivity holdout & Does the model recognize soft-mode-amplified risk? \\
+Multi-shift & Source + chemistry/prototype + sensitivity shift \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\subsection{Baselines}
+
+\begin{enumerate}[leftmargin=1.5em]
+    \item Source-specific GMTNet/EATGNN/CEITNet-style models.
+    \item Source-agnostic pooled model.
+    \item Source-token model with shared output head.
+    \item Shared backbone with source-specific heads.
+    \item Paired $\Delta$-learning model.
+    \item Heteroscedastic Gaussian model without equivariant covariance.
+    \item Deep ensemble with global conformal scaling.
+    \item \PULSE{} without mechanistic sensitivity.
+    \item Full \PULSE{}.
+\end{enumerate}
+
+\subsection{Metrics}
+
+Accuracy:
+\begin{itemize}[leftmargin=1.5em]
+    \item component MAE/RMSE;
+    \item absolute and relative Frobenius error;
+    \item cosine and amplitude;
+    \item symmetry residual;
+    \item derived $d$ and orientation-functional error.
+\end{itemize}
+
+Distributional quality:
+\begin{itemize}[leftmargin=1.5em]
+    \item negative log-likelihood;
+    \item energy score;
+    \item coverage and interval/ellipsoid volume;
+    \item calibration error by source and OOD stratum;
+    \item risk--coverage curves and abstention.
+\end{itemize}
+
+Decision quality:
+\begin{itemize}[leftmargin=1.5em]
+    \item top-$k$ Jaccard overlap;
+    \item Kendall $\tau$;
+    \item rank-flip probability;
+    \item robust hit rate on the adjudication set;
+    \item false-discovery rate above a frozen performance threshold.
+\end{itemize}
+
+\subsection{Optional third-protocol adjudication set}
+
+For a higher-impact version, select \TBD{48--96} materials before seeing third-protocol results, stratified by:
+\begin{itemize}[leftmargin=1.5em]
+    \item cross-source disagreement quartile;
+    \item soft-mode sensitivity quartile;
+    \item chemistry and crystal class;
+    \item response amplitude;
+    \item source ranking agreement.
+\end{itemize}
+Recompute structures and DFPT response using one fully documented open protocol (for example ABINIT or Quantum ESPRESSO with a frozen pseudopotential library). This set is used only for adjudication and robust-ranking validation. It is not called experimental truth.
+
+\section{Preregistered Hypotheses and Stop Conditions}
+
+\subsection{Hypotheses}
+
+\begin{description}[leftmargin=2.5em,style=nextline]
+    \item[H1: Uncertainty floor] Cross-protocol tensor disagreement is not negligible relative to in-source SOTA model error.
+    \item[H2: Mechanistic amplification] Disagreement increases with soft-mode sensitivity and ionic-response fraction after controlling for chemistry and structure mismatch.
+    \item[H3: Leaderboard fragility] Architecture rankings under random in-source splits differ from rankings under source-held-out and paired-counterfactual tests.
+    \item[H4: Calibration value] Source-conditional calibration improves coverage and risk--coverage behavior without excessive loss of sharpness.
+    \item[H5: Decision value] Robust screening yields higher cross-protocol or adjudication-set hit rate than ranking by a single-source point estimate.
+\end{description}
+
+\subsection{No-Go or downgrade conditions}
+
+The project should be downgraded to a data/benchmark paper if:
+\begin{enumerate}[leftmargin=1.5em]
+    \item fewer than \TBD{300--500} high-confidence paired tensors remain after strict matching;
+    \item paired disagreement is small relative to model error across almost all strata;
+    \item disagreement is dominated by recoverable convention errors rather than protocol effects;
+    \item soft-mode sensitivity has no reproducible relationship with disagreement;
+    \item source-aware modeling does not improve calibration or robust decision quality;
+    \item the third-protocol set, if run, does not support the robust-ranking claims.
+\end{enumerate}
+
+\section{Planned Results}
+
+\subsection{Cross-protocol disagreement atlas}
+
+\TBD{Report strict pair counts, source/version provenance, discrepancy distributions, chemistry/crystal-class stratification, raw versus symmetry-projected residuals, and the effect of structure-match tier.}
+
+\subsection{The protocol uncertainty floor versus model error}
+
+\TBD{Compare paired-source discrepancy with in-source errors of all baselines. Report PMR with bootstrap confidence intervals and avoid selecting only favorable metrics.}
+
+\subsection{Microscopic amplification near soft modes}
+
+\TBD{Report mode-resolved analysis on the strict-factor subset, nested regressions, partial dependence, and stability after excluding near-zero optical eigenvalues.}
+
+\subsection{Source shift changes model leaderboards}
+
+\TBD{Report model rankings across all frozen splits, including confidence intervals and statistical tests for ranking inversion.}
+
+\subsection{Calibrated protocol-conditional tensor distributions}
+
+\TBD{Report NLL, energy score, coverage, sharpness, source/OOD stratification, rotation tests, and ablations.}
+
+\subsection{Robust screening changes candidate selection}
+
+\TBD{Report top-$k$ overlap, disputed candidates, robust candidates, and validation against the third protocol if available. Do not label candidates as experimentally superior.}
+
+\section{Discussion}
+
+The intended scientific conclusion is not that one database is universally more accurate than another. Instead, computational response labels should be interpreted as protocol-conditioned observations. For piezoelectricity, the ionic response provides a physical mechanism for material-dependent protocol amplification. This creates an uncertainty floor that is invisible to conventional random splits and cannot be repaired by architecture improvements alone.
+
+If supported, the results would motivate three changes to AI-guided piezoelectric discovery:
+\begin{enumerate}[leftmargin=1.5em]
+    \item freeze database versions and retain response provenance;
+    \item report source-held-out and paired-counterfactual evaluation in addition to random splits;
+    \item rank candidates using protocol-aware uncertainty rather than a single point prediction.
+\end{enumerate}
+
+The framework is designed to generalize to coupled dielectric and elastic tensors, but piezoelectricity remains the primary scientific case because its soft-mode-mediated ionic response makes protocol dependence especially consequential.
+
+\section{Limitations}
+
+\begin{enumerate}[leftmargin=1.5em]
+    \item Two computational sources do not identify experimental truth.
+    \item MP and JARVIS protocol differences are confounded; causal attribution to a single setting is generally impossible.
+    \item Strict matching may preferentially retain simple or stable structures.
+    \item JARVIS microscopic factors are not independent third-source labels.
+    \item Gaussian or ellipsoidal uncertainty may be inadequate for multimodal structure ambiguity.
+    \item Conformal coverage under source and chemistry shift is empirical unless assumptions for weighted or grouped calibration hold.
+    \item DFT omits finite temperature, defects, domains, and experimental processing.
+\end{enumerate}
+
+\section{Data and Code Availability}
+
+The released artifact should include:
+\begin{itemize}[leftmargin=1.5em]
+    \item source/version manifests and SHA256 hashes;
+    \item structure-match tiers and mapping proofs;
+    \item tensor transformation histories;
+    \item frozen splits;
+    \item benchmark loaders and metrics;
+    \item model and calibration code;
+    \item all figure/table generation scripts;
+    \item instructions to reconstruct non-redistributable upstream data.
+\end{itemize}
+
+\bibliographystyle{unsrt}
+\bibliography{references}
+
+\appendix
+
+\section{Tensor Convention Audit}
+
+\TBD{Insert exact mappings for each source, including Voigt order, engineering shear, Cartesian expansion, units, source sign, primitive/conventional cell relation, and point-group action.}
+
+\section{Structure Matching Audit}
+
+\TBD{Insert frozen tolerances, matching algorithm, atom permutation proof, unimodular cell transformation, and ambiguity/quarantine policy.}
+
+\section{Derivation of the First-Order Sensitivity}
+
+Starting from \cref{eq:factor}, apply the product rule and
+\begin{equation}
+\delta(\Phi_o^{-1})
+=
+-\bar\Phi_o^{-1}(\delta\Phi_o)\bar\Phi_o^{-1}
+\end{equation}
+for a stable optical block. \TBD{Include projector and basis perturbations, degenerate subspace treatment, and the policy for near-singular structures.}
+
+\section{Calibration Under Symmetry}
+
+\TBD{Prove or numerically audit invariance of the nonconformity score under simultaneous O(3) transformation of structure, mean tensor, covariance, and target tensor.}
+
+\section{Minimum Reproducible Analysis}
+
+Before training a new architecture, complete:
+\begin{enumerate}[leftmargin=1.5em]
+    \item strict pair construction;
+    \item discrepancy atlas;
+    \item SOTA in-source versus cross-source error comparison;
+    \item top-$k$ rank stability;
+    \item soft-mode sensitivity test on the available strict-factor intersection.
+\end{enumerate}
+Only proceed to full \PULSE{} development if these analyses support H1 or H2.
+
+\end{document}

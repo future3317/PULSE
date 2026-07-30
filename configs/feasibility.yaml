@@ -1,0 +1,50 @@
+# Frozen feasibility-audit configuration for CrossPiezo Phase 3-4.
+
+metrics:
+  epsilon: 1.0e-6
+  norm_scalar: frobenius
+  bootstrap_seed: 42
+  bootstrap_replicates: 2000
+
+ranking:
+  k_values: [20, 50, 100]
+  scalar_functionals:
+    - name: frobenius_norm
+      description: "||e||_F"
+    - name: max_component
+      description: "max_{i,j,k} |e_{ijk}|"
+
+soft_mode:
+  # PiezoJet strict-factor subset parameters
+  min_optical_eigenvalue_threshold_ev_per_angstrom2: 1.0e-4
+  ionic_fraction_threshold: 0.05
+  required_fields:
+    - dynamical_eigenvalues
+    - born_charges
+    - internal_strain_tensors
+    - epsilon
+    - total_piezo_source
+
+model_error_reference:
+  # Literature / local-report comparable in-source errors to be collected in Phase 3.
+  # Values are placeholders; the audit script replaces them with extracted numbers.
+  sources:
+    - paper: GMTNet
+      dataset: JARVIS piezo
+      metric: MAE C/m^2
+      value: null
+    - paper: EATGNN
+      dataset: JARVIS piezo
+      metric: MAE C/m^2
+      value: null
+    - paper: GoeCTP
+      dataset: JARVIS piezo
+      metric: MAE C/m^2
+      value: null
+
+thresholds:
+  full_go_min_tier01_pairs: 300
+  no_go_max_tier01_pairs: 150
+  pmr_significant: 0.5
+  top_50_jaccard_unstable: 0.70
+  top_50_kendall_unstable: 0.80

@@ -1,0 +1,45 @@
+请完整读取：
+
+- CLAUDE.md
+- CROSSPIEZO_TASKBOOK.md
+- PiezoProtocol_Draft_v0.1.tex
+- reports/00_environment_and_scope.md 至 reports/05_go_no_go.md
+- CrossPiezo_Phase5A_Critical_Adjudication_v0.1.md
+
+当前不批准直接开发完整 PULSE。你现在只执行 Phase 5A 关键复核。
+
+特别注意以下红旗：
+
+1. JARVIS symmetry residual median 0.286、MP 0.090，必须先明确 residual 定义并排除 convention/frame 问题。
+2. median normalized discrepancy 1.597 和 top-50 Jaccard 0.075 极端巨大，必须验证：
+   - 同一个 paired universe；
+   - 同一个 metric；
+   - O(3) tensor transport；
+   - improper transform；
+   - inversion-related polar domain；
+   - symmetry projection；
+   - structure relaxation shift。
+3. 4,995 是 parsed DFPT payload，不是 strict internal-strain factor count；strict completion 为 1,638，必须纠正。
+4. PMR 必须使用同 split、同 convention、同 metric 的可复现 in-source baseline，不能直接拼接文献数字。
+5. Soft-mode 分析只能声称 JARVIS-side sensitivity indicator 与 cross-protocol discrepancy 相关，不能归因到某个具体协议参数。
+
+执行顺序：
+
+- 冻结 Phase 0–4；
+- symmetry residual 审计；
+- 60 对人工审计包；
+- domain/O(3) transport；
+- T1a/T1b/T1c 结构分层；
+- 排名重新验证；
+- 2×2 in-source/counterfactual baseline 和 PMR；
+- strict-factor 交集与 soft-mode feasibility；
+- Strong Go / Benchmark Go / No-Go。
+
+限制：
+
+- 不修改 E:/DATA；
+- 不联网；
+- 不开发完整 PULSE；
+- 不修改 LaTeX 结果段；
+- 不通过看结果调整 matching tolerance；
+- 完成 reports/14_phase5a_decision.md 后停止。
