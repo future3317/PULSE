@@ -90,6 +90,7 @@ class MatchRecord(BaseModel):
     right_structure_key: str
     match_tier: MatchTier
     unimodular_cell_transform: list[list[float]] | None = None
+    fractional_translation: list[float] | None = None
     cartesian_rotation: list[list[float]] | None = None
     atom_permutation: list[int] | None = None
     lattice_distance: float | None = None

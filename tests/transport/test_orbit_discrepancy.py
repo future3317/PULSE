@@ -7,12 +7,19 @@ from __future__ import annotations
 
 import numpy as np
 import pytest
+from pymatgen.core.structure import Structure
 
 from crosspiezo.analysis.o3_transport import (
     exact_transported_discrepancy,
     point_group_equivalent_discrepancy,
     proper_orbit_discrepancy,
 )
+
+
+def _triclinic_structure() -> Structure:
+    """Triclinic P1 structure; point group contains only identity."""
+    lattice = np.array([[2.5, 0.1, 0.0], [0.2, 3.0, 0.0], [0.0, 0.1, 4.0]])
+    return Structure(lattice, ["Li", "F"], [[0.0, 0.0, 0.0], [0.5, 0.5, 0.5]])
 
 
 def _random_symmetric_tensor(rng: np.random.Generator) -> np.ndarray:
@@ -41,7 +48,7 @@ def test_proper_orbit_after_exact_transport():
     assert exact["absolute"] < 1e-6, "exact transport discrepancy should be zero"
 
     # The proper-orbit routine must accept the frame rotation and transport first.
-    orbit = proper_orbit_discrepancy(left, right, space_group_symbol=1, rotation=q_inv)
+    orbit = proper_orbit_discrepancy(left, right, structure=_triclinic_structure(), rotation=q_inv)
     assert orbit["absolute"] < 1e-6, (
         "proper-orbit discrepancy should vanish after exact-frame transport"
     )
@@ -57,7 +64,9 @@ def test_point_group_equivalent_after_exact_transport():
     right = _apply_rotation(left, q)
 
     q_inv = q.T
-    equiv = point_group_equivalent_discrepancy(left, right, space_group_symbol=1, rotation=q_inv)
+    equiv = point_group_equivalent_discrepancy(
+        left, right, structure=_triclinic_structure(), rotation=q_inv
+    )
     assert equiv["absolute"] < 1e-6, (
         "point-group-equivalent discrepancy should vanish after exact-frame transport"
     )
@@ -68,5 +77,5 @@ def test_orbit_discrepancy_refuses_missing_rotation():
     rng = np.random.default_rng(403)
     left = _random_symmetric_tensor(rng)
     right = _random_symmetric_tensor(rng)
-    orbit = proper_orbit_discrepancy(left, right, space_group_symbol=1, rotation=None)
+    orbit = proper_orbit_discrepancy(left, right, structure=_triclinic_structure(), rotation=None)
     assert np.isnan(orbit["absolute"])

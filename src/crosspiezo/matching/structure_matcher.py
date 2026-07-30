@@ -1,4 +1,5 @@
-"""Strict structure matching for CrossPiezo cross-source pairs."""
+"""Strict structure matching for CrossPiezo cross-source pairs.
+"""
 
 from __future__ import annotations
 
@@ -27,6 +28,8 @@ class MatchResult:
     atom_mapping: list[int] | None = None
     lattice_distance: float | None = None
     cartesian_rotation: list[list[float]] | None = None
+    fractional_translation: list[float] | None = None
+    unimodular_cell_transform: list[list[float]] | None = None
     space_group_relation: str | None = None
     ambiguity: str | None = None
     reasons: list[str] | None = None
@@ -62,31 +65,72 @@ def _space_group_relation(s1: Structure, s2: Structure) -> str:
     return "different"
 
 
+def _cartesian_rotation_from_mapping(
+    s_left: Structure,
+    s_right: Structure,
+    mapping: np.ndarray,
+) -> np.ndarray | None:
+    """Recover the orthogonal Cartesian rotation mapping s_right onto s_left.
+
+    Uses a Kabsch/Procrustes fit over the matched atom Cartesian coordinates.
+    Both proper and improper rotations are allowed; basis relabelings that do
+    not correspond to a physical rotation return identity (or the true rotation
+    if the coordinates themselves were rotated).
+    """
+    coords_left = np.asarray(s_left.cart_coords, dtype=np.float64)
+    coords_right = np.asarray(s_right.cart_coords, dtype=np.float64)[mapping]
+
+    centroid_left = np.mean(coords_left, axis=0)
+    centroid_right = np.mean(coords_right, axis=0)
+    centered_left = coords_left - centroid_left
+    centered_right = coords_right - centroid_right
+
+    # Covariance matrix: right -> left.
+    h = centered_right.T @ centered_left
+    u, _, vh = svd(h)
+
+    # Allow improper rotations; do not force det = +1.
+    rotation = vh.T @ u.T
+
+    # Sanity check orthogonality and reconstruction.
+    if not np.allclose(rotation.T @ rotation, np.eye(3), atol=1e-6):
+        return None
+    reconstructed = centered_right @ rotation.T + centroid_left
+    rms = float(np.sqrt(np.mean((reconstructed - coords_left) ** 2)))
+    if rms > 1.0:
+        return None
+    return rotation
+
+
 def _rotation_between_matched_structures(
     matcher: PMGStructureMatcher,
     s_left: Structure,
     s_right: Structure,
-) -> np.ndarray | None:
-    """Estimate the Cartesian rotation that maps s_right into s_left frame.
+) -> tuple[np.ndarray | None, np.ndarray | None, list[float] | None, list[int] | None]:
+    """Estimate the Cartesian rotation and lattice transform for a matched pair.
 
-    Uses the lattice of the StructureMatcher's `get_s2_like_s1` output and
-    takes the rotation part by polar decomposition.
+    Returns
+    -------
+    rotation:
+        3x3 orthogonal Cartesian rotation (det may be -1).
+    unimodular_transform:
+        Integer matrix mapping s_right fractional coordinates to the s_left cell.
+    fractional_translation:
+        Translation vector in the s_left fractional basis.
+    atom_mapping:
+        ``mapping[i]`` is the index in s_right corresponding to site ``i`` in s_left.
     """
     try:
-        s_right_aligned = matcher.get_s2_like_s1(s_left, s_right)  # type: ignore[no-untyped-call]
+        transform = matcher.get_transformation(s_left, s_right)
+        unimodular_transform = np.asarray(transform[0], dtype=np.float64)
+        fractional_translation = [float(x) for x in transform[1]]
+        atom_mapping = [int(x) for x in transform[2]]
     except Exception:  # noqa: BLE001
-        return None
-    l_right = s_right.lattice.matrix
-    l_aligned = s_right_aligned.lattice.matrix
-    transform = l_aligned @ np.linalg.inv(l_right)
-    # Polar decomposition to extract the orthogonal part
-    u, _, vh = svd(transform)
-    rotation = u @ vh
-    # Enforce right-handedness
-    if np.linalg.det(rotation) < 0:
-        u[:, -1] *= -1
-        rotation = u @ vh
-    return np.asarray(rotation, dtype=np.float64)
+        return None, None, None, None
+
+    mapping_array = np.asarray(atom_mapping, dtype=np.int64)
+    rotation = _cartesian_rotation_from_mapping(s_left, s_right, mapping_array)
+    return rotation, unimodular_transform, fractional_translation, atom_mapping
 
 
 def match_structures(
@@ -178,20 +222,14 @@ def match_structures(
             )
 
     rms = matcher.get_rms_dist(s_left, s_right)  # type: ignore[no-untyped-call]
-    max_dist, rms_dist = (float(rms[0]), float(rms[1])) if rms is not None else (None, None)
+    # get_rms_dist returns (rms displacement, maximum distance).
+    rms_dist, max_dist = (float(rms[0]), float(rms[1])) if rms is not None else (None, None)
 
     lattice_dist = _lattice_distance(s_left, s_right)
 
-    atom_mapping: list[int] | None = None
-    if not primitive_cell:
-        try:
-            mapping = matcher.get_mapping(s_left, s_right)  # type: ignore[no-untyped-call]
-            if mapping is not None:
-                atom_mapping = [int(x) for x in mapping]
-        except ValueError:
-            reasons.append("mapping_unavailable_with_primitive_option")
-
-    rotation = _rotation_between_matched_structures(matcher, s_left, s_right)
+    rotation, unimodular_transform, fractional_translation, atom_mapping = (
+        _rotation_between_matched_structures(matcher, s_left, s_right)
+    )
 
     if sg_rel == "different":
         # Even if pymatgen fit succeeded, differing space groups are suspicious.
@@ -209,6 +247,8 @@ def match_structures(
         atom_mapping=atom_mapping,
         lattice_distance=lattice_dist,
         cartesian_rotation=rotation.tolist() if rotation is not None else None,
+        fractional_translation=fractional_translation,
+        unimodular_cell_transform=unimodular_transform.tolist() if unimodular_transform is not None else None,
         space_group_relation=sg_rel,
         reasons=reasons or None,
     )
@@ -224,6 +264,8 @@ def to_match_record(result: MatchResult) -> MatchRecord:
         atom_permutation=result.atom_mapping,
         lattice_distance=result.lattice_distance,
         cartesian_rotation=result.cartesian_rotation,
+        fractional_translation=result.fractional_translation,
+        unimodular_cell_transform=result.unimodular_cell_transform,
         site_distance=result.max_distance,
         space_group_relation=result.space_group_relation,
         ambiguity=result.ambiguity,

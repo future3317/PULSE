@@ -54,26 +54,15 @@ def test_rotations_are_orthogonal_and_proper_or_improper():
         assert abs(np.linalg.det(rot) - 1.0) < 1e-9 or abs(np.linalg.det(rot) + 1.0) < 1e-9
 
 
-def test_symbol_based_rotations_match_structure_based_rotations():
-    """Abstract symbol-based rotations must equal actual Cartesian operations."""
+def test_symbol_based_rotations_are_rejected():
+    """Abstract symbol/number inputs must be rejected because they cannot produce
+    Cartesian rotations for the actual structure setting."""
     structure = _rotated_orthorhombic_structure()
     analyzer = SpacegroupAnalyzer(structure)
     sg_number = analyzer.get_space_group_number()
 
-    # Current API: point_group_rotations only accepts a symbol/number.
-    symbol_rots = point_group_rotations(sg_number)
-    struct_rots = [r.rotation_matrix for r in analyzer.get_point_group_operations(cartesian=True)]
-
-    # Every Cartesian operation must appear in the symbol set (up to sign) and
-    # vice versa.  For a non-standard orientation this should fail with the
-    # current fractional-matrices implementation.
-    rng = np.random.default_rng(302)
-    tensor = _random_piezo_tensor(rng)
-    proj_symbol = project_piezo_tensor(tensor, symbol_rots)
-    proj_struct = project_piezo_tensor(tensor, struct_rots)
-    assert np.allclose(proj_symbol, proj_struct, atol=1e-6), (
-        "symbol-based projection differs from structure-based Cartesian projection"
-    )
+    with pytest.raises(TypeError):
+        point_group_rotations(sg_number)
 
 
 def test_point_group_rotations_accepts_structure():

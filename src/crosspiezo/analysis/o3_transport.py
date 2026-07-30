@@ -6,6 +6,14 @@ This module implements the discrepancy metrics required by Phase 5A:
 * proper-orbit discrepancy restricted to source point-group proper rotations;
 * domain-aware discrepancy that detects and flags inversion-related polar domains;
 * point-group-equivalent discrepancy minimized over the common point group.
+
+All transforms here follow the standard polar rank-3 tensor law:
+
+    e'_{ijk} = R_{il} R_{jm} R_{kn} e_{lmn}.
+
+Improper rotations are allowed in the input; the triple-product already
+contains the correct sign for a polar tensor.  Axial/pseudotensor transforms
+are exposed separately for tests and future use.
 """
 
 from __future__ import annotations
@@ -13,41 +21,46 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 import numpy as np
-from scipy.linalg import svd
 
 from crosspiezo.analysis.discrepancy import absolute_discrepancy, normalized_discrepancy
+from pymatgen.core.structure import Structure
+
 from crosspiezo.conventions.symmetry import point_group_rotations, project_piezo_tensor
 
 
-def _transport_tensor(tensor: np.ndarray, rotation: np.ndarray) -> np.ndarray:
-    """Transport a polar third-rank tensor by a proper O(3) rotation.
+def transform_polar_rank3(tensor: np.ndarray, rotation: np.ndarray) -> np.ndarray:
+    """Apply the standard polar rank-3 O(3) transform.
 
-    For an improper rotation (det = -1) the tensor additionally picks up a
-    minus sign because it is polar (odd under inversion).  The caller is
-    responsible for deciding whether an improper transformation is physically
-    admissible for a given pair.
+    For an improper rotation with det(R) = -1 the triple product already gives
+    the correct minus sign under inversion.
     """
     tensor = np.asarray(tensor, dtype=np.float64)
     rotation = np.asarray(rotation, dtype=np.float64)
-    transported = np.asarray(np.einsum("il,jm,kn,lmn->ijk", rotation, rotation, rotation, tensor), dtype=np.float64)
-    if np.linalg.det(rotation) < 0:
-        transported = -transported
-    return transported
+    return np.asarray(
+        np.einsum("il,jm,kn,lmn->ijk", rotation, rotation, rotation, tensor),
+        dtype=np.float64,
+    )
+
+
+def transform_axial_rank3(tensor: np.ndarray, rotation: np.ndarray) -> np.ndarray:
+    """Apply the axial (pseudotensor) rank-3 O(3) transform.
+
+    This includes an additional det(R) factor, appropriate for axial quantities
+    such as the piezomagnetic tensor.
+    """
+    transported = transform_polar_rank3(tensor, rotation)
+    det = float(np.linalg.det(np.asarray(rotation, dtype=np.float64)))
+    return det * transported
+
+
+def _transport_tensor(tensor: np.ndarray, rotation: np.ndarray) -> np.ndarray:
+    """Backwards-compatible alias for the polar rank-3 transform."""
+    return transform_polar_rank3(tensor, rotation)
 
 
 def _polar_domain_tensor(tensor: np.ndarray) -> np.ndarray:
     """Return the inversion-related polar-domain partner of a tensor."""
     return -np.asarray(tensor, dtype=np.float64)
-
-
-def _nearest_proper_rotation(rotation: np.ndarray) -> np.ndarray:
-    """Project an O(3) matrix to the nearest proper rotation (det = +1)."""
-    u, _, vh = svd(rotation)
-    proper = np.asarray(u @ vh, dtype=np.float64)
-    if np.linalg.det(proper) < 0:
-        u[:, -1] *= -1
-        proper = np.asarray(u @ vh, dtype=np.float64)
-    return proper
 
 
 @dataclass(frozen=True)
@@ -70,8 +83,8 @@ def exact_transported_discrepancy(
 ) -> dict[str, float]:
     """Discrepancy after transporting ``right`` into ``left`` frame.
 
-    The structure matcher returns a proper rotation (det = +1) by construction.
-    If it is None, the raw tensor discrepancy is returned with a warning flag.
+    The structure matcher returns a proper or improper orthogonal matrix.  If
+    it is None, the raw tensor discrepancy is returned with a warning flag.
     """
     left = np.asarray(left, dtype=np.float64)
     right = np.asarray(right, dtype=np.float64)
@@ -85,7 +98,7 @@ def exact_transported_discrepancy(
             "rotation_available": 0.0,
         }
     rot = np.asarray(rotation, dtype=np.float64)
-    right_transported = _transport_tensor(right, rot)
+    right_transported = transform_polar_rank3(right, rot)
     return {
         "absolute": absolute_discrepancy(left, right_transported),
         "normalized": normalized_discrepancy(left, right_transported),
@@ -99,18 +112,22 @@ def exact_transported_discrepancy(
 def proper_orbit_discrepancy(
     left: np.ndarray,
     right: np.ndarray,
-    space_group_symbol: str | int,
+    structure: Structure,
+    rotation: np.ndarray | None = None,
 ) -> dict[str, float]:
     """Minimum discrepancy over proper rotations in the source point group.
 
-    Only the proper rotations of the common space group are allowed.  This is a
-    sanity check that the reported disagreement is not an artifact of an
-    arbitrary Cartesian frame choice.
+    If ``rotation`` is supplied, ``right`` is first transported into the
+    ``left`` frame; only then are the common point-group operations applied.
     """
     left = np.asarray(left, dtype=np.float64)
     right = np.asarray(right, dtype=np.float64)
+    if rotation is None:
+        return _nan_result()
+    rot = np.asarray(rotation, dtype=np.float64)
+    right_aligned = transform_polar_rank3(right, rot)
     try:
-        rots = point_group_rotations(space_group_symbol)
+        rots = point_group_rotations(structure)
     except Exception:  # noqa: BLE001
         return _nan_result()
     proper_rots = [r for r in rots if np.linalg.det(r) > 0]
@@ -118,7 +135,7 @@ def proper_orbit_discrepancy(
         return _nan_result()
     best = None
     for r in proper_rots:
-        cand = _transport_tensor(right, r)
+        cand = transform_polar_rank3(right_aligned, r)
         d = absolute_discrepancy(left, cand)
         if best is None or d < best["absolute"]:
             best = {
@@ -147,7 +164,7 @@ def domain_aware_discrepancy(
     if rotation is None:
         right_t = right
     else:
-        right_t = _transport_tensor(right, np.asarray(rotation, dtype=np.float64))
+        right_t = transform_polar_rank3(right, np.asarray(rotation, dtype=np.float64))
     signed = absolute_discrepancy(left, right_t)
     flipped = absolute_discrepancy(left, _polar_domain_tensor(right_t))
     use_flip = flipped < signed
@@ -166,7 +183,8 @@ def domain_aware_discrepancy(
 def point_group_equivalent_discrepancy(
     left: np.ndarray,
     right: np.ndarray,
-    space_group_symbol: str | int,
+    structure: Structure,
+    rotation: np.ndarray | None = None,
 ) -> dict[str, float]:
     """Minimum discrepancy over the full common point group (proper + improper).
 
@@ -176,15 +194,19 @@ def point_group_equivalent_discrepancy(
     """
     left = np.asarray(left, dtype=np.float64)
     right = np.asarray(right, dtype=np.float64)
+    if rotation is None:
+        return _nan_result()
+    rot = np.asarray(rotation, dtype=np.float64)
+    right_aligned = transform_polar_rank3(right, rot)
     try:
-        rots = point_group_rotations(space_group_symbol)
+        rots = point_group_rotations(structure)
     except Exception:  # noqa: BLE001
         return _nan_result()
     if not rots:
         return _nan_result()
     best = None
     for r in rots:
-        cand = _transport_tensor(right, r)
+        cand = transform_polar_rank3(right_aligned, r)
         d = absolute_discrepancy(left, cand)
         if best is None or d < best["absolute"]:
             best = {
@@ -201,7 +223,7 @@ def point_group_equivalent_discrepancy(
 def symmetry_projected_discrepancy(
     left: np.ndarray,
     right: np.ndarray,
-    space_group_symbol: str | int,
+    structure: Structure,
     rotation: np.ndarray | None = None,
 ) -> dict[str, float]:
     """Discrepancy after Reynolds projection onto the common point group.
@@ -213,9 +235,9 @@ def symmetry_projected_discrepancy(
     left = np.asarray(left, dtype=np.float64)
     right = np.asarray(right, dtype=np.float64)
     if rotation is not None:
-        right = _transport_tensor(right, np.asarray(rotation, dtype=np.float64))
+        right = transform_polar_rank3(right, np.asarray(rotation, dtype=np.float64))
     try:
-        rots = point_group_rotations(space_group_symbol)
+        rots = point_group_rotations(structure)
         left_proj = project_piezo_tensor(left, rots)
         right_proj = project_piezo_tensor(right, rots)
     except Exception:  # noqa: BLE001

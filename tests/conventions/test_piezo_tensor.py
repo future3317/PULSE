@@ -64,11 +64,11 @@ def test_pymatgen_voigt_oracle():
     """Our Cartesian tensor agrees with pymatgen's PiezoTensor.from_vasp_voigt."""
     rng = np.random.default_rng(102)
     # Build a random symmetric Cartesian tensor and convert to VASP Voigt order:
-    # pymatgen uses xx, yy, zz, xy, yz, zx.
+    # pymatgen uses xx, yy, zz, xy, yz, zx.  Internal order is xx, yy, zz, yz, xz, xy.
     cart = _random_symmetric_piezo_tensor(rng)
     internal = cartesian_to_voigt(cart, engineering_shear=True)
-    vasp = np.zeros_like(internal)
-    vasp[:, [0, 1, 2, 5, 3, 4]] = internal[:, [0, 1, 2, 3, 4, 5]]
+    # internal -> vasp: [xx,yy,zz,yz,xz,xy] -> [xx,yy,zz,xy,yz,zx]
+    vasp = internal[:, [0, 1, 2, 5, 3, 4]]
     expected = PiezoTensor.from_vasp_voigt(vasp).voigt
     # Compare in internal order after converting back.
     ours = cartesian_to_voigt(cart, engineering_shear=True)

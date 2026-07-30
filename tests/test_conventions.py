@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import numpy as np
+from pymatgen.core.structure import Structure
 
 from crosspiezo.conventions.symmetry import (
     point_group_rotations,
@@ -13,6 +14,10 @@ from crosspiezo.conventions.voigt import (
     round_trip_voigt,
     voigt_to_cartesian,
 )
+
+
+def _cubic_structure() -> Structure:
+    return Structure(np.eye(3) * 3.0, ["Na", "Cl"], [[0.0, 0.0, 0.0], [0.5, 0.5, 0.5]])
 
 
 def test_voigt_cartesian_round_trip():
@@ -44,7 +49,7 @@ def test_point_group_projection_idempotent():
     rng = np.random.default_rng(3)
     cart = rng.normal(size=(3, 3, 3))
     cart = 0.5 * (cart + cart.transpose(0, 2, 1))
-    rots = point_group_rotations("P222")
+    rots = point_group_rotations(_cubic_structure())
     proj1 = project_piezo_tensor(cart, rots)
     proj2 = project_piezo_tensor(proj1, rots)
     assert np.allclose(proj1, proj2)
@@ -53,5 +58,5 @@ def test_point_group_projection_idempotent():
 def test_symmetry_residual_nonnegative():
     rng = np.random.default_rng(4)
     cart = rng.normal(size=(3, 3, 3))
-    rots = point_group_rotations("P222")
+    rots = point_group_rotations(_cubic_structure())
     assert symmetry_residual(cart, rots) >= -1e-12

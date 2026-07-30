@@ -1,32 +1,67 @@
-"""Point-group symmetry projection for third-rank polar tensors."""
+"""Point-group symmetry projection for third-rank polar tensors.
+
+All Cartesian symmetry operations are derived from an actual pymatgen
+``Structure`` using ``SpacegroupAnalyzer``.  Using an abstract space-group
+symbol or fractional matrices is no longer supported because they ignore the
+real lattice setting and orientation.
+"""
 
 from __future__ import annotations
 
 import numpy as np
 from pymatgen.core.structure import Structure
-from pymatgen.symmetry.groups import SpaceGroup
+from pymatgen.symmetry.analyzer import SpacegroupAnalyzer
 
 
-def point_group_rotations(space_group_symbol: str | int) -> list[np.ndarray]:
-    """Return the pure rotation matrices for a space- or point-group symbol.
+def structure_point_group_rotations(
+    structure: Structure,
+    symprec: float = 0.01,
+    angle_tolerance: float = 5.0,
+) -> list[np.ndarray]:
+    """Return the Cartesian point-group rotation matrices for a structure.
 
-    Inversion and improper rotations are kept as provided by pymatgen; for
-    piezoelectric tensors the direct product of rotation matrices already gives
-    the correct sign because a polar third-rank tensor is odd under inversion.
+    Parameters
+    ----------
+    structure:
+        The pymatgen ``Structure`` whose actual setting is used.
+    symprec, angle_tolerance:
+        Spglib precision parameters passed to ``SpacegroupAnalyzer``.
+
+    Returns
+    -------
+    rotations:
+        Unique 3x3 orthogonal matrices (det = +/-1) in Cartesian coordinates.
     """
-    if isinstance(space_group_symbol, int):
-        sg = SpaceGroup.from_int_number(space_group_symbol)
-    else:
-        try:
-            sg = SpaceGroup(space_group_symbol)
-        except ValueError:
-            # Try interpreting a numeric string as an international number.
-            sg = SpaceGroup.from_int_number(int(space_group_symbol))
-    rotations: list[np.ndarray] = []
-    for op in sg.symmetry_ops:
+    analyzer = SpacegroupAnalyzer(structure, symprec=symprec, angle_tolerance=angle_tolerance)
+    ops = analyzer.get_point_group_operations(cartesian=True)
+    seen: list[np.ndarray] = []
+    for op in ops:
         rot = np.asarray(op.rotation_matrix, dtype=np.float64)
-        rotations.append(rot)
-    return rotations
+        # Validate orthogonality.
+        if not np.allclose(rot.T @ rot, np.eye(3), atol=1e-8):
+            raise ValueError("Non-orthogonal Cartesian rotation from SpacegroupAnalyzer")
+        det = float(np.linalg.det(rot))
+        if not (abs(det - 1.0) < 1e-8 or abs(det + 1.0) < 1e-8):
+            raise ValueError(f"Rotation determinant {det} is not +/-1")
+        # Deduplicate within numerical tolerance.
+        if not any(np.allclose(rot, existing, atol=1e-8) for existing in seen):
+            seen.append(rot)
+    return seen
+
+
+def point_group_rotations(structure: Structure) -> list[np.ndarray]:
+    """Return Cartesian point-group rotations for a ``Structure``.
+
+    .. deprecated::
+        The old int/symbol path used fractional matrices and has been removed.
+        Pass a ``pymatgen.core.structure.Structure``.
+    """
+    if not isinstance(structure, Structure):
+        raise TypeError(
+            "point_group_rotations now requires a pymatgen Structure; "
+            "abstract space-group symbols cannot yield Cartesian rotations."
+        )
+    return structure_point_group_rotations(structure)
 
 
 def project_piezo_tensor(tensor: np.ndarray, rotations: list[np.ndarray]) -> np.ndarray:
@@ -47,12 +82,19 @@ def project_piezo_tensor(tensor: np.ndarray, rotations: list[np.ndarray]) -> np.
         return tensor.copy()
     projected = np.zeros_like(tensor)
     for r in rotations:
-        # e'_{ijk} = R_il R_jm R_kn e_lmn
-        projected += np.einsum("il,jm,kn,lmn->ijk", r, r, r, tensor)
+        projected += transform_polar_rank3(tensor, r)
     projected /= len(rotations)
     # Enforce exact last-index symmetry (numerical noise)
     projected = 0.5 * (projected + projected.transpose(0, 2, 1))
     return np.asarray(projected, dtype=np.float64)
+
+
+def transform_polar_rank3(tensor: np.ndarray, rotation: np.ndarray) -> np.ndarray:
+    """Standard polar rank-3 transform (duplicated here to avoid import cycle)."""
+    return np.asarray(
+        np.einsum("il,jm,kn,lmn->ijk", rotation, rotation, rotation, tensor),
+        dtype=np.float64,
+    )
 
 
 def symmetry_residual(tensor: np.ndarray, rotations: list[np.ndarray]) -> float:
@@ -61,11 +103,10 @@ def symmetry_residual(tensor: np.ndarray, rotations: list[np.ndarray]) -> float:
     return float(np.linalg.norm(tensor - projected))
 
 
-def allowed_components_mask(space_group_symbol: str | int) -> np.ndarray:
+def allowed_components_mask(structure: Structure) -> np.ndarray:
     """Return a 3x3x3 boolean mask of symmetry-allowed Cartesian components."""
-    rotations = point_group_rotations(space_group_symbol)
+    rotations = point_group_rotations(structure)
     mask = np.zeros((3, 3, 3), dtype=bool)
-    # A component is allowed if perturbing it yields a non-zero projection.
     for i in range(3):
         for j in range(3):
             for k in range(3):
