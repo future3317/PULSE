@@ -1001,6 +1001,7 @@ def _report_final_decision(
     }
 
     proceed = all(checks.values())
+    failed = [k for k, v in checks.items() if not v]
     decision = "Proceed — Invariant Benchmark" if proceed else "Stop — CrossPiezo Main Claim"
 
     md += table_from_records([{"criterion": k, "satisfied": str(v)} for k, v in checks.items()])
@@ -1010,7 +1011,13 @@ def _report_final_decision(
         md += bullet("The invariant-only benchmark is viable: lineage closes, MP scalar reproduces in available records, the strict panel has >=100 pairs, and cross-library ranking is reproducibly unstable outside near-zero records.")
     else:
         md += bullet("At least one closure criterion failed. The project should be retained as a data-interoperability tool; no screening-instability paper should be written on the current processed-field mix.")
-        md += bullet(f"Specific concern: {inst_reason}")
+        md += bullet(f"Failed criteria: {failed}")
+        if "ranking_instability_present" in failed:
+            md += bullet(f"Specific concern: {inst_reason}")
+        if "not_near_zero_driven" in failed:
+            md += bullet("Ranking instability disappears when near-zero records are excluded; the effect is driven by low-response noise.")
+        if "artifacts_hash_bound" in failed:
+            md += bullet("Artifacts are not bound to a git commit; rerun with --commit <hash>.")
 
     md += "\n## Evidence summary\n"
     md += bullet(f"All-record conversion verified: {(conversion_df['status'] == 'verified').sum()}/{len(conversion_df)} ({verified_rate:.1%})")
@@ -1030,13 +1037,14 @@ def _report_final_decision(
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="CrossPiezo correctness v1.2 invariant closure")
     parser.add_argument("--data-root", type=Path, default=None)
+    parser.add_argument("--commit", type=str, default=None, help="Git commit hash to bind to artifacts")
     args = parser.parse_args(argv)
 
     data_root = args.data_root or _resolve_data_root()
     print(f"[Correctness v1.2] Data root: {data_root}")
 
     _setup_dirs()
-    commit = _git_commit()
+    commit = args.commit or _git_commit()
 
     cfg = _load_config("data_sources.yaml")
     t2c = cfg["sources"]["t2c_flow"]
