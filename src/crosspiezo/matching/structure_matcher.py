@@ -1,0 +1,231 @@
+"""Strict structure matching for CrossPiezo cross-source pairs."""
+
+from __future__ import annotations
+
+import warnings
+from dataclasses import dataclass
+
+import numpy as np
+from pymatgen.analysis.structure_matcher import StructureMatcher as PMGStructureMatcher
+from pymatgen.core.structure import Structure
+from scipy.linalg import svd
+
+from crosspiezo.schemas import MatchRecord, MatchTier
+
+warnings.filterwarnings("ignore", category=UserWarning, module="pymatgen")
+
+
+@dataclass(frozen=True)
+class MatchResult:
+    """Outcome of a single structure-match attempt."""
+
+    match_key: str
+    tier: MatchTier
+    fit: bool
+    rms_distance: float | None = None
+    max_distance: float | None = None
+    atom_mapping: list[int] | None = None
+    lattice_distance: float | None = None
+    cartesian_rotation: list[list[float]] | None = None
+    space_group_relation: str | None = None
+    ambiguity: str | None = None
+    reasons: list[str] | None = None
+
+
+def parse_cif(cif_string: str) -> Structure:
+    """Parse a CIF string into a pymatgen Structure."""
+    return Structure.from_str(cif_string, fmt="cif")
+
+
+def _lattice_distance(s1: Structure, s2: Structure) -> float:
+    """Fractional lattice-parameter distance after volume scaling."""
+    l1 = np.array(s1.lattice.abc)
+    l2 = np.array(s2.lattice.abc)
+    # Scale s2 to s1 volume
+    vol_ratio = s1.volume / (s2.volume + 1e-12)
+    l2_scaled = l2 * (vol_ratio ** (1.0 / 3.0))
+    return float(np.max(np.abs(l1 - l2_scaled) / (np.abs(l1) + 1e-6)))
+
+
+def _space_group_relation(s1: Structure, s2: Structure) -> str:
+    """Compare space-group symbols."""
+    try:
+        sg1 = s1.get_space_group_info()[0]
+        sg2 = s2.get_space_group_info()[0]
+    except Exception:  # noqa: BLE001
+        return "unknown"
+    if sg1 == sg2:
+        return "identical"
+    # Accept if one symbol is a substring (e.g., different settings)
+    if sg1 in sg2 or sg2 in sg1:
+        return "related_setting"
+    return "different"
+
+
+def _rotation_between_matched_structures(
+    matcher: PMGStructureMatcher,
+    s_left: Structure,
+    s_right: Structure,
+) -> np.ndarray | None:
+    """Estimate the Cartesian rotation that maps s_right into s_left frame.
+
+    Uses the lattice of the StructureMatcher's `get_s2_like_s1` output and
+    takes the rotation part by polar decomposition.
+    """
+    try:
+        s_right_aligned = matcher.get_s2_like_s1(s_left, s_right)  # type: ignore[no-untyped-call]
+    except Exception:  # noqa: BLE001
+        return None
+    l_right = s_right.lattice.matrix
+    l_aligned = s_right_aligned.lattice.matrix
+    transform = l_aligned @ np.linalg.inv(l_right)
+    # Polar decomposition to extract the orthogonal part
+    u, _, vh = svd(transform)
+    rotation = u @ vh
+    # Enforce right-handedness
+    if np.linalg.det(rotation) < 0:
+        u[:, -1] *= -1
+        rotation = u @ vh
+    return np.asarray(rotation, dtype=np.float64)
+
+
+def match_structures(
+    left_key: str,
+    right_key: str,
+    left_cif: str,
+    right_cif: str,
+    ltol: float = 0.2,
+    stol: float = 0.3,
+    angle_tol: float = 5.0,
+    primitive_cell: bool = False,
+    attempt_supercell: bool = False,
+) -> MatchResult:
+    """Run the frozen strict-match protocol on a candidate pair.
+
+    Tier assignment:
+      - Tier 0 is reserved for explicit upstream provenance matches; this
+        routine assigns Tier 1 for a successful structure match and Tier 3
+        for formula-only input.
+      - Tier 2 is not assigned automatically; it requires a prototype-aware
+        analysis that this minimal Phase-3 routine does not perform.
+    """
+    match_key = f"{left_key}__{right_key}"
+    reasons: list[str] = []
+    try:
+        s_left = parse_cif(left_cif)
+        s_right = parse_cif(right_cif)
+    except Exception as exc:  # noqa: BLE001
+        return MatchResult(
+            match_key=match_key,
+            tier=MatchTier.QUARANTINE,
+            fit=False,
+            reasons=[f"cif_parse_error: {exc}"],
+        )
+
+    if len(s_left) != len(s_right):
+        return MatchResult(
+            match_key=match_key,
+            tier=MatchTier.TIER_3,
+            fit=False,
+            reasons=["different_atom_counts"],
+        )
+
+    if s_left.composition.reduced_formula != s_right.composition.reduced_formula:
+        return MatchResult(
+            match_key=match_key,
+            tier=MatchTier.TIER_3,
+            fit=False,
+            reasons=["different_reduced_formula"],
+        )
+
+    sg_rel = _space_group_relation(s_left, s_right)
+    if sg_rel == "different":
+        reasons.append("space_group_different")
+
+    matcher = PMGStructureMatcher(
+        ltol=ltol,
+        stol=stol,
+        angle_tol=angle_tol,
+        primitive_cell=primitive_cell,
+        scale=True,
+        attempt_supercell=attempt_supercell,
+    )
+
+    fit = matcher.fit(s_left, s_right)
+    if not fit:
+        # Retry with primitive cell normalization before giving up.
+        matcher_primitive = PMGStructureMatcher(
+            ltol=ltol,
+            stol=stol,
+            angle_tol=angle_tol,
+            primitive_cell=True,
+            scale=True,
+            attempt_supercell=attempt_supercell,
+        )
+        fit = matcher_primitive.fit(s_left, s_right)
+        if fit:
+            matcher = matcher_primitive
+            reasons.append("matched_after_primitive_normalization")
+        else:
+            reasons.extend(["structure_match_failed", f"space_group_relation:{sg_rel}"])
+            return MatchResult(
+                match_key=match_key,
+                tier=MatchTier.QUARANTINE,
+                fit=False,
+                lattice_distance=_lattice_distance(s_left, s_right),
+                space_group_relation=sg_rel,
+                reasons=reasons,
+            )
+
+    rms = matcher.get_rms_dist(s_left, s_right)  # type: ignore[no-untyped-call]
+    max_dist, rms_dist = (float(rms[0]), float(rms[1])) if rms is not None else (None, None)
+
+    lattice_dist = _lattice_distance(s_left, s_right)
+
+    atom_mapping: list[int] | None = None
+    if not primitive_cell:
+        try:
+            mapping = matcher.get_mapping(s_left, s_right)  # type: ignore[no-untyped-call]
+            if mapping is not None:
+                atom_mapping = [int(x) for x in mapping]
+        except ValueError:
+            reasons.append("mapping_unavailable_with_primitive_option")
+
+    rotation = _rotation_between_matched_structures(matcher, s_left, s_right)
+
+    if sg_rel == "different":
+        # Even if pymatgen fit succeeded, differing space groups are suspicious.
+        reasons.append("space_group_mismatch_kept_for_review")
+        tier = MatchTier.QUARANTINE
+    else:
+        tier = MatchTier.TIER_1
+
+    return MatchResult(
+        match_key=match_key,
+        tier=tier,
+        fit=True,
+        rms_distance=rms_dist,
+        max_distance=max_dist,
+        atom_mapping=atom_mapping,
+        lattice_distance=lattice_dist,
+        cartesian_rotation=rotation.tolist() if rotation is not None else None,
+        space_group_relation=sg_rel,
+        reasons=reasons or None,
+    )
+
+
+def to_match_record(result: MatchResult) -> MatchRecord:
+    """Convert a MatchResult to a Pydantic MatchRecord."""
+    return MatchRecord(
+        match_key=result.match_key,
+        left_structure_key=result.match_key.split("__")[0],
+        right_structure_key=result.match_key.split("__")[1],
+        match_tier=result.tier,
+        atom_permutation=result.atom_mapping,
+        lattice_distance=result.lattice_distance,
+        cartesian_rotation=result.cartesian_rotation,
+        site_distance=result.max_distance,
+        space_group_relation=result.space_group_relation,
+        ambiguity=result.ambiguity,
+        pass_fail_reasons=result.reasons or [],
+    )
