@@ -15,7 +15,7 @@
 \newcommand{\E}{\mathbf{e}}
 \newcommand{\norm}[1]{\left\lVert #1 \right\rVert}
 
-% Number macros -- updated from results/phase7c/manuscript_numbers.json
+% Number macros -- updated from results/phase8a/manuscript_numbers.json
 \newcommand{\PZeroFOneNaucc}{0.105}
 \newcommand{\PZeroFOneQZero}{33\%}
 \newcommand{\PZeroFOnePersistFive}{--}
@@ -34,8 +34,10 @@
 \newcommand{\PrimaryBestStrategy}{balanced\_union}
 \newcommand{\PrimaryBestWorstSourceRecall}{0.526}
 \newcommand{\PrimaryBestPairedDiffRecall}{+0.012 (95\% CI [-0.012, 0.036])}
+\newcommand{\CVPrimaryBestStrategy}{balanced\_union}
+\newcommand{\CVPrimaryPairedDiffRecall}{+0.342 (95\% CI [0.284, 0.389])}
 
-\title{\textbf{CrossPiezo: Databases Agree on Broad Promising Regions but Cannot Resolve the Elite Tail in Piezoelectric Screening}}
+\title{\textbf{CrossPiezo: Two High-Throughput Databases Agree on Broad Promising Regions but Cannot Resolve the Elite Tail in Piezoelectric Screening}}
 \author[1]{Anonymous Author(s)}
 \affil[1]{Anonymous Institution}
 \date{2 August 2026}
@@ -43,16 +45,16 @@
 \maketitle
 
 \begin{abstract}
-High-throughput piezoelectric databases are widely used to train and benchmark machine-learning models, yet their cross-source agreement is usually reported as a single global correlation.
-Here we reframe cross-database comparison as a question of \emph{screening resolution}: do the Materials Project (MP) and JARVIS databases agree on broad promising regions of chemical space, yet fail to reproducibly resolve the elite tail of candidates?
+High-throughput piezoelectric databases are widely used to train and benchmark machine-learning models, yet their agreement is usually reported as a single global correlation.
+Here we reframe comparison between two independently generated high-throughput datasets as a question of \emph{screening resolution}: do the Materials Project (MP) and JARVIS databases agree on broad promising regions of chemical space, yet fail to reproducibly resolve the elite tail of candidates?
 Using the frozen CrossPiezo-Invariant-v1 benchmark of 573 strict structure-matched pairs (P0) and 207 tighter matches (P2), we compute coordinate-invariant response scalars F1, F3 and F4 and sweep the screened quantile from 1\% to 50\%.
 The full-range normalised area under the chance-adjusted concordance curve (nAUCC) for F1 on P0 is \PZeroFOneNaucc{}, and the simultaneous 95\% lower confidence bound of adjusted overlap first exceeds 0 at $q=\PZeroFOneQZero{}$; no five-quantile persistent onset is observed at $\delta=0.05$, showing that chance-adjusted agreement is not reliably sustained in the elite tail.
 We report partial nAUCC separately for the elite (1--10\%), intermediate (10--20\%) and broad (20--50\%) bands; concordance is weakest in the elite band and only emerges after substantially broadening the candidate pool.
 Corrected high-response sensitivity analyses avoid the pooled-selection collider bias: dual-high, JARVIS-anchor and MP-anchor subsets all show reduced or negative elite-tail concordance, confirming that the gap is not an artifact of the selection definition.
-Simpler scalar controls (unit-cell volume, band gap) are markedly more cross-source consistent than the piezoelectric response, with positive $\Delta\tau$ and $\Delta$nAUCC; their higher consistency reflects lower workflow sensitivity, not proof that response disagreement is mainly conventional.
+Simpler scalar controls (unit-cell volume, band gap) are markedly more cross-source consistent than the piezoelectric response, with positive $\Delta\tau$ and $\Delta$nAUCC; their higher consistency reflects lower workflow sensitivity in these two sources, not proof that response disagreement is mainly conventional.
 Equal-budget source-robust portfolios improve worst-source recall and NDCG relative to JARVIS-only or MP-only selection, and paired-bootstrap confidence intervals on the difference are reported.
 The balanced-union strategy reaches worst-source recall of 1.0 at twice the elite budget by coverage construction; this is an upper bound, not a method gain.
-All numbers are hash-bound and traceable to the Phase~7C manifest; a 48-material third-protocol adjudication plan is pre-registered for independent validation.
+All numbers are hash-bound and traceable to the Phase~7C manifest and the Phase~8A audit; a 48-material third-protocol adjudication plan is pre-registered for independent validation.
 \end{abstract}
 
 \section{Introduction}
@@ -69,12 +71,15 @@ This distinction matters for materials discovery: a model that is validated only
 \paragraph{Paired universe.}
 We use the frozen Phase 6A panel: P0 ($n=573$) and P2 ($n=207$), structure-matched pairs with identical or near-identical crystal structures across MP and JARVIS \cite{jain2013,ong2013}.
 We do not modify panel membership.
+The panels were built by structure matching of relaxed CIFs followed by manual inspection of the top candidates; full details and the frozen membership file are released in the repository.
+At the 1\% elite quantile the effective sample is approximately 6 materials in P0 and 2 materials in P2, so elite-tail statements should be read as lower-bound diagnostics rather than precise population estimates.
 
 \paragraph{Response functionals.}
 For each source we compute three coordinate-invariant scalars:
 F1 = Cartesian Frobenius norm $\norm{\E}_F$;
 F3 = true collinear longitudinal maximum $\max_{\norm{\bm n}=1} |n_i e_{ijk} n_j n_k|$ \cite{maxlongitudinal2021};
 F4 = Kelvin/Mandel operator norm on symmetric strain.
+F3 is reported because it isolates the longitudinal single-crystal response; F1 and F4 are more relevant for polycrystalline or norm-based screening.
 
 \paragraph{Chance-adjusted concordance curve.}
 For each panel, metric and quantile $q=1\%,\dots,50\%$, we report the observed top-$q$ Jaccard overlap $J_q$, the exact hypergeometric null expectation $\mathbb{E}[J_q]$ under independent rankings, and the chance-adjusted overlap
@@ -87,6 +92,7 @@ The normalised area under the concordance curve is
 \mathrm{nAUCC} = \frac{1}{q_{\max}-q_{\min}} \int_{q_{\min}}^{q_{\max}} \widetilde J_q \,dq,
 \end{equation}
 and the persistent consensus onset is the smallest $q$ for which the lower band exceeds a threshold $\delta$ for at least five consecutive quantiles.
+nAUCC is a descriptive summary of the curve; uncertainty is conveyed by the simultaneous bands on the underlying curve, not by a confidence interval on the area itself.
 
 \paragraph{Banded reporting.}
 To avoid unified claims about broad agreement, we split the 1--50\% curve into elite (1--10\%), intermediate (10--20\%) and broad (20--50\%) bands and report partial nAUCC and simultaneous bands for each.
@@ -104,7 +110,7 @@ We report $f=0.10$ and $f=0.25$.
 We compare piezoelectric response against volume, band gap, energy above hull and dielectric trace.
 For each attribute we record source field, source database, unit, calculation type/version, missingness and a flag for possible same-field copying (more than 5\% identical JARVIS/MP values) \cite{wilkinson2016}.
 We report $\Delta\tau = \tau_{\text{control}} - \tau_{\text{piezo}}$ and $\Delta\mathrm{nAUCC}$ with grouped paired-bootstrap confidence intervals, permutation $p$-values and Benjamini--Hochberg FDR \cite{benjamini1995}.
-Controls show that response properties have higher workflow sensitivity; they do not prove that disagreement is mainly conventional.
+Controls show that response properties have higher workflow sensitivity in these two sources; they do not prove that disagreement is mainly conventional.
 
 \paragraph{Robust portfolio benchmark.}
 We fix an elite fraction $q^*=10\%$.
@@ -113,6 +119,7 @@ Strategies include single-source, average percentile, Borda count, maximin perce
 All deterministic strategies are evaluated on the full panel; disagreement abstention tunes its penalty with nested grouped cross-validation.
 We also perform 5-fold grouped cross-evaluation.
 Improvements over the better of JARVIS-only and MP-only are reported as paired differences with grouped paired-bootstrap confidence intervals, not only point estimates.
+Full-panel differences are modest and their confidence intervals include zero; they should be read as decision examples rather than as proof of large method gains.
 The balanced-union strategy at $b=2.0$ is labelled a \emph{coverage upper bound} because it contains the union of the two source top-$q^*$ sets by construction.
 
 \section{Results}
@@ -188,7 +195,7 @@ Volume is the strongest control (P0 $\tau=0.967$, nAUCC $=0.918$), followed by b
 All controls have positive $\Delta\tau$ and $\Delta$nAUCC with respect to F1.
 The provenance audit (Table~\ref{tab:provenance}) records source fields, databases, units, calculation types and a same-field-copy flag.
 Energy above hull is flagged because many stable materials share a zero hull value in both sources; this is physically expected and does not invalidate the other controls.
-We therefore interpret the contrast as evidence that piezoelectric response has higher workflow sensitivity, not as proof that response disagreement is mainly conventional.
+We therefore interpret the contrast as evidence that piezoelectric response has higher workflow sensitivity in these two sources, not as proof that response disagreement is mainly conventional.
 
 \begin{table}[htbp]
 \centering
@@ -227,7 +234,7 @@ dielectric\_trace & 0.482 & 0.286 & 0.236 & 0.181 & 573 \\
 At equal budget $b=1.0$, the source-robust strategies improve worst-source recall and NDCG relative to JARVIS-only or MP-only selection on P0 F1 (Table~\ref{tab:portfolio}).
 The best full-panel primary strategy is \PrimaryBestStrategy{} (worst-source recall = \PrimaryBestWorstSourceRecall{}), with a paired difference versus the better single-source baseline of \PrimaryBestPairedDiffRecall{}.
 Full-panel differences are modest and their confidence intervals include zero, so they should be read as a decision example rather than as proof of a large method gain.
-In 5-fold grouped cross-evaluation the gains are larger (e.g., average\_percentile paired difference = +0.201, 95\% CI [0.137, 0.272]), reflecting the variance reduction from grouping by composition.
+In 5-fold grouped cross-evaluation the gains are larger (e.g., \CVPrimaryBestStrategy{} paired difference = \CVPrimaryPairedDiffRecall{}), reflecting the variance reduction from grouping by composition; CV estimates should be interpreted as an optimistic upper bound because different structural entries of the same formula may still leak across folds.
 The balanced-union strategy reaches a worst-source recall of 1.0 at budget factor 2.0 on P0 F1 by construction; this is a coverage upper bound, not an algorithmic gain.
 Disagreement abstention tunes its penalty with nested grouped cross-validation and reduces tail regret by penalising high cross-source disagreement.
 Full benchmark numbers, including paired confidence intervals, are given in the hash-bound \texttt{portfolio\_benchmark.csv} artifact.
@@ -251,15 +258,23 @@ balanced\_union & 0.526 & 0.902 \\
 \end{table}
 
 \section{Discussion}
-The weak elite-tail resolution is a statement about database definitions and processed fields, not about the physical correctness of either source.
-Simpler, more convention-robust observables (volume, band gap) are reproduced far more reliably than the piezoelectric tensor, indicating that the response property has higher workflow sensitivity.
+The weak elite-tail resolution is a statement about these two database definitions and processed fields, not about the physical correctness of either source.
+Simpler, more convention-robust observables (volume, band gap) are reproduced far more reliably than the piezoelectric tensor in MP and JARVIS, indicating that the response property has higher workflow sensitivity in these two sources.
 This contrast does not establish that a large fraction of the disagreement stems from conventions; an irreducible physical component cannot be ruled out without a third independent protocol or experiment.
 
 Source-robust portfolios improve the worst-case recall of a two-source decision maker, but they do not validate physical truth.
 A 48-material third-protocol adjudication plan has been pre-registered to provide independent computational validation; experimental adjudication would be required to settle source correctness on specific candidates \cite{wilkinson2016,lyngby2024}.
 
+\paragraph{Limitations.}
+First, only two high-throughput sources are compared, so conclusions are source-pair specific and should not be read as a universal statement about all piezoelectric databases.
+Second, coordinate-invariant scalars reduce but do not eliminate convention dependence; full tensor convention alignment was not performed.
+Third, the hypergeometric null treats rankings as independent given the shared universe; any positive correlation under the null would make the observed weak agreement a conservative finding.
+Fourth, effective elite-tail samples are small ($\sim$6 materials at 1\% in P0, $\sim$2 in P2), so elite-tail statements are lower-bound diagnostics.
+Fifth, grouped CV gains may be optimistic if information leaks across different structural entries of the same reduced formula.
+
 \section{Data availability}
-Hash-bound result tables, panel membership, the Phase 7C manifest, the manuscript-numbers JSON and reproducibility instructions are released in the CrossPiezo repository.
+Hash-bound result tables, panel membership, the Phase~7C manifest, the Phase~8A audit reports, the manuscript-numbers JSON and reproducibility instructions are released in the CrossPiezo repository.
+A permanent archive (Zenodo/Figshare) containing the frozen manifest and all CSV artifacts will be created upon acceptance; the Phase~8A manifest hash is included in the repository for traceability.
 
 \section{Conclusion}
 CrossPiezo shows that MP and JARVIS agree on broad promising regions of piezoelectric chemical space while failing to reproducibly resolve the elite tail.

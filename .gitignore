@@ -23,3 +23,10 @@ Thumbs.db
 # Editor settings (unless intentionally shared)
 .vscode/
 .idea/
+
+# LaTeX build artifacts
+*.aux
+*.bbl
+*.blg
+*.log
+*.out

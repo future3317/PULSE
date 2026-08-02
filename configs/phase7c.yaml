@@ -188,6 +188,6 @@ outputs:
   result_root: results/phase7c
   report_root: reports/phase7c
   manuscript:
-    tex: CrossPiezo_ScreeningResolution_Manuscript_v0.6.tex
+    tex: CrossPiezo_ScreeningResolution_Manuscript.tex
     bib: CrossPiezo_ScreeningResolution_references.bib
   third_protocol_config: configs/third_protocol_phase7c.yaml
