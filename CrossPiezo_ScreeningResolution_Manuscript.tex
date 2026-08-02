@@ -3,6 +3,7 @@
 \usepackage{amsmath,amssymb,amsfonts,bm}
 \usepackage{booktabs,multirow,array}
 \usepackage{graphicx}
+\graphicspath{{figures/screening_resolution/}}
 \usepackage{xcolor}
 \usepackage{hyperref}
 \usepackage{cleveref}
@@ -125,10 +126,18 @@ The balanced-union strategy at $b=2.0$ is labelled a \emph{coverage upper bound}
 \section{Results}
 \label{sec:results}
 \subsection{Screening-resolution curves}
-\Cref{tab:concordance} summarises the concordance diagnostics.
+\Cref{fig:screening_curves} shows the screening-resolution curves for P0.
+\Cref{tab:concordance} summarises the corresponding concordance diagnostics.
 On P0 the three functionals behave similarly: full-range nAUCC is \PZeroFOneNaucc{} for F1, \PZeroFThreeNaucc{} for F3 and \PZeroFFourNaucc{} for F4.
 The pointwise lower confidence bound first exceeds 0 at \PZeroFOneQZero{} for F1, but a five-quantile persistent onset at $\delta=0.05$ is not observed for F1, and the P2 panel shows even weaker concordance (F1 nAUCC = \PTwoFOneNaucc{}).
 Thus, even if one screens half of the universe, the two sources only barely agree more than would be expected by chance.
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.95\textwidth]{fig1_screening_resolution_curves}
+\caption{Screening-resolution curves for P0 ($n=573$). Solid lines show the chance-adjusted Jaccard overlap $\widetilde J_q$ for F1 (blue), F3 (orange) and F4 (green); shaded ribbons are simultaneous 95\% confidence bands. The horizontal dashed line marks chance-adjusted zero overlap. Background shading distinguishes the elite (1--10\%), intermediate (10--20\%) and broad (20--50\%) bands. Concordance is weak in the elite tail and only becomes positive after substantially broadening the candidate pool.}
+\label{fig:screening_curves}
+\end{figure}
 
 \begin{table}[htbp]
 \centering
@@ -148,7 +157,7 @@ P2 & F4\_KelvinOp & 0.046 & -- & -- \\
 \end{tabular}
 \end{table}
 
-\Cref{tab:bands} reports partial nAUCC by band.
+\Cref{fig:banded_naucc,tab:bands} report partial nAUCC by band.
 Concordance is weakest in the elite band, modest in the intermediate band, and only reaches clearly positive values in the broad band for F3/F4.
 This pattern shows that concordance emerges only after substantially broadening the candidate pool.
 
@@ -166,6 +175,13 @@ broad & 20--50\% & \PZeroFOneBroadNaucc{} \\
 \bottomrule
 \end{tabular}
 \end{table}
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.95\textwidth]{fig2_banded_naucc}
+\caption{Partial nAUCC by band for P0 ($n=573$) and P2 ($n=207$). Positive values indicate agreement better than chance. For all metrics, concordance is weakest in the elite band and grows only after broadening the candidate pool.}
+\label{fig:banded_naucc}
+\end{figure}
 
 \subsection{Corrected high-response sensitivity}
 \Cref{tab:highresponse} shows the corrected high-response analyses on P0 F1.
@@ -190,7 +206,7 @@ pooled\_exploratory & 58 & -0.155 \\
 \end{table}
 
 \subsection{Property controls}
-\Cref{tab:controls} shows that all available controls are more cross-source consistent than piezoelectric F1.
+\Cref{fig:property_controls,tab:controls} show that all available controls are more cross-source consistent than piezoelectric F1.
 Volume is the strongest control (P0 $\tau=0.967$, nAUCC $=0.918$), followed by band gap ($\tau=0.908$, nAUCC $=0.897$).
 All controls have positive $\Delta\tau$ and $\Delta$nAUCC with respect to F1.
 The provenance audit (Table~\ref{tab:provenance}) records source fields, databases, units, calculation types and a same-field-copy flag.
@@ -230,8 +246,15 @@ dielectric\_trace & 0.482 & 0.286 & 0.236 & 0.181 & 573 \\
 \end{tabular}
 \end{table}
 
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.95\textwidth]{fig3_property_controls}
+\caption{Property-control comparison on P0. Bars show the advantage of each control over piezoelectric F1 in Kendall $\tau$ (left) and nAUCC (right). All controls are more cross-source consistent than the piezoelectric response, indicating higher workflow sensitivity for piezoelectric tensors in these two sources.}
+\label{fig:property_controls}
+\end{figure}
+
 \subsection{Robust portfolio benchmark}
-At equal budget $b=1.0$, the source-robust strategies improve worst-source recall and NDCG relative to JARVIS-only or MP-only selection on P0 F1 (Table~\ref{tab:portfolio}).
+At equal budget $b=1.0$, the source-robust strategies improve worst-source recall and NDCG relative to JARVIS-only or MP-only selection on P0 F1 (Figure~\ref{fig:portfolio_benchmark} and Table~\ref{tab:portfolio}).
 The best full-panel primary strategy is \PrimaryBestStrategy{} (worst-source recall = \PrimaryBestWorstSourceRecall{}), with a paired difference versus the better single-source baseline of \PrimaryBestPairedDiffRecall{}.
 Full-panel differences are modest and their confidence intervals include zero, so they should be read as a decision example rather than as proof of a large method gain.
 In 5-fold grouped cross-evaluation the gains are larger (e.g., \CVPrimaryBestStrategy{} paired difference = \CVPrimaryPairedDiffRecall{}), reflecting the variance reduction from grouping by composition; CV estimates should be interpreted as an optimistic upper bound because different structural entries of the same formula may still leak across folds.
@@ -256,6 +279,13 @@ balanced\_union & 0.526 & 0.902 \\
 \bottomrule
 \end{tabular}
 \end{table}
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.95\textwidth]{fig4_portfolio_benchmark}
+\caption{Equal-budget portfolio benchmark on P0 F1 ($q^*=10\%$). Bars show worst-source recall at budget $b=1.0$ (blue) and the coverage upper bound at $b=2.0$ (grey). Robust strategies improve worst-source recall relative to single-source selection; the $b=2.0$ balanced-union recall of 1.0 is a coverage upper bound by construction.}
+\label{fig:portfolio_benchmark}
+\end{figure}
 
 \section{Discussion}
 The weak elite-tail resolution is a statement about these two database definitions and processed fields, not about the physical correctness of either source.
