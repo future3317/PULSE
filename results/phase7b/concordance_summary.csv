@@ -1,0 +1,13 @@
+panel,metric,n_pairs,nAUCC,q_consensus_delta0.00,persistent_onset_delta0.00,q_consensus_delta0.05,persistent_onset_delta0.05,q_consensus_delta0.10,persistent_onset_delta0.10
+P0,F1_Frobenius,573,0.1050746995817334,33.0,33.0,43.0,,,
+P0,F3_Longitudinal,573,0.11016248011534203,20.0,24.0,38.0,38.0,,
+P0,F4_KelvinOp,573,0.10572407600228573,28.0,28.0,39.0,42.0,,
+P0_high_response,F1_Frobenius,287,-0.0482279701000004,,,,,,
+P0_high_response,F3_Longitudinal,287,-0.04764141380814934,,,,,,
+P0_high_response,F4_KelvinOp,287,-0.04873390818105534,,,,,,
+P2,F1_Frobenius,207,0.060232288789580576,,,,,,
+P2,F3_Longitudinal,207,0.043279956848819176,,,,,,
+P2,F4_KelvinOp,207,0.04593413088143092,,,,,,
+P2_high_response,F1_Frobenius,116,-0.07610029823207669,,,,,,
+P2_high_response,F3_Longitudinal,116,-0.11544784272426803,,,,,,
+P2_high_response,F4_KelvinOp,116,-0.09895996068932379,,,,,,

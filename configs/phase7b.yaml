@@ -1,0 +1,190 @@
+# CrossPiezo Phase 7B: Screening Resolution v2 Methodological Upgrade
+# Frozen before viewing any Phase 7B results.
+#
+# Branch: research/screening-resolution-v2
+# Baseline commit: ede4066921b4d22bcc5688ae91febcb429871dbb
+
+metadata:
+  phase: 7B
+  baseline_commit: ede4066921b4d22bcc5688ae91febcb429871dbb
+  branch: research/screening-resolution-v2
+  frozen_at: 2026-08-02T11:24:00Z
+
+panels:
+  # Frozen nested panels from Phase 6A/6B. Do not redefine.
+  primary: P0
+  sensitivity: P2
+  membership_path: artifacts/phase6a/panels/panel_membership.parquet
+  high_response_fraction: 0.50
+  high_response_suffix: _high_response
+
+metrics:
+  # Coordinate-invariant response scalars (primary endpoints).
+  primary:
+    - name: F1_Frobenius
+      jarvis_col: jarvis_f1
+      mp_col: mp_f1
+      description: Cartesian Frobenius norm of the piezoelectric stress tensor
+    - name: F3_Longitudinal
+      jarvis_col: jarvis_f3
+      mp_col: mp_f3
+      description: True collinear longitudinal maximum
+    - name: F4_KelvinOp
+      jarvis_col: jarvis_f4
+      mp_col: mp_f4
+      description: Kelvin/Mandel operator norm on symmetric strain
+
+screening_resolution:
+  # Quantile fractions q = k / N, reported as percentages.
+  q_percentiles:
+    start: 1
+    stop: 50
+    step: 1
+  # Persistent-onset thresholds for chance-adjusted concordance.
+  delta_thresholds:
+    - 0.0
+    - 0.05
+    - 0.10
+  persistent_onset_min_consecutive: 5
+  overlap_ci_alpha: 0.05
+  bootstrap_replicates: 2000
+  random_seed: 42
+  confidence_level: 0.95
+
+scale_order_tail:
+  # Decomposition of cross-source disagreement into scale, order, and tail.
+  tail_fraction: 0.10
+  quantile_mapping_grid:
+    start: 0.01
+    stop: 0.99
+    step: 0.01
+  ks_alpha: 0.05
+  rank_displacement_method: average
+
+property_controls:
+  # Negative-control properties to compare against piezoelectric response.
+  # Each entry defines a scalar attribute and the columns/sources from which it is read.
+  reference_piezo_metric: F1_Frobenius
+  attributes:
+    - name: volume
+      required: true
+      jarvis_col: null  # computed from CIF
+      mp_col: null
+      unit: Angstrom^3
+      description: Unit-cell volume per formula unit
+    - name: band_gap
+      required: true
+      jarvis_col: band_gap
+      mp_col: band_gap
+      unit: eV
+      description: Electronic band gap
+    - name: energy_above_hull
+      required: false
+      jarvis_col: energy_above_hull
+      mp_col: energy_above_hull
+      unit: eV/atom
+      description: Energy above the convex hull
+    - name: dielectric_total_trace
+      required: true
+      jarvis_col: dielectric_total
+      mp_col: dielectric_total
+      unit: dimensionless
+      description: Trace of the total dielectric tensor
+    - name: elastic_bulk_modulus_vrh
+      required: false
+      jarvis_col: elastic_tensor
+      mp_col: elastic_tensor
+      unit: GPa
+      description: Voigt-Reuss-Hill average bulk modulus from elastic tensor
+  # Grouping variable for paired grouped bootstrap and permutation tests.
+  group_by: reduced_formula
+  grouped_bootstrap_replicates: 2000
+  grouped_bootstrap_seed: 43
+  permutation_replicates: 4999
+  permutation_seed: 44
+  confidence_level: 0.95
+  fdr_method: benjamini_hochberg
+
+electronic_ionic:
+  # Decomposition only when both sources carry convention-complete total/electronic/ionic tensors.
+  min_effective_n: 100
+  contributions:
+    - total
+    - electronic
+    - ionic
+  cancellation_index: false
+
+heterogeneity:
+  covariates:
+    - crystal_system
+    - anion_group
+    - response_magnitude_quartile
+    - rms_match_quality
+    - lattice_distance
+    - heavy_atom_fraction
+  subgroup_min_n: 30
+  grouped_bootstrap_replicates: 2000
+  grouped_bootstrap_seed: 45
+  permutation_replicates: 4999
+  permutation_seed: 46
+  fdr_method: benjamini_hochberg
+  continuous_covariates:
+    - rms_distance
+    - lattice_distance
+
+robust_portfolio:
+  # Elite fraction and budget multipliers.
+  q_star: 0.10
+  budgets:
+    - 1.0
+    - 1.5
+    - 2.0
+  strategies:
+    - jarvis_only
+    - mp_only
+    - average_percentile
+    - borda_count
+    - maximin_percentile
+    - intersection_first
+    - balanced_union
+    - disagreement_abstention
+    - minimax_oracle
+  metrics:
+    - worst_source_recall
+    - worst_source_ndcg
+    - worst_source_normalized_utility
+    - minimax_recall_regret
+    - minimax_ndcg_regret
+    - portfolio_size
+    - portfolio_coverage
+  # Deterministic grouped split for dev/holdout evaluation.
+  n_splits: 5
+  holdout_fold: 0
+  split_seed: 0
+  grouped_bootstrap_replicates: 2000
+  grouped_bootstrap_seed: 47
+  disagreement_abstention:
+    lambda_grid:
+      - 0.0
+      - 0.5
+      - 1.0
+      - 2.0
+      - 4.0
+    tuning_metric: worst_source_recall
+
+statistics:
+  random_seed: 42
+  bootstrap_replicates: 2000
+  permutation_replicates: 4999
+  confidence_level: 0.95
+  kendall_variant: b
+
+outputs:
+  artifact_root: artifacts/phase7b
+  result_root: results/phase7b
+  report_root: reports/phase7b
+  literature_matrix: results/phase7b/literature_matrix.csv
+  manuscript:
+    tex: CrossPiezo_ScreeningResolution_Manuscript_v0.5.tex
+    bib: CrossPiezo_ScreeningResolution_references.bib
+  ccfa_concept: docs/ccfa_method_paper_concept_v0.2.md

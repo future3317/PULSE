@@ -1,0 +1,58 @@
+{
+  "timestamp": "2026-08-02T12:34:48.865929+00:00",
+  "commit": "ede4066921b4d22bcc5688ae91febcb429871dbb",
+  "config_commit": "ede4066921b4d22bcc5688ae91febcb429871dbb",
+  "branch": "research/screening-resolution-v2",
+  "files": [
+    {
+      "path": "results\\phase7b\\concordance_curve.csv",
+      "sha256": "192716e111ad9b9274231777ba4894dd445c78264e9563b6fa511424b7733b76"
+    },
+    {
+      "path": "results\\phase7b\\concordance_summary.csv",
+      "sha256": "e2cc8016ee151ce2e264b477fe2dc2d1486c32b250fc9230261ff1d770aaf946"
+    },
+    {
+      "path": "results\\phase7b\\electronic_ionic_decomposition.csv",
+      "sha256": "960d4f7a763fbd030778858ee509dd6396bff986a7c6766f4f725c206318f51e"
+    },
+    {
+      "path": "results\\phase7b\\heterogeneity.csv",
+      "sha256": "982f5b8617d1954bfe42f39469b2a331a9f23b1a9ffd58367e63044c39c87407"
+    },
+    {
+      "path": "results\\phase7b\\heterogeneity_continuous.csv",
+      "sha256": "f476e45f98e08a9486c389e6d3c7472d345ce93a8f17efd000d87bd62be450e4"
+    },
+    {
+      "path": "results\\phase7b\\portfolio_benchmark.csv",
+      "sha256": "f8a52e7bcd56a7079b01d393508069641958e7ea7ac89a6ec0dd151293ac80bb"
+    },
+    {
+      "path": "results\\phase7b\\portfolio_pareto.csv",
+      "sha256": "4554fe283eb96bd12efbb26e8eff4e6b8dd5a161ee4ab85a25228b8d7d401ba5"
+    },
+    {
+      "path": "results\\phase7b\\property_control_comparison.csv",
+      "sha256": "b94daa0543a6ef795533f0d879598cfe0e688de931fa8dcd25e48049648f368b"
+    },
+    {
+      "path": "results\\phase7b\\property_control_curves.csv",
+      "sha256": "ad2b8896bad977b04b6112b3d1b403eaed16e72fa07f216f61eff090e096a466"
+    },
+    {
+      "path": "results\\phase7b\\property_controls.csv",
+      "sha256": "d82b62c20f9dd851118fdd7794f62bd086590f1fc744a075f1ff8e31311d4739"
+    },
+    {
+      "path": "results\\phase7b\\scale_order_tail.csv",
+      "sha256": "7930bdbcf509f791d4c5d9347fc8c311fe3e5afe119bb5030da3dbd0a0dfb93e"
+    }
+  ],
+  "key_numbers": {
+    "P0_F1_nAUCC": 0.1050746995817334,
+    "P0_F1_persistent_onset_delta0.05": NaN,
+    "best_holdout_worst_source_recall": 1.0,
+    "best_holdout_strategy": "balanced_union"
+  }
+}
