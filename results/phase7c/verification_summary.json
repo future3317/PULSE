@@ -1,0 +1,14 @@
+{
+  "status": "reconciled",
+  "max_absolute_difference": 1.1102230246251565e-16,
+  "wp_a": {
+    "max_diff": 9.627715291671279e-17,
+    "flagged": []
+  },
+  "wp_f": {
+    "max_diff": 1.1102230246251565e-16,
+    "flagged": []
+  },
+  "n_flags": 0,
+  "flagged_items": []
+}

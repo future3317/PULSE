@@ -1,0 +1,193 @@
+# CrossPiezo Phase 7C: Reviewer-Proofing and Q1 Decision
+# Frozen before viewing any Phase 7C results.
+#
+# Branch: paper/screening-resolution-q1-v1
+# Baseline commit: 7c19a3a2401bc37b9f3dcb680c66c052d54f4c71
+
+metadata:
+  phase: 7C
+  baseline_commit: 7c19a3a2401bc37b9f3dcb680c66c052d54f4c71
+  branch: paper/screening-resolution-q1-v1
+  frozen_at: 2026-08-02T13:18:00Z
+  baseline_phase: 7B
+
+panels:
+  # Frozen nested panels from Phase 6A/6B. Do not redefine.
+  primary: P0
+  sensitivity: P2
+  membership_path: artifacts/phase6a/panels/panel_membership.parquet
+
+metrics:
+  # Coordinate-invariant response scalars (primary endpoints).
+  primary:
+    - name: F1_Frobenius
+      jarvis_col: jarvis_f1
+      mp_col: mp_f1
+      description: Cartesian Frobenius norm of the piezoelectric stress tensor
+    - name: F3_Longitudinal
+      jarvis_col: jarvis_f3
+      mp_col: mp_f3
+      description: True collinear longitudinal maximum
+    - name: F4_KelvinOp
+      jarvis_col: jarvis_f4
+      mp_col: mp_f4
+      description: Kelvin/Mandel operator norm on symmetric strain
+
+screening_resolution:
+  # Quantile fractions q = k / N, reported as percentages.
+  q_percentiles:
+    start: 1
+    stop: 50
+    step: 1
+  # Band definitions for partial nAUCC reporting.
+  bands:
+    - name: elite
+      q_min: 1
+      q_max: 10
+    - name: intermediate
+      q_min: 10
+      q_max: 20
+    - name: broad
+      q_min: 20
+      q_max: 50
+  # Persistent-onset thresholds for chance-adjusted concordance.
+  delta_thresholds:
+    - 0.0
+    - 0.05
+    - 0.10
+  persistent_onset_min_consecutive: 5
+  overlap_ci_alpha: 0.05
+  bootstrap_replicates: 2000
+  random_seed: 42
+  confidence_level: 0.95
+
+high_response:
+  # Corrected sensitivity analyses that avoid the pooled-selection collider bias.
+  fractions:
+    - 0.10
+    - 0.25
+  methods:
+    - name: dual_high
+      description: both source values exceed the quantile threshold of min(F_J, F_M)
+    - name: jarvis_anchor
+      description: top fraction selected by JARVIS, evaluated on MP
+    - name: mp_anchor
+      description: top fraction selected by MP, evaluated on JARVIS
+    - name: pooled_exploratory
+      description: legacy pooled selection, conditional permutation, exploratory only
+  conditional_permutation:
+    n_perm: 199
+    seed: 50
+  confidence_level: 0.95
+
+property_controls:
+  # Negative-control properties to compare against piezoelectric response.
+  reference_piezo_metric: F1_Frobenius
+  attributes:
+    - name: volume
+      required: true
+      jarvis_col: null  # computed from CIF
+      mp_col: null
+      unit: Angstrom^3
+      description: Unit-cell volume per formula unit
+    - name: band_gap
+      required: true
+      jarvis_col: band_gap
+      mp_col: band_gap
+      unit: eV
+      description: Electronic band gap
+    - name: energy_above_hull
+      required: false
+      jarvis_col: energy_above_hull
+      mp_col: energy_above_hull
+      unit: eV/atom
+      description: Energy above the convex hull
+    - name: dielectric_total_trace
+      required: true
+      jarvis_col: dielectric_total
+      mp_col: dielectric_total
+      unit: dimensionless
+      description: Trace of the total dielectric tensor
+    - name: elastic_bulk_modulus_vrh
+      required: false
+      jarvis_col: elastic_tensor
+      mp_col: elastic_tensor
+      unit: GPa
+      description: Voigt-Reuss-Hill average bulk modulus from elastic tensor
+  # Provenance fields recorded for every control attribute.
+  provenance_audit:
+    - source_field
+    - source_database
+    - unit
+    - calculation_type_version
+    - missingness
+    - same_field_copy_flag
+  # Grouping variable for paired grouped bootstrap and permutation tests.
+  group_by: reduced_formula
+  grouped_bootstrap_replicates: 2000
+  grouped_bootstrap_seed: 43
+  permutation_replicates: 4999
+  permutation_seed: 44
+  confidence_level: 0.95
+  fdr_method: benjamini_hochberg
+
+robust_portfolio:
+  # Elite fraction and budget multipliers.
+  q_star: 0.10
+  primary_budget_factor: 1.0
+  budget_factors:
+    - 1.0
+    - 1.5
+    - 2.0
+  strategies:
+    - jarvis_only
+    - mp_only
+    - average_percentile
+    - borda_count
+    - maximin_percentile
+    - intersection_first
+    - balanced_union
+    - disagreement_abstention
+    - minimax_oracle
+  metrics:
+    - worst_source_recall
+    - worst_source_ndcg
+    - worst_source_normalized_utility
+    - minimax_recall_regret
+    - minimax_ndcg_regret
+    - portfolio_size
+    - portfolio_coverage
+  # Cross-evaluation: grouped 5-fold for deterministic strategies.
+  n_folds: 5
+  cross_eval_seed: 49
+  # Abstention hyperparameter tuning uses nested grouped CV.
+  disagreement_abstention:
+    lambda_grid:
+      - 0.0
+      - 0.5
+      - 1.0
+      - 2.0
+      - 4.0
+    tuning_metric: worst_source_recall
+    n_inner_folds: 5
+    n_inner_boot: 200
+    tune_seed: 48
+  # Paired difference inference against the better single-source baseline.
+  paired_bootstrap_replicates: 2000
+  paired_bootstrap_seed: 51
+
+statistics:
+  random_seed: 42
+  bootstrap_replicates: 2000
+  permutation_replicates: 4999
+  confidence_level: 0.95
+  kendall_variant: b
+
+outputs:
+  artifact_root: artifacts/phase7c
+  result_root: results/phase7c
+  report_root: reports/phase7c
+  manuscript:
+    tex: CrossPiezo_ScreeningResolution_Manuscript_v0.6.tex
+    bib: CrossPiezo_ScreeningResolution_references.bib
+  third_protocol_config: configs/third_protocol_phase7c.yaml

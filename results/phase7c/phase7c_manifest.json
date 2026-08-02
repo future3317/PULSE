@@ -1,0 +1,66 @@
+{
+  "timestamp": "2026-08-02T14:00:13.593169+00:00",
+  "commit": "7c19a3a2401bc37b9f3dcb680c66c052d54f4c71",
+  "config_commit": "7c19a3a2401bc37b9f3dcb680c66c052d54f4c71",
+  "branch": "paper/screening-resolution-q1-v1",
+  "files": [
+    {
+      "path": "results\\phase7c\\concordance_bands.csv",
+      "sha256": "0753f36f1da944ee3f4882f6ac4a30f9b1d9015821d659d0684ab0d2bf77b40b"
+    },
+    {
+      "path": "results\\phase7c\\concordance_curve.csv",
+      "sha256": "0443f0c2e280c75e1a0c27df33e21d88ecd9375dd685ff468cef6da6d086c4ad"
+    },
+    {
+      "path": "results\\phase7c\\concordance_summary.csv",
+      "sha256": "61cb107618f89aa70d026751595d56b1801badd65a82c02e23b4c6a8497d14e3"
+    },
+    {
+      "path": "results\\phase7c\\control_provenance.csv",
+      "sha256": "feb64cea21e1c96672764de0bc94d8d586607c98943553a938cbd2a279e596f7"
+    },
+    {
+      "path": "results\\phase7c\\high_response_sensitivity.csv",
+      "sha256": "0956c4f3af687a5b3935c0dfde75f5685bbb6078d52ec15d887f01643988bea7"
+    },
+    {
+      "path": "results\\phase7c\\portfolio_benchmark.csv",
+      "sha256": "5b5ecccfe6a24c8b67eab2227ee33069504156ba350e8af2fb7e4503fb200a42"
+    },
+    {
+      "path": "results\\phase7c\\portfolio_paired_differences.csv",
+      "sha256": "3b68dafadfdb768a894e013dcbf550f980c44c6c4348775d6a69eeda086d429b"
+    },
+    {
+      "path": "results\\phase7c\\portfolio_pareto.csv",
+      "sha256": "2d22f8774f3ce92694c77b8bfc83765d92e5f05b9030244189d4775ff82b5362"
+    },
+    {
+      "path": "results\\phase7c\\property_control_comparison.csv",
+      "sha256": "c94e287c14750049d9644283facedbc6829578a44e4f31ce647cbcd4d8a39b09"
+    },
+    {
+      "path": "results\\phase7c\\property_control_curves.csv",
+      "sha256": "1341b456635f0faa004afe70d8280fe992eaa78a7f2c849c7c9463a2b242b9d6"
+    },
+    {
+      "path": "results\\phase7c\\property_controls.csv",
+      "sha256": "4b13b71d2596013335a80bfcd235720eabef00bc7fe6a959306516753d52cd1e"
+    },
+    {
+      "path": "results\\phase7c\\manuscript_numbers.json",
+      "sha256": "9a7144de28f8c434fd5aea110b08da7110582ea1d3ac65bc10d032e857979dcb"
+    }
+  ],
+  "key_numbers": {
+    "P0_F1_nAUCC": 0.1050746995817334,
+    "P0_F1_partial_nAUCC_elite": 0.0030140174179539,
+    "P0_F1_partial_nAUCC_intermediate": 0.0758586700510463,
+    "P0_F1_partial_nAUCC_broad": 0.1454315807410962,
+    "P0_F1_dual_high_10pct_nAUCC": -0.0457965096560343,
+    "n_positive_P0_controls": 4,
+    "primary_best_worst_source_recall": 0.5789473684210527,
+    "primary_best_strategy": "balanced_union"
+  }
+}

@@ -1,0 +1,9 @@
+panel,attribute,reference_metric,fdr_qvalue
+P0,volume,F1_Frobenius,0.4812
+P0,band_gap,F1_Frobenius,0.4812
+P0,energy_above_hull,F1_Frobenius,0.4812
+P0,dielectric_total_trace,F1_Frobenius,0.4812
+P2,volume,F1_Frobenius,0.5088
+P2,band_gap,F1_Frobenius,0.5088
+P2,energy_above_hull,F1_Frobenius,0.5088
+P2,dielectric_total_trace,F1_Frobenius,0.5088
