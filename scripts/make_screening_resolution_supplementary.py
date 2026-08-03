@@ -127,15 +127,15 @@ def table_s3_portfolio() -> str:
         strat = strategy_labels.get(row["strategy"], row["strategy"])
         rows.append(
             f"{strat} \\& {_fmt(row['worst_source_recall'])} \\& {_fmt(row['worst_source_ndcg'])} \\& "
-            f"{_fmt(row['portfolio_coverage'])} \\& {_fmt(row['material_paired_diff_recall'])} \\& "
-            f"[{_fmt(row['material_paired_diff_recall_ci95_low'])}, {_fmt(row['material_paired_diff_recall_ci95_high'])}] \\\\\n"
+            f"{_fmt(row['portfolio_coverage'])} \\& {_fmt(row['full_proc_delta_best_recall'])} \\& "
+            f"[{_fmt(row['full_proc_delta_best_recall_ci95_low'])}, {_fmt(row['full_proc_delta_best_recall_ci95_high'])}] \\\\\n"
         )
     return """\\begin{table}[htbp]
 \\small
 \\setlength{\\tabcolsep}{4pt}
 \\centering
 \\caption{Equal-budget ($b=1.0$) portfolio results on P0 F1 ($q^*=10\\%$).
-Paired differences are versus the better single-source baseline and are computed as material-level worst-source recall differences using a grouped bootstrap that resamples reduced-formula groups and projects the global selection onto each bootstrap sample (see Note~1).}
+Paired differences are versus the better single-source baseline and are computed as material-level worst-source recall differences using a full-procedure grouped bootstrap: each replicate resamples reduced-formula groups with replacement, assigns distinct identities to duplicated occurrences, re-runs the portfolio strategy and both single-source baselines, and recomputes the improvement (see Note~1).}
 \\label{tab:si_portfolio}
 \\begin{tabular}{lccccc}
 \\toprule
@@ -208,9 +208,18 @@ def main() -> int:
 
 The portfolio benchmark reports two related quantities.
 \emph{Worst-source recall} is a material-level (micro) metric: it counts how many of the top-$q^* n$ materials selected by a strategy are also present in the JARVIS and MP elite sets, divided by $q^* n$, with no group weighting.
-\emph{Paired difference in recall} is also a material-level metric: it is the difference between the material-level worst-source recall of the strategy and that of the better single-source baseline, computed on the full panel.
-To account for dependence among entries sharing a reduced formula, the confidence interval is obtained by a grouped paired bootstrap: reduced-formula groups are resampled with replacement, the existing global selections are projected onto each bootstrap sample, and the material-level worst-source recall difference is recomputed within the sample.
-Thus the $\Delta$Recall column in Table~S3 is directly comparable to the arithmetic difference of the Recall column; both are material-level quantities, and the bootstrap only affects the uncertainty estimate.
+\emph{Paired difference in recall} is the difference between the material-level worst-source recall of the strategy and that of the better single-source baseline, computed on the full observed panel.
+
+The confidence interval reported in Table~S3 uses a \emph{full-procedure grouped bootstrap}.
+Each replicate:
+(i) resamples reduced-formula groups with replacement and assigns distinct bootstrap identities to duplicated occurrences;
+(ii) recomputes source-specific rankings and top-$q^*$ elite sets on the bootstrap sample;
+(iii) re-runs the portfolio strategy and both single-source baselines;
+(iv) computes the improvement over the better single source within that replicate.
+The reported 95\% interval is the percentile bootstrap interval of these replicate differences.
+The point estimate is fixed on the full-panel selections and is exactly the arithmetic difference of the Recall column; the bootstrap captures uncertainty from group resampling and re-selection.
+
+The ``better single source'' is determined per replicate for the interval; the main-text point estimate uses the full-panel better source (here JARVIS-only and MP-only are tied on P0 F1 at $q^*=10\%$, $b=1.0$).
 The portfolio analysis is presented as a risk-management illustration, not as a validated method comparison or as evidence of physical truth.
 
 \subsection{Structure matching and manual audit (Note~2)}
@@ -237,8 +246,11 @@ No sign conventions, unit conversions or coordinate rotations were applied silen
 
 Screening-resolution curves are evaluated at quantiles $q=1\%,2\%,\dots,50\%$.
 The chance-adjusted Jaccard overlap is $\widetilde J_q = (J_q - \mathbb{E}[J_q])/(1 - \mathbb{E}[J_q])$, where $\mathbb{E}[J_q]$ is the exact hypergeometric expectation under independent rankings.
-Simultaneous 95\% confidence bands use a paired bootstrap with a studentized sup-norm critical value.
-Bootstrap resampling is by reduced-formula group to respect the dependence among entries sharing a composition; the random seed, number of replicates and studentization details are recorded in the Phase~7C configuration.
+Simultaneous 95\% confidence bands for the screening-resolution curve use a paired bootstrap with a studentized sup-norm critical value; this bootstrap resamples matched material pairs (rows) because the curve itself is a cross-sectional function of the ranked universe and the band is constructed for fixed quantiles.
+
+For property-control comparisons and the portfolio benchmark, bootstrap resampling is by reduced-formula group to respect the dependence among entries sharing a composition.
+In the portfolio full-procedure bootstrap, duplicated groups create distinct bootstrap identities so that re-selection and elite-set sizes are computed on the expanded bootstrap sample.
+The random seed, number of replicates, studentization details, tie handling and $k$ rounding are recorded in the Phase~7C configuration and result files.
 Ties in source rankings are broken by stable sorting; duplicate reduced formulae are retained in the ranking but noted in the panel metadata.
 The persistent-onset criterion requires the lower confidence bound to exceed a threshold $\delta$ for at least five consecutive quantiles.
 

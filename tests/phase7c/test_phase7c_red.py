@@ -25,6 +25,7 @@ from crosspiezo.analysis.phase7c_stats import (
     conditional_permutation_high_response,
     control_provenance_record,
     dual_high_response_mask,
+    full_procedure_portfolio_bootstrap_ci,
     paired_bootstrap_ci_difference,
     partial_naucc,
     portfolio_cross_evaluation,
@@ -221,3 +222,90 @@ def test_current_manuscript_avoids_forbidden_phrases():
     ]
     for phrase in forbidden:
         assert phrase.lower() not in text.lower(), f"forbidden phrase present: {phrase}"
+
+
+def _make_portfolio_data(rng: np.random.Generator, n: int = 80):
+    """Correlated left/right scores with a few groups."""
+    base = rng.exponential(scale=1.0, size=n)
+    left = base + rng.normal(scale=0.1, size=n)
+    right = base + rng.normal(scale=0.1, size=n)
+    groups = np.repeat(np.arange(n // 4), 4)[:n]
+    return left, right, groups
+
+
+def test_full_procedure_point_equals_arithmetic_difference():
+    """The reported point equals the arithmetic recall difference on the full panel."""
+    rng = np.random.default_rng(21)
+    left, right, groups = _make_portfolio_data(rng)
+    df = full_procedure_portfolio_bootstrap_ci(
+        left, right, q_star=0.10, budget_factor=1.0,
+        strategies=["average_percentile", "balanced_union"],
+        groups=groups, n_boot=500, seed=31,
+    )
+    # Manual full-panel check for balanced_union.
+    sel = portfolio_select("balanced_union", left, right, q_star=0.10, budget_factor=1.0)
+    rec = portfolio_metrics(sel, left, right, q_star=0.10)["worst_source_recall"]
+    jarvis_rec = portfolio_metrics(
+        portfolio_select("jarvis_only", left, right, q_star=0.10, budget_factor=1.0),
+        left, right, q_star=0.10,
+    )["worst_source_recall"]
+    expected_delta_j = rec - jarvis_rec
+    row = df[(df["strategy"] == "balanced_union") & (df["delta_type"] == "delta_j")]
+    assert len(row) == 1
+    assert float(row["point"].iloc[0]) == pytest.approx(expected_delta_j, abs=1e-9)
+
+
+def test_full_procedure_same_strategy_has_zero_ci():
+    """When strategy == JARVIS-only, delta_j point and CI are exactly zero."""
+    rng = np.random.default_rng(23)
+    left, right, groups = _make_portfolio_data(rng)
+    df = full_procedure_portfolio_bootstrap_ci(
+        left, right, q_star=0.10, budget_factor=1.0,
+        strategies=["jarvis_only"],
+        groups=groups, n_boot=500, seed=33,
+    )
+    row = df[(df["strategy"] == "jarvis_only") & (df["delta_type"] == "delta_j")]
+    assert float(row["point"].iloc[0]) == pytest.approx(0.0, abs=1e-9)
+    assert float(row["ci95_low"].iloc[0]) == pytest.approx(0.0, abs=1e-9)
+    assert float(row["ci95_high"].iloc[0]) == pytest.approx(0.0, abs=1e-9)
+
+
+def test_full_procedure_seed_reproducible():
+    """Two runs with the same seed produce identical CIs."""
+    rng = np.random.default_rng(25)
+    left, right, groups = _make_portfolio_data(rng)
+    df1 = full_procedure_portfolio_bootstrap_ci(
+        left, right, q_star=0.10, budget_factor=1.0,
+        strategies=["balanced_union"], groups=groups, n_boot=300, seed=41,
+    )
+    df2 = full_procedure_portfolio_bootstrap_ci(
+        left, right, q_star=0.10, budget_factor=1.0,
+        strategies=["balanced_union"], groups=groups, n_boot=300, seed=41,
+    )
+    pd.testing.assert_frame_equal(df1.reset_index(drop=True), df2.reset_index(drop=True))
+
+
+def test_full_procedure_duplicate_groups_expand_sample():
+    """Duplicated groups create distinct bootstrap identities and do not collapse."""
+    rng = np.random.default_rng(27)
+    left, right, groups = _make_portfolio_data(rng, n=80)
+    df = full_procedure_portfolio_bootstrap_ci(
+        left, right, q_star=0.10, budget_factor=1.0,
+        strategies=["balanced_union"], groups=groups, n_boot=200, seed=43,
+    )
+    assert len(df) == 3  # delta_j, delta_m, delta_best
+    assert all(np.isfinite(df["point"]))
+    assert all(np.isfinite(df["ci95_low"]))
+    assert all(np.isfinite(df["ci95_high"]))
+
+
+def test_full_procedure_delta_best_non_negative():
+    """Delta versus the better single source is never negative for a sensible strategy."""
+    rng = np.random.default_rng(29)
+    left, right, groups = _make_portfolio_data(rng)
+    df = full_procedure_portfolio_bootstrap_ci(
+        left, right, q_star=0.10, budget_factor=1.0,
+        strategies=["balanced_union"], groups=groups, n_boot=500, seed=47,
+    )
+    row = df[(df["strategy"] == "balanced_union") & (df["delta_type"] == "delta_best")]
+    assert float(row["point"].iloc[0]) >= -1e-9

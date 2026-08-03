@@ -304,6 +304,141 @@ def material_level_paired_diff_ci(
     return point, float(np.percentile(reps_arr, 2.5)), float(np.percentile(reps_arr, 97.5))
 
 
+def full_procedure_portfolio_bootstrap_ci(
+    left: np.ndarray,
+    right: np.ndarray,
+    q_star: float,
+    budget_factor: float,
+    strategies: Sequence[str],
+    groups: Sequence[Hashable] | np.ndarray,
+    n_boot: int = 2000,
+    seed: int = 53,
+) -> pd.DataFrame:
+    """Full-procedure grouped bootstrap CI for portfolio strategies.
+
+    Each bootstrap replicate:
+
+    1. resamples reduced-formula groups with replacement;
+    2. creates distinct bootstrap identities for duplicated occurrences;
+    3. recomputes source-specific rankings and top-:math:`q^*` elite sets;
+    4. re-runs every portfolio strategy and both single-source baselines;
+    5. reports recall differences versus JARVIS-only, MP-only, and the
+       better single source *within that replicate*.
+
+    The point estimate is computed on the full observed panel.  The
+    returned intervals are unconditional percentile bootstrap CIs.
+    """
+    left = np.asarray(left, dtype=np.float64)
+    right = np.asarray(right, dtype=np.float64)
+    groups = np.asarray(groups)
+
+    valid = _finite_mask(left, right)
+    left, right, groups = left[valid], right[valid], groups[valid]
+    n = len(left)
+    if n < 2:
+        return _empty_portfolio_ci(strategies)
+
+    unique_groups = np.unique(groups)
+    if len(unique_groups) < 2:
+        return _empty_portfolio_ci(strategies)
+
+    idx_by_group: dict[Any, np.ndarray] = {g: np.where(groups == g)[0] for g in unique_groups}
+
+    def _evaluate(_l: np.ndarray, _r: np.ndarray) -> dict[str, dict[str, Any]]:
+        out: dict[str, dict[str, Any]] = {}
+        for strategy in list(strategies) + ["jarvis_only", "mp_only"]:
+            sel = portfolio_select(strategy, _l, _r, q_star, budget_factor)
+            out[strategy] = portfolio_metrics(sel, _l, _r, q_star)
+        return out
+
+    # Full-panel point estimates.
+    full = _evaluate(left, right)
+    full_better = (
+        "jarvis_only"
+        if full["jarvis_only"]["worst_source_recall"] >= full["mp_only"]["worst_source_recall"]
+        else "mp_only"
+    )
+
+    rows: list[dict[str, Any]] = []
+    rng = np.random.default_rng(seed)
+    reps: dict[str, dict[str, list[float]]] = {
+        s: {"delta_j": [], "delta_m": [], "delta_best": []} for s in strategies
+    }
+
+    for _ in range(n_boot):
+        sampled_groups = rng.choice(unique_groups, size=len(unique_groups), replace=True)
+        boot_idx = np.concatenate([idx_by_group[g] for g in sampled_groups])
+        if len(boot_idx) < 5:
+            continue
+        boot_left, boot_right = left[boot_idx], right[boot_idx]
+        boot = _evaluate(boot_left, boot_right)
+        jarvis_rec = boot["jarvis_only"]["worst_source_recall"]
+        mp_rec = boot["mp_only"]["worst_source_recall"]
+        better_rec = max(jarvis_rec, mp_rec)
+        for strategy in strategies:
+            rec = boot[strategy]["worst_source_recall"]
+            reps[strategy]["delta_j"].append(float(rec - jarvis_rec))
+            reps[strategy]["delta_m"].append(float(rec - mp_rec))
+            reps[strategy]["delta_best"].append(float(rec - better_rec))
+
+    for strategy in strategies:
+        point = float(full[strategy]["worst_source_recall"])
+        delta_j_point = float(full[strategy]["worst_source_recall"] - full["jarvis_only"]["worst_source_recall"])
+        delta_m_point = float(full[strategy]["worst_source_recall"] - full["mp_only"]["worst_source_recall"])
+        delta_best_point = float(full[strategy]["worst_source_recall"] - full[full_better]["worst_source_recall"])
+
+        for delta_name, point_val, values in (
+            ("delta_j", delta_j_point, reps[strategy]["delta_j"]),
+            ("delta_m", delta_m_point, reps[strategy]["delta_m"]),
+            ("delta_best", delta_best_point, reps[strategy]["delta_best"]),
+        ):
+            if values:
+                arr = np.asarray(values)
+                rows.append(
+                    {
+                        "strategy": strategy,
+                        "delta_type": delta_name,
+                        "point": point_val,
+                        "ci95_low": float(np.percentile(arr, 2.5)),
+                        "ci95_high": float(np.percentile(arr, 97.5)),
+                        "n_boot": n_boot,
+                        "seed": seed,
+                    }
+                )
+            else:
+                rows.append(
+                    {
+                        "strategy": strategy,
+                        "delta_type": delta_name,
+                        "point": point_val,
+                        "ci95_low": float("nan"),
+                        "ci95_high": float("nan"),
+                        "n_boot": n_boot,
+                        "seed": seed,
+                    }
+                )
+
+    return pd.DataFrame(rows)
+
+
+def _empty_portfolio_ci(strategies: Sequence[str]) -> pd.DataFrame:
+    rows: list[dict[str, Any]] = []
+    for strategy in strategies:
+        for delta_name in ("delta_j", "delta_m", "delta_best"):
+            rows.append(
+                {
+                    "strategy": strategy,
+                    "delta_type": delta_name,
+                    "point": float("nan"),
+                    "ci95_low": float("nan"),
+                    "ci95_high": float("nan"),
+                    "n_boot": 0,
+                    "seed": 0,
+                }
+            )
+    return pd.DataFrame(rows)
+
+
 def _assign_folds(pair_ids: Sequence[str], n_folds: int, seed: int = 0) -> np.ndarray:
     """Deterministic fold assignment from hashed pair identifiers."""
     folds = np.empty(len(pair_ids), dtype=np.int64)
@@ -469,6 +604,7 @@ __all__ = [
     "anchor_high_response_mask",
     "conditional_permutation_high_response",
     "paired_bootstrap_ci_difference",
+    "full_procedure_portfolio_bootstrap_ci",
     "portfolio_cross_evaluation",
     "control_provenance_record",
     "benjamini_hochberg",

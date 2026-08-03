@@ -2,6 +2,6 @@
 \contentsline {subsection}{\numberline {1.1}Portfolio estimand definition (Note~1)}{2}{subsection.1.1}%
 \contentsline {subsection}{\numberline {1.2}Structure matching and manual audit (Note~2)}{2}{subsection.1.2}%
 \contentsline {subsection}{\numberline {1.3}Tensor invariants and conventions (Note~3)}{2}{subsection.1.3}%
-\contentsline {subsection}{\numberline {1.4}Bootstrap, quantile and tie handling (Note~4)}{2}{subsection.1.4}%
+\contentsline {subsection}{\numberline {1.4}Bootstrap, quantile and tie handling (Note~4)}{3}{subsection.1.4}%
 \contentsline {section}{\numberline {2}Supplementary figures}{3}{section.2}%
 \contentsline {section}{\numberline {3}Supplementary tables}{3}{section.3}%

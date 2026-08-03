@@ -1,6 +1,6 @@
 {
-  "timestamp": "2026-08-03T03:28:57.933433+00:00",
-  "commit": "c61587828039ea649dadcee1daa680b239196a90",
+  "timestamp": "2026-08-03T05:18:24.051524+00:00",
+  "commit": "786b03bf38916098c88f0be1576ae6fefe0c693b",
   "config_commit": "7c19a3a2401bc37b9f3dcb680c66c052d54f4c71",
   "branch": "paper/screening-resolution-q1-v1",
   "files": [
@@ -26,15 +26,19 @@
     },
     {
       "path": "results\\phase7c\\portfolio_benchmark.csv",
-      "sha256": "22c2476d698c5d718c86e323eace2f0df275f92831ed81b3d508de02b6b8c435"
+      "sha256": "552e9dffab809dbafa07f10bdc5e9a2f1ac414a1fa1b618a62ade00cbb545e63"
+    },
+    {
+      "path": "results\\phase7c\\portfolio_full_procedure_bootstrap.csv",
+      "sha256": "1787907baa9433be0ea78f646f262d926fd3ef654f041a85399f8624c20a8c4b"
     },
     {
       "path": "results\\phase7c\\portfolio_paired_differences.csv",
-      "sha256": "609f4b3b45ea3853aab9216728cf76aa012266c7536d9c01e8ab66c71991f686"
+      "sha256": "85526a84bcf5af91a279eebe0d6326a051f0c2d073c18da2350d63f225bf9364"
     },
     {
       "path": "results\\phase7c\\portfolio_pareto.csv",
-      "sha256": "8da3fd565f689f32e078bba4d814f67c6ec6529faba814634cf926914bebcd84"
+      "sha256": "36dd6b1aaf3c332a231255f1a01a9d722c0c876dcc6f8f1d6ce742a57430b65a"
     },
     {
       "path": "results\\phase7c\\property_control_comparison.csv",
@@ -50,11 +54,11 @@
     },
     {
       "path": "results\\phase7c\\manuscript_numbers.json",
-      "sha256": "c414b9797f0c650168eda8186d67ba7108158e8261a8ff2331c57b8ef66f6bd7"
+      "sha256": "27e0504f49ea976bbbcd8a9d7a5e872773f11535a4845c429f309eb592d92bba"
     },
     {
       "path": "results\\phase7c\\phase7c_manifest.json",
-      "sha256": "efbd82b190f6466ff4afd8c6fd7c168b88cb7ec9e4fcee1019741aeadaf8f18e"
+      "sha256": "f5a747a6ba79d00099e7f7bd7a8429095bbee5a1bca2fa79627eb53504d5ce65"
     },
     {
       "path": "results\\phase7c\\verification_summary.json",
@@ -70,8 +74,8 @@
     "n_positive_P0_controls": 4,
     "primary_best_worst_source_recall": 0.5263157894736842,
     "primary_best_strategy": "balanced_union",
-    "primary_best_material_paired_diff_recall": 0.3859649122807017,
-    "primary_best_material_paired_diff_recall_ci95_low": 0.2142857142857142,
-    "primary_best_material_paired_diff_recall_ci95_high": 0.5
+    "primary_best_full_proc_delta_best_recall": 0.3859649122807017,
+    "primary_best_full_proc_delta_best_recall_ci95_low": 0.2727272727272727,
+    "primary_best_full_proc_delta_best_recall_ci95_high": 0.4406779661016948
   }
 }

@@ -59,6 +59,7 @@ from crosspiezo.analysis.phase7c_stats import (  # noqa: E402
     conditional_permutation_high_response,
     control_provenance_record,
     dual_high_response_mask,
+    full_procedure_portfolio_bootstrap_ci,
     material_level_paired_diff_ci,
     paired_bootstrap_ci_difference,
     partial_naucc,
@@ -934,6 +935,7 @@ def run_wp_d(enriched: pd.DataFrame, cfg: dict[str, Any]) -> dict[str, Any]:
 
     bench_records: list[dict[str, Any]] = []
     diff_records: list[dict[str, Any]] = []
+    full_proc_ci_records: list[dict[str, Any]] = []
 
     for panel_name, mask in panel_masks.items():
         sub = enriched[mask].copy()
@@ -965,6 +967,9 @@ def run_wp_d(enriched: pd.DataFrame, cfg: dict[str, Any]) -> dict[str, Any]:
                     else "mp_only"
                 )
 
+                # Compute all strategy selections first, then run one full-procedure bootstrap.
+                strategy_selections: dict[str, list[int]] = {}
+                strategy_metrics: dict[str, dict[str, Any]] = {}
                 for strategy in strategies:
                     lam = 0.0
                     if strategy == "disagreement_abstention":
@@ -983,9 +988,46 @@ def run_wp_d(enriched: pd.DataFrame, cfg: dict[str, Any]) -> dict[str, Any]:
                     sel = portfolio_select(
                         strategy, left_v, right_v, q_star, budget_factor, lambda_param=lam
                     )
-                    metrics_dict = portfolio_metrics(sel, left_v, right_v, q_star)
+                    strategy_selections[strategy] = sel
+                    strategy_metrics[strategy] = portfolio_metrics(sel, left_v, right_v, q_star)
+
+                full_proc_ci = full_procedure_portfolio_bootstrap_ci(
+                    left_v,
+                    right_v,
+                    q_star,
+                    budget_factor,
+                    strategies,
+                    groups_v,
+                    n_boot=n_boot,
+                    seed=seed + 2000,
+                )
+                full_proc_ci["panel"] = panel_name
+                full_proc_ci["metric"] = metric["name"]
+                full_proc_ci["budget_factor"] = budget_factor
+                full_proc_lookup: dict[tuple[str, str], dict[str, Any]] = {
+                    (row["strategy"], row["delta_type"]): row.to_dict()
+                    for _, row in full_proc_ci.iterrows()
+                }
+
+                for strategy in strategies:
+                    sel = strategy_selections[strategy]
+                    metrics_dict = strategy_metrics[strategy]
                     target_k = max(1, int(math.floor(q_star * len(left_v))))
                     budget = min(len(left_v), int(round(budget_factor * target_k)))
+                    lam = 0.0
+                    if strategy == "disagreement_abstention":
+                        unique_groups = np.unique(groups_v)
+                        if len(unique_groups) >= 2:
+                            lam = tune_disagreement_abstention(
+                                left_v,
+                                right_v,
+                                q_star,
+                                budget_factor,
+                                lambda_grid,
+                                groups_v,
+                                n_boot=n_inner_boot,
+                                seed=tune_seed,
+                            )
 
                     diff_point, diff_lo, diff_hi = _paired_diff_ci_vs_baseline(
                         sel,
@@ -1007,6 +1049,10 @@ def run_wp_d(enriched: pd.DataFrame, cfg: dict[str, Any]) -> dict[str, Any]:
                         n_boot=n_boot,
                         seed=seed + 1000,
                     )
+
+                    fp_j = full_proc_lookup.get((strategy, "delta_j"), {})
+                    fp_m = full_proc_lookup.get((strategy, "delta_m"), {})
+                    fp_best = full_proc_lookup.get((strategy, "delta_best"), {})
 
                     is_primary = budget_factor == primary_budget
                     is_coverage_upper_bound = strategy == "balanced_union" and budget_factor == 2.0
@@ -1032,6 +1078,15 @@ def run_wp_d(enriched: pd.DataFrame, cfg: dict[str, Any]) -> dict[str, Any]:
                             "material_paired_diff_recall": mat_diff_point,
                             "material_paired_diff_recall_ci95_low": mat_diff_lo,
                             "material_paired_diff_recall_ci95_high": mat_diff_hi,
+                            "full_proc_delta_j_recall": fp_j.get("point", float("nan")),
+                            "full_proc_delta_j_recall_ci95_low": fp_j.get("ci95_low", float("nan")),
+                            "full_proc_delta_j_recall_ci95_high": fp_j.get("ci95_high", float("nan")),
+                            "full_proc_delta_m_recall": fp_m.get("point", float("nan")),
+                            "full_proc_delta_m_recall_ci95_low": fp_m.get("ci95_low", float("nan")),
+                            "full_proc_delta_m_recall_ci95_high": fp_m.get("ci95_high", float("nan")),
+                            "full_proc_delta_best_recall": fp_best.get("point", float("nan")),
+                            "full_proc_delta_best_recall_ci95_low": fp_best.get("ci95_low", float("nan")),
+                            "full_proc_delta_best_recall_ci95_high": fp_best.get("ci95_high", float("nan")),
                             "baseline_strategy": better_baseline,
                         }
                     )
@@ -1053,8 +1108,19 @@ def run_wp_d(enriched: pd.DataFrame, cfg: dict[str, Any]) -> dict[str, Any]:
                             "material_paired_diff_recall": mat_diff_point,
                             "material_paired_diff_recall_ci95_low": mat_diff_lo,
                             "material_paired_diff_recall_ci95_high": mat_diff_hi,
+                            "full_proc_delta_j_recall": fp_j.get("point", float("nan")),
+                            "full_proc_delta_j_recall_ci95_low": fp_j.get("ci95_low", float("nan")),
+                            "full_proc_delta_j_recall_ci95_high": fp_j.get("ci95_high", float("nan")),
+                            "full_proc_delta_m_recall": fp_m.get("point", float("nan")),
+                            "full_proc_delta_m_recall_ci95_low": fp_m.get("ci95_low", float("nan")),
+                            "full_proc_delta_m_recall_ci95_high": fp_m.get("ci95_high", float("nan")),
+                            "full_proc_delta_best_recall": fp_best.get("point", float("nan")),
+                            "full_proc_delta_best_recall_ci95_low": fp_best.get("ci95_low", float("nan")),
+                            "full_proc_delta_best_recall_ci95_high": fp_best.get("ci95_high", float("nan")),
                         }
                     )
+
+                full_proc_ci_records.extend(full_proc_ci.to_dict("records"))
 
             # 5-fold grouped cross-evaluation at the primary equal budget.
             cv_df = portfolio_cross_evaluation(
@@ -1114,12 +1180,17 @@ def run_wp_d(enriched: pd.DataFrame, cfg: dict[str, Any]) -> dict[str, Any]:
 
     bench_df = pd.DataFrame(bench_records)
     diff_df = pd.DataFrame(diff_records)
+    full_proc_ci_df = pd.DataFrame(full_proc_ci_records)
     info: dict[str, Any] = {
         "portfolio_benchmark": _write_csv_with_hash(bench_df, RESULT_ROOT / "portfolio_benchmark.csv"),
         "portfolio_paired_differences": _write_csv_with_hash(
             diff_df, RESULT_ROOT / "portfolio_paired_differences.csv"
         ),
     }
+    if not full_proc_ci_df.empty:
+        info["portfolio_full_procedure_bootstrap"] = _write_csv_with_hash(
+            full_proc_ci_df, RESULT_ROOT / "portfolio_full_procedure_bootstrap.csv"
+        )
 
     # Pareto frontier on the full-panel results.
     full_panel = bench_df[bench_df["eval_mode"] == "full_panel"].copy()
@@ -1189,13 +1260,14 @@ def run_wp_e(cfg: dict[str, Any], summaries: dict[str, pd.DataFrame]) -> dict[st
             best = primary.loc[primary["worst_source_recall"].idxmax()]
             numbers["primary_best_strategy"] = str(best["strategy"])
             numbers["primary_best_worst_source_recall"] = float(best["worst_source_recall"])
-            numbers["primary_best_paired_diff_recall"] = float(best["material_paired_diff_recall"])
-            numbers["primary_best_material_paired_diff_recall"] = float(best["material_paired_diff_recall"])
-            numbers["primary_best_material_paired_diff_recall_ci95_low"] = float(
-                best["material_paired_diff_recall_ci95_low"]
+            numbers["primary_best_full_proc_delta_best_recall"] = float(
+                best["full_proc_delta_best_recall"]
             )
-            numbers["primary_best_material_paired_diff_recall_ci95_high"] = float(
-                best["material_paired_diff_recall_ci95_high"]
+            numbers["primary_best_full_proc_delta_best_recall_ci95_low"] = float(
+                best["full_proc_delta_best_recall_ci95_low"]
+            )
+            numbers["primary_best_full_proc_delta_best_recall_ci95_high"] = float(
+                best["full_proc_delta_best_recall_ci95_high"]
             )
             numbers["primary_best_metric"] = ref_metric
 
@@ -1335,12 +1407,14 @@ def _key_numbers(summaries: dict[str, pd.DataFrame], cfg: dict[str, Any] | None 
             best = primary.loc[primary["worst_source_recall"].idxmax()]
             numbers["primary_best_worst_source_recall"] = float(best["worst_source_recall"])
             numbers["primary_best_strategy"] = str(best["strategy"])
-            numbers["primary_best_material_paired_diff_recall"] = float(best["material_paired_diff_recall"])
-            numbers["primary_best_material_paired_diff_recall_ci95_low"] = float(
-                best["material_paired_diff_recall_ci95_low"]
+            numbers["primary_best_full_proc_delta_best_recall"] = float(
+                best["full_proc_delta_best_recall"]
             )
-            numbers["primary_best_material_paired_diff_recall_ci95_high"] = float(
-                best["material_paired_diff_recall_ci95_high"]
+            numbers["primary_best_full_proc_delta_best_recall_ci95_low"] = float(
+                best["full_proc_delta_best_recall_ci95_low"]
+            )
+            numbers["primary_best_full_proc_delta_best_recall_ci95_high"] = float(
+                best["full_proc_delta_best_recall_ci95_high"]
             )
     return numbers
 
@@ -1408,6 +1482,10 @@ def main() -> int:
     summaries["portfolio_paired_differences"] = pd.read_csv(RESULT_ROOT / "portfolio_paired_differences.csv")
     if (RESULT_ROOT / "portfolio_pareto.csv").exists():
         summaries["portfolio_pareto"] = pd.read_csv(RESULT_ROOT / "portfolio_pareto.csv")
+    if (RESULT_ROOT / "portfolio_full_procedure_bootstrap.csv").exists():
+        summaries["portfolio_full_procedure_bootstrap"] = pd.read_csv(
+            RESULT_ROOT / "portfolio_full_procedure_bootstrap.csv"
+        )
 
     info_e = run_wp_e(cfg, summaries)
     info_f = run_wp_f(cfg)
