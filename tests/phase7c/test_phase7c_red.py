@@ -196,16 +196,17 @@ def test_control_provenance_no_flag_below_threshold():
     assert rec["same_field_copy_flag"] is False
 
 
-def test_v0_6_manuscript_avoids_forbidden_phrases():
-    """The v0.6 manuscript must contain required sections and avoid forbidden claims."""
-    tex_path = Path(__file__).resolve().parents[2] / "CrossPiezo_ScreeningResolution_Manuscript_v0.6.tex"
-    assert tex_path.exists(), "v0.6 manuscript not found"
+def test_current_manuscript_avoids_forbidden_phrases():
+    """The consolidated manuscript must contain required sections and avoid forbidden claims."""
+    tex_path = Path(__file__).resolve().parents[2] / "CrossPiezo_ScreeningResolution_Manuscript.tex"
+    assert tex_path.exists(), "consolidated manuscript not found"
     text = tex_path.read_text(encoding="utf-8")
 
     required_sections = [
         r"\section{Introduction}",
-        r"\section{Results}",
         r"\section{Discussion}",
+        r"\section{Methods}",
+        r"\section{Data availability}",
         r"\bibliography",
     ]
     for section in required_sections:
@@ -215,6 +216,8 @@ def test_v0_6_manuscript_avoids_forbidden_phrases():
         "large fraction stems from conventions",
         "high-response negative nAUCC confirms",
         "balanced_union=1.0",
+        "true tensor",
+        "ground truth consensus",
     ]
     for phrase in forbidden:
         assert phrase.lower() not in text.lower(), f"forbidden phrase present: {phrase}"

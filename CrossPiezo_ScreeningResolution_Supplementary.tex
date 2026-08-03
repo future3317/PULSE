@@ -1,0 +1,175 @@
+\documentclass[11pt]{article}
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{booktabs}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\usepackage{cleveref}
+\usepackage{graphicx}
+\usepackage{enumitem}
+\graphicspath{{figures/screening_resolution/}}
+\hypersetup{colorlinks=true,linkcolor=blue!60!black,citecolor=blue!60!black,urlcolor=blue!60!black}
+
+\title{\textbf{Supplementary Information}\\CrossPiezo: Elite-Tail Instability in Cross-Database Piezoelectric Screening}
+\author{Anonymous Author(s)}
+\date{3 August 2026}
+\begin{document}
+\maketitle
+
+\tableofcontents
+\newpage
+
+\section{Supplementary notes}
+
+\subsection{Portfolio estimand definition (Note~1)}
+
+The portfolio benchmark reports two related but distinct quantities.
+\emph{Worst-source recall} is a material-level (micro) metric: it counts how many of the top-$q^* n$ materials selected by a strategy are also present in the JARVIS and MP elite sets, divided by $q^* n$, with no group weighting.
+\emph{Paired difference in recall} is computed by first evaluating a grouped worst-source recall within each reduced-formula group, then taking the mean difference across groups with a group-level paired bootstrap confidence interval.
+Because each reduced-formula group contains only a handful of materials, the group-mean differences are small even when the material-level recall improves substantially.
+Consequently, the $\Delta$Recall column in Table~S3 should not be interpreted as the arithmetic difference of the Recall column; the two columns answer different statistical questions.
+The portfolio analysis is therefore exploratory and is not presented in the main text as a validated method comparison.
+
+\subsection{Structure matching and manual audit (Note~2)}
+
+The CrossPiezo-Invariant-v1 panel was constructed from relaxed CIFs shared by the Materials Project (MP) and JARVIS.
+The matching pipeline is: (i) load all processed MP and JARVIS piezoelectric records; (ii) compute structure-level overlaps by compositional reduced formula and relaxed-lattice similarity; (iii) apply a frozen similarity threshold to obtain candidate pairs; (iv) perform a response-blind manual audit of the top-matched candidates using a frozen rule set.
+The audit was response-blind: the auditor did not see piezoelectric response values when deciding whether a candidate pair represented the same or a distinct structure.
+All audit decisions, exclusion reasons and ambiguous cases are recorded in the frozen panel-membership file.
+P0 ($n=573$) is the full set of accepted structure matches; P2 ($n=207$) is the subset passing a tighter similarity threshold.
+
+\subsection{Tensor invariants and conventions (Note~3)}
+
+All piezoelectric response values are piezoelectric stress tensors $\mathbf{e}$ in C/m$^2$ with full Cartesian $3\times3\times3$ components.
+The three coordinate-invariant scalars are:
+\begin{itemize}[noitemsep]
+\item F1, Cartesian Frobenius norm $\|\mathbf{e}\|_F$;
+\item F3, true collinear longitudinal maximum $\max_{\|\mathbf{n}\|=1} |n_i e_{ijk} n_j n_k|$ computed by numerical optimisation over the unit sphere;
+\item F4, Kelvin/Mandel operator norm on symmetric strain, computed from the Mandel representation of the $6\times3$ piezoelectric tensor.
+\end{itemize}
+Voigt-to-Cartesian conversion follows the standard convention $11\to xx$, $22\to yy$, $33\to zz$, $23\to yz$, $13\to xz$, $12\to xy$ with factor-of-two handling for shear components as appropriate for the stress tensor.
+No sign conventions, unit conversions or coordinate rotations were applied silently; all transformations are recorded in the repository transformation history.
+
+\subsection{Bootstrap, quantile and tie handling (Note~4)}
+
+Screening-resolution curves are evaluated at quantiles $q=1\%,2\%,\dots,50\%$.
+The chance-adjusted Jaccard overlap is $\widetilde J_q = (J_q - \mathbb{E}[J_q])/(1 - \mathbb{E}[J_q])$, where $\mathbb{E}[J_q]$ is the exact hypergeometric expectation under independent rankings.
+Simultaneous 95\% confidence bands use a paired bootstrap with a studentized sup-norm critical value.
+Bootstrap resampling is by reduced-formula group to respect the dependence among entries sharing a composition; the random seed, number of replicates and studentization details are recorded in the Phase~7C configuration.
+Ties in source rankings are broken by stable sorting; duplicate reduced formulae are retained in the ranking but noted in the panel metadata.
+The persistent-onset criterion requires the lower confidence bound to exceed a threshold $\delta$ for at least five consecutive quantiles.
+
+\section{Supplementary figures}
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.95\textwidth]{fig4_illustrative_candidates}
+\caption{Illustrative cross-database consensus and disputed candidates on P0 F1.
+Points show JARVIS versus MP percentiles for consensus elite (green), JARVIS-only elite (orange), MP-only elite (purple) and consensus low (grey) materials.
+The dashed diagonal marks equal ranking; dotted lines mark the 10\% elite threshold.
+These examples are illustrative and are not adjudicated as physically correct or incorrect.}
+\label{fig:si_candidates}
+\end{figure}
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.95\textwidth]{fig5_portfolio_frontier}
+\caption{Portfolio cost--coverage frontier on P0 F1 ($q^*=10\%$).
+Worst-source recall (left) and NDCG (right) are plotted against budget factor $b$ for the best single-source baselines and three source-robust aggregation strategies.
+The vertical dashed line marks the equal-budget analysis at $b=1.0$.
+Aggregation changes the coverage--quality trade-off but does not validate physical truth.
+See Note~1 for the distinction between material-level recall and group-mean paired differences.}
+\label{fig:si_portfolio}
+\end{figure}
+
+\section{Supplementary tables}
+
+\begin{table}[htbp]
+\small
+\setlength{\tabcolsep}{4pt}
+\centering
+\caption{Corrected high-response sensitivity for P0 F1 at $f=0.10$ and $f=0.25$.}
+\label{tab:si_highresponse}
+\begin{tabular}{lcccccc}
+\toprule
+Method \& $f$ \& $N$ \& $	au$ \& CI \& nAUCC \& CI \\
+\midrule
+Dual-high & 10\% & 58 & 0.035 & [-0.193, 0.239] & -0.046 & [-0.118, 0.044] \\
+JARVIS anchor & 10\% & 57 & 0.209 & [-0.062, 0.374] & 0.053 & [-0.061, 0.191] \\
+MP anchor & 10\% & 57 & -0.053 & [-0.235, 0.137] & -0.018 & [-0.104, 0.090] \\
+Pooled (exploratory) & 10\% & 58 & -- & [--, --] & -0.155 & [--, --] \\
+Dual-high & 25\% & 143 & 0.070 & [-0.046, 0.181] & 0.031 & [-0.034, 0.102] \\
+JARVIS anchor & 25\% & 143 & -0.019 & [-0.141, 0.105] & -0.006 & [-0.070, 0.070] \\
+MP anchor & 25\% & 143 & 0.039 & [-0.083, 0.154] & 0.007 & [-0.052, 0.078] \\
+Pooled (exploratory) & 25\% & 144 & -- & [--, --] & -0.100 & [--, --] \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+
+\begin{table}[htbp]
+\small
+\setlength{\tabcolsep}{4pt}
+\centering
+\caption{Property-control comparison on P0. The same-field copy flag is raised when more than 5\% of finite matched pairs have identical JARVIS/MP values.}
+\label{tab:si_controls}
+\begin{tabular}{lcccccccc}
+\toprule
+Attribute \& $N$ \& $	au$ \& 95\% CI \& nAUCC \& 95\% CI \& $\Delta\tau$ \& $\Delta$nAUCC \& Copy flag \\
+\midrule
+Volume \& 573 \& 0.967 \& [0.963, 0.971] \& 0.918 \& [0.901, 0.936] \& 0.722 \& 0.813 \&  \\
+Band gap \& 573 \& 0.908 \& [0.890, 0.923] \& 0.897 \& [0.864, 0.908] \& 0.663 \& 0.792 \&  \\
+Energy above hull \& 573 \& 0.611 \& [0.547, 0.670] \& 0.533 \& [0.455, 0.592] \& 0.366 \& 0.428 \& $\checkmark$ \\
+Dielectric trace \& 573 \& 0.482 \& [0.418, 0.547] \& 0.286 \& [0.228, 0.344] \& 0.236 \& 0.181 \&  \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+
+\begin{table}[htbp]
+\small
+\setlength{\tabcolsep}{4pt}
+\centering
+\caption{Equal-budget ($b=1.0$) portfolio results on P0 F1 ($q^*=10\%$).
+Paired differences are versus the better single-source baseline and are computed as group-mean differences, not as arithmetic differences of the material-level Recall column (see Note~1).}
+\label{tab:si_portfolio}
+\begin{tabular}{lccccc}
+\toprule
+Strategy \& Recall \& NDCG \& Coverage \& $\Delta$Recall \& 95\% CI \\
+\midrule
+JARVIS only \& 0.140 \& 0.646 \& 0.099 \& 0.000 \& [0.000, 0.000] \\
+MP only \& 0.140 \& 0.673 \& 0.099 \& 0.014 \& [-0.022, 0.050] \\
+Average percentile \& 0.456 \& 0.915 \& 0.099 \& 0.014 \& [-0.012, 0.042] \\
+Borda \& 0.456 \& 0.915 \& 0.099 \& 0.014 \& [-0.012, 0.042] \\
+Maximin \& 0.386 \& 0.909 \& 0.099 \& 0.014 \& [-0.016, 0.044] \\
+Intersection first \& 0.456 \& 0.915 \& 0.099 \& 0.014 \& [-0.012, 0.042] \\
+Balanced union \& 0.526 \& 0.902 \& 0.099 \& 0.012 \& [-0.012, 0.036] \\
+Disagreement abstention \& 0.456 \& 0.915 \& 0.099 \& 0.014 \& [-0.012, 0.042] \\
+Minimax oracle \& 0.474 \& 0.915 \& 0.099 \& 0.014 \& [-0.012, 0.040] \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+
+\begin{table}[htbp]
+\small
+\setlength{\tabcolsep}{4pt}
+\centering
+\caption{Portfolio worst-source recall on P0 F1 across budget factors $b=1.0, 1.5, 2.0$.}
+\label{tab:si_budget}
+\begin{tabular}{lccc}
+\toprule
+Strategy \& $b=1.0$ \& $b=1.5$ \& $b=2.0$ \\
+\midrule
+JARVIS only \& 0.140 \& 0.281 \& 0.333 \\
+MP only \& 0.140 \& 0.228 \& 0.316 \\
+Average percentile \& 0.456 \& 0.526 \& 0.579 \\
+Maximin \& 0.386 \& 0.456 \& 0.491 \\
+Balanced union \& 0.526 \& 0.789 \& 1.000 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+
+
+\end{document}
