@@ -59,6 +59,7 @@ from crosspiezo.analysis.phase7c_stats import (  # noqa: E402
     conditional_permutation_high_response,
     control_provenance_record,
     dual_high_response_mask,
+    material_level_paired_diff_ci,
     paired_bootstrap_ci_difference,
     partial_naucc,
     portfolio_cross_evaluation,
@@ -996,6 +997,16 @@ def run_wp_d(enriched: pd.DataFrame, cfg: dict[str, Any]) -> dict[str, Any]:
                         n_boot=n_boot,
                         seed=seed,
                     )
+                    mat_diff_point, mat_diff_lo, mat_diff_hi = material_level_paired_diff_ci(
+                        sel,
+                        baseline_selections[better_baseline],
+                        left_v,
+                        right_v,
+                        q_star,
+                        groups_v,
+                        n_boot=n_boot,
+                        seed=seed + 1000,
+                    )
 
                     is_primary = budget_factor == primary_budget
                     is_coverage_upper_bound = strategy == "balanced_union" and budget_factor == 2.0
@@ -1018,6 +1029,9 @@ def run_wp_d(enriched: pd.DataFrame, cfg: dict[str, Any]) -> dict[str, Any]:
                             "paired_diff_recall": diff_point,
                             "paired_diff_recall_ci95_low": diff_lo,
                             "paired_diff_recall_ci95_high": diff_hi,
+                            "material_paired_diff_recall": mat_diff_point,
+                            "material_paired_diff_recall_ci95_low": mat_diff_lo,
+                            "material_paired_diff_recall_ci95_high": mat_diff_hi,
                             "baseline_strategy": better_baseline,
                         }
                     )
@@ -1036,6 +1050,9 @@ def run_wp_d(enriched: pd.DataFrame, cfg: dict[str, Any]) -> dict[str, Any]:
                             "paired_diff_recall": diff_point,
                             "paired_diff_recall_ci95_low": diff_lo,
                             "paired_diff_recall_ci95_high": diff_hi,
+                            "material_paired_diff_recall": mat_diff_point,
+                            "material_paired_diff_recall_ci95_low": mat_diff_lo,
+                            "material_paired_diff_recall_ci95_high": mat_diff_hi,
                         }
                     )
 
@@ -1162,12 +1179,25 @@ def run_wp_e(cfg: dict[str, Any], summaries: dict[str, pd.DataFrame]) -> dict[st
 
     port = summaries.get("portfolio_benchmark")
     if port is not None and not port.empty:
-        primary = port[(port["eval_mode"] == "full_panel") & (port["is_primary"].eq(True))]
+        ref_metric = cfg["property_controls"]["reference_piezo_metric"]
+        primary = port[
+            (port["eval_mode"] == "full_panel")
+            & (port["is_primary"].eq(True))
+            & (port["metric"] == ref_metric)
+        ]
         if not primary.empty:
             best = primary.loc[primary["worst_source_recall"].idxmax()]
             numbers["primary_best_strategy"] = str(best["strategy"])
             numbers["primary_best_worst_source_recall"] = float(best["worst_source_recall"])
-            numbers["primary_best_paired_diff_recall"] = float(best["paired_diff_recall"])
+            numbers["primary_best_paired_diff_recall"] = float(best["material_paired_diff_recall"])
+            numbers["primary_best_material_paired_diff_recall"] = float(best["material_paired_diff_recall"])
+            numbers["primary_best_material_paired_diff_recall_ci95_low"] = float(
+                best["material_paired_diff_recall_ci95_low"]
+            )
+            numbers["primary_best_material_paired_diff_recall_ci95_high"] = float(
+                best["material_paired_diff_recall_ci95_high"]
+            )
+            numbers["primary_best_metric"] = ref_metric
 
     numbers["baseline_commit"] = cfg["metadata"]["baseline_commit"]
     numbers["branch"] = cfg["metadata"]["branch"]
@@ -1263,24 +1293,27 @@ def _result_hashes() -> list[dict[str, Any]]:
     return hashes
 
 
-def _key_numbers(summaries: dict[str, pd.DataFrame]) -> dict[str, Any]:
+def _key_numbers(summaries: dict[str, pd.DataFrame], cfg: dict[str, Any] | None = None) -> dict[str, Any]:
     numbers: dict[str, Any] = {}
+    ref_metric = "F1_Frobenius"
+    if cfg is not None:
+        ref_metric = cfg.get("property_controls", {}).get("reference_piezo_metric", "F1_Frobenius")
     conc = summaries.get("concordance_summary")
     if conc is not None and not conc.empty:
-        row = conc[(conc["panel"] == "P0") & (conc["metric"] == "F1_Frobenius")]
+        row = conc[(conc["panel"] == "P0") & (conc["metric"] == ref_metric)]
         if not row.empty:
             numbers["P0_F1_nAUCC"] = float(row.iloc[0]["nAUCC"])
     bands = summaries.get("concordance_bands")
     if bands is not None and not bands.empty:
         for band in ["elite", "intermediate", "broad"]:
-            row = bands[(bands["panel"] == "P0") & (bands["metric"] == "F1_Frobenius") & (bands["band"] == band)]
+            row = bands[(bands["panel"] == "P0") & (bands["metric"] == ref_metric) & (bands["band"] == band)]
             if not row.empty:
                 numbers[f"P0_F1_partial_nAUCC_{band}"] = float(row.iloc[0]["partial_nAUCC"])
     hr = summaries.get("high_response_sensitivity")
     if hr is not None and not hr.empty:
         dual = hr[
             (hr["panel"] == "P0")
-            & (hr["metric"] == "F1_Frobenius")
+            & (hr["metric"] == ref_metric)
             & (hr["method"] == "dual_high")
             & (hr["fraction"] == 0.10)
         ]
@@ -1293,11 +1326,22 @@ def _key_numbers(summaries: dict[str, pd.DataFrame]) -> dict[str, Any]:
         numbers["n_positive_P0_controls"] = len(pos)
     port = summaries.get("portfolio_benchmark")
     if port is not None and not port.empty:
-        primary = port[(port["eval_mode"] == "full_panel") & (port["is_primary"].eq(True))]
+        primary = port[
+            (port["eval_mode"] == "full_panel")
+            & (port["is_primary"].eq(True))
+            & (port["metric"] == ref_metric)
+        ]
         if not primary.empty:
             best = primary.loc[primary["worst_source_recall"].idxmax()]
             numbers["primary_best_worst_source_recall"] = float(best["worst_source_recall"])
             numbers["primary_best_strategy"] = str(best["strategy"])
+            numbers["primary_best_material_paired_diff_recall"] = float(best["material_paired_diff_recall"])
+            numbers["primary_best_material_paired_diff_recall_ci95_low"] = float(
+                best["material_paired_diff_recall_ci95_low"]
+            )
+            numbers["primary_best_material_paired_diff_recall_ci95_high"] = float(
+                best["material_paired_diff_recall_ci95_high"]
+            )
     return numbers
 
 
@@ -1308,7 +1352,7 @@ def write_manifest(summaries: dict[str, pd.DataFrame], cfg: dict[str, Any]) -> d
         "config_commit": cfg["metadata"]["baseline_commit"],
         "branch": cfg["metadata"]["branch"],
         "files": _result_hashes(),
-        "key_numbers": _key_numbers(summaries),
+        "key_numbers": _key_numbers(summaries, cfg),
     }
     path = RESULT_ROOT / "phase7c_manifest.json"
     path.write_text(json.dumps(manifest, indent=2, default=str), encoding="utf-8")

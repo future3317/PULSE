@@ -181,9 +181,13 @@
     }
   ],
   "primary_best_strategy": "balanced_union",
-  "primary_best_worst_source_recall": 0.5789473684210527,
-  "primary_best_paired_diff_recall": 0.0141129032258064,
+  "primary_best_worst_source_recall": 0.5263157894736842,
+  "primary_best_paired_diff_recall": 0.3859649122807017,
+  "primary_best_material_paired_diff_recall": 0.3859649122807017,
+  "primary_best_material_paired_diff_recall_ci95_low": 0.2142857142857142,
+  "primary_best_material_paired_diff_recall_ci95_high": 0.5,
+  "primary_best_metric": "F1_Frobenius",
   "baseline_commit": "7c19a3a2401bc37b9f3dcb680c66c052d54f4c71",
   "branch": "paper/screening-resolution-q1-v1",
-  "timestamp": "2026-08-02T14:00:13.575644+00:00"
+  "timestamp": "2026-08-03T03:28:57.922923+00:00"
 }

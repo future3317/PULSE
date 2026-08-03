@@ -51,7 +51,7 @@
 \newcommand{\PZeroBandGapDeltaNaucc}{0.792}
 \newcommand{\PrimaryBestStrategy}{balanced\_union}
 \newcommand{\PrimaryBestWorstSourceRecall}{0.526}
-\newcommand{\PrimaryBestPairedDiffRecall}{+0.012 (95\% CI [-0.012, 0.036])}
+\newcommand{\PrimaryBestPairedDiffRecall}{+0.386 (95\% CI [0.214, 0.500])}
 \newcommand{\CVPrimaryBestStrategy}{balanced\_union}
 \newcommand{\CVPrimaryPairedDiffRecall}{+0.342 (95\% CI [0.284, 0.389])}
 
@@ -82,7 +82,7 @@ This distinction matters for materials discovery: a model validated only on aggr
 This paper makes three contributions.
 First, we release a frozen, structure-matched benchmark of 573 MP--JARVIS pairs and three coordinate-invariant response scalars.
 Second, we show that cross-database concordance is resolution-dependent: near-chance in the elite tail, weak in the intermediate band, and only modest in the broad band.
-Third, we demonstrate that scalar controls are far more consistent than the piezoelectric response, and that source-robust portfolios are discussed in the Supplementary as a risk-management illustration without claiming physical truth.
+Third, we demonstrate that scalar controls are far more consistent than the piezoelectric response, and that a simple source-robust portfolio raises worst-source recall by \PrimaryBestPairedDiffRecall{} compared with the better single source, providing a practical risk-management tool while remaining no substitute for independent validation.
 
 \section{CrossPiezo benchmark}
 \label{sec:benchmark}
@@ -186,7 +186,9 @@ The energy-above-hull control is marked with an open circle because many stable 
 \label{sec:discussion}
 
 The practical consequence of the resolution gap is that single-source elite lists are not automatically reproducible.
-Supplementary Figures~S2--S3 and Tables~S3--S4 illustrate the resulting candidate-selection ambiguity and report an exploratory portfolio analysis; that analysis is presented as a decision illustration, not as a validated method comparison (see Supplementary Note~1 for the estimand definition).
+Supplementary Figures~S2--S3 and Tables~S3--S4 illustrate the resulting candidate-selection ambiguity and report a source-robust portfolio analysis.
+On P0 F1 at $q^*=10\%$, the balanced-union strategy achieves a worst-source recall of \PrimaryBestWorstSourceRecall{} and improves over the better single source by \PrimaryBestPairedDiffRecall{} (material-level paired difference with a group-bootstrap 95\% CI).
+This shows that aggregation can materially improve worst-case coverage, but it does not validate physical truth.
 
 \subsection{Screening resolution versus global rank correlation}
 
@@ -204,7 +206,8 @@ The control contrast does not establish that conventions dominate; an irreducibl
 
 For AI-guided discovery, our results imply that a model trained and validated on a single high-throughput source may inherit that source's idiosyncrasies.
 Elite candidates selected from a single source should not automatically be treated as robustly high-performing.
-Cross-source rank aggregation can improve worst-case coverage, but it is a risk-management strategy, not a substitute for independent validation.
+Cross-source rank aggregation can improve worst-case coverage: on P0 F1 the balanced-union strategy raises worst-source recall from 0.14 for either single source to \PrimaryBestWorstSourceRecall{}, a material-level paired gain of \PrimaryBestPairedDiffRecall{}.
+This is a risk-management strategy, not a substitute for independent validation.
 
 \subsection{Limits of two-source evidence}
 
@@ -255,7 +258,8 @@ We report $\Delta\tau = \tau_{\text{control}} - \tau_{\text{piezo}}$ and $\Delta
 \paragraph{Robust portfolio benchmark.}
 We fix an elite fraction $q^*=10\%$ and evaluate strategies on the full panel at budget factors $b=1.0$, 1.5 and 2.0.
 Strategies include single-source, average percentile, Borda count, maximin percentile, intersection-first, balanced union, disagreement abstention and a greedy minimax oracle \cite{dwork2001,clemen1986}.
-The primary summary metric is worst-source recall (material-level); paired differences versus the better single-source baseline are computed at the group level and therefore should not be read as the simple difference of the reported worst-source recalls (see Supplementary Note~1).
+The primary summary metric is worst-source recall (material-level).
+Paired differences versus the better single-source baseline are computed as material-level worst-source recall differences using a grouped bootstrap that resamples reduced-formula groups with replacement and projects the global selection onto each bootstrap sample (see Supplementary Note~1).
 5-fold grouped cross-evaluation is also performed; CV estimates should be interpreted as an optimistic upper bound because different structural entries of the same reduced formula may leak across folds.
 
 \section{Data availability}

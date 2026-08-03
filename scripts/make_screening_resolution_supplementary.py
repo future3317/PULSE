@@ -127,15 +127,15 @@ def table_s3_portfolio() -> str:
         strat = strategy_labels.get(row["strategy"], row["strategy"])
         rows.append(
             f"{strat} \\& {_fmt(row['worst_source_recall'])} \\& {_fmt(row['worst_source_ndcg'])} \\& "
-            f"{_fmt(row['portfolio_coverage'])} \\& {_fmt(row['paired_diff_recall'])} \\& "
-            f"[{_fmt(row['paired_diff_recall_ci95_low'])}, {_fmt(row['paired_diff_recall_ci95_high'])}] \\\\\n"
+            f"{_fmt(row['portfolio_coverage'])} \\& {_fmt(row['material_paired_diff_recall'])} \\& "
+            f"[{_fmt(row['material_paired_diff_recall_ci95_low'])}, {_fmt(row['material_paired_diff_recall_ci95_high'])}] \\\\\n"
         )
     return """\\begin{table}[htbp]
 \\small
 \\setlength{\\tabcolsep}{4pt}
 \\centering
 \\caption{Equal-budget ($b=1.0$) portfolio results on P0 F1 ($q^*=10\\%$).
-Paired differences are versus the better single-source baseline and are computed as group-mean differences, not as arithmetic differences of the material-level Recall column (see Note~1).}
+Paired differences are versus the better single-source baseline and are computed as material-level worst-source recall differences using a grouped bootstrap that resamples reduced-formula groups and projects the global selection onto each bootstrap sample (see Note~1).}
 \\label{tab:si_portfolio}
 \\begin{tabular}{lccccc}
 \\toprule
@@ -206,12 +206,12 @@ def main() -> int:
 
 \subsection{Portfolio estimand definition (Note~1)}
 
-The portfolio benchmark reports two related but distinct quantities.
+The portfolio benchmark reports two related quantities.
 \emph{Worst-source recall} is a material-level (micro) metric: it counts how many of the top-$q^* n$ materials selected by a strategy are also present in the JARVIS and MP elite sets, divided by $q^* n$, with no group weighting.
-\emph{Paired difference in recall} is computed by first evaluating a grouped worst-source recall within each reduced-formula group, then taking the mean difference across groups with a group-level paired bootstrap confidence interval.
-Because each reduced-formula group contains only a handful of materials, the group-mean differences are small even when the material-level recall improves substantially.
-Consequently, the $\Delta$Recall column in Table~S3 should not be interpreted as the arithmetic difference of the Recall column; the two columns answer different statistical questions.
-The portfolio analysis is therefore exploratory and is not presented in the main text as a validated method comparison.
+\emph{Paired difference in recall} is also a material-level metric: it is the difference between the material-level worst-source recall of the strategy and that of the better single-source baseline, computed on the full panel.
+To account for dependence among entries sharing a reduced formula, the confidence interval is obtained by a grouped paired bootstrap: reduced-formula groups are resampled with replacement, the existing global selections are projected onto each bootstrap sample, and the material-level worst-source recall difference is recomputed within the sample.
+Thus the $\Delta$Recall column in Table~S3 is directly comparable to the arithmetic difference of the Recall column; both are material-level quantities, and the bootstrap only affects the uncertainty estimate.
+The portfolio analysis is presented as a risk-management illustration, not as a validated method comparison or as evidence of physical truth.
 
 \subsection{Structure matching and manual audit (Note~2)}
 

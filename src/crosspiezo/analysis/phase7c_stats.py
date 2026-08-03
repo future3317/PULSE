@@ -254,6 +254,56 @@ def paired_bootstrap_ci_difference(
     return point, ci_low, ci_high
 
 
+def material_level_paired_diff_ci(
+    selected: Sequence[int],
+    baseline_selected: Sequence[int],
+    left: np.ndarray,
+    right: np.ndarray,
+    q_star: float,
+    groups: Sequence[Hashable] | np.ndarray,
+    n_boot: int = 2000,
+    seed: int = 52,
+) -> tuple[float, float, float]:
+    """Grouped paired-bootstrap CI for the material-level worst-source recall difference.
+
+    The point estimate is ``worst_source_recall(strategy) - worst_source_recall(baseline)``
+    on the full panel.  For each bootstrap replicate groups are resampled with
+    replacement, the existing global selections are projected onto the bootstrap
+    sample, and the material-level worst-source recall difference is recomputed.
+    """
+    selected = [int(i) for i in selected]
+    baseline_selected = [int(i) for i in baseline_selected]
+    selected_set = set(selected)
+    baseline_set = set(baseline_selected)
+
+    def _diff_on_sample(idx: np.ndarray) -> float:
+        l, r = left[idx], right[idx]
+        local_selected = [i for i, global_idx in enumerate(idx) if global_idx in selected_set]
+        local_baseline = [i for i, global_idx in enumerate(idx) if global_idx in baseline_set]
+        rec_a = portfolio_metrics(local_selected, l, r, q_star)["worst_source_recall"]
+        rec_b = portfolio_metrics(local_baseline, l, r, q_star)["worst_source_recall"]
+        return float(rec_a - rec_b)
+
+    point = _diff_on_sample(np.arange(len(left)))
+
+    groups = np.asarray(groups)
+    unique_groups = np.unique(groups)
+    if len(unique_groups) < 2:
+        return float("nan"), float("nan"), float("nan")
+
+    idx_by_group: dict[Any, np.ndarray] = {g: np.where(groups == g)[0] for g in unique_groups}
+
+    rng = np.random.default_rng(seed)
+    reps: list[float] = []
+    for _ in range(n_boot):
+        sampled_groups = rng.choice(unique_groups, size=len(unique_groups), replace=True)
+        boot_idx = np.concatenate([idx_by_group[g] for g in sampled_groups])
+        reps.append(_diff_on_sample(boot_idx))
+
+    reps_arr = np.asarray(reps)
+    return point, float(np.percentile(reps_arr, 2.5)), float(np.percentile(reps_arr, 97.5))
+
+
 def _assign_folds(pair_ids: Sequence[str], n_folds: int, seed: int = 0) -> np.ndarray:
     """Deterministic fold assignment from hashed pair identifiers."""
     folds = np.empty(len(pair_ids), dtype=np.int64)

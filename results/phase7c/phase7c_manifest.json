@@ -1,6 +1,6 @@
 {
-  "timestamp": "2026-08-02T14:00:13.593169+00:00",
-  "commit": "7c19a3a2401bc37b9f3dcb680c66c052d54f4c71",
+  "timestamp": "2026-08-03T03:28:57.933433+00:00",
+  "commit": "c61587828039ea649dadcee1daa680b239196a90",
   "config_commit": "7c19a3a2401bc37b9f3dcb680c66c052d54f4c71",
   "branch": "paper/screening-resolution-q1-v1",
   "files": [
@@ -26,15 +26,15 @@
     },
     {
       "path": "results\\phase7c\\portfolio_benchmark.csv",
-      "sha256": "5b5ecccfe6a24c8b67eab2227ee33069504156ba350e8af2fb7e4503fb200a42"
+      "sha256": "22c2476d698c5d718c86e323eace2f0df275f92831ed81b3d508de02b6b8c435"
     },
     {
       "path": "results\\phase7c\\portfolio_paired_differences.csv",
-      "sha256": "3b68dafadfdb768a894e013dcbf550f980c44c6c4348775d6a69eeda086d429b"
+      "sha256": "609f4b3b45ea3853aab9216728cf76aa012266c7536d9c01e8ab66c71991f686"
     },
     {
       "path": "results\\phase7c\\portfolio_pareto.csv",
-      "sha256": "2d22f8774f3ce92694c77b8bfc83765d92e5f05b9030244189d4775ff82b5362"
+      "sha256": "8da3fd565f689f32e078bba4d814f67c6ec6529faba814634cf926914bebcd84"
     },
     {
       "path": "results\\phase7c\\property_control_comparison.csv",
@@ -50,7 +50,15 @@
     },
     {
       "path": "results\\phase7c\\manuscript_numbers.json",
-      "sha256": "9a7144de28f8c434fd5aea110b08da7110582ea1d3ac65bc10d032e857979dcb"
+      "sha256": "c414b9797f0c650168eda8186d67ba7108158e8261a8ff2331c57b8ef66f6bd7"
+    },
+    {
+      "path": "results\\phase7c\\phase7c_manifest.json",
+      "sha256": "efbd82b190f6466ff4afd8c6fd7c168b88cb7ec9e4fcee1019741aeadaf8f18e"
+    },
+    {
+      "path": "results\\phase7c\\verification_summary.json",
+      "sha256": "f1ac15d89f5010beac4bdd9a88f083f2087a789d037790fdad2220be9e88fd4a"
     }
   ],
   "key_numbers": {
@@ -60,7 +68,10 @@
     "P0_F1_partial_nAUCC_broad": 0.1454315807410962,
     "P0_F1_dual_high_10pct_nAUCC": -0.0457965096560343,
     "n_positive_P0_controls": 4,
-    "primary_best_worst_source_recall": 0.5789473684210527,
-    "primary_best_strategy": "balanced_union"
+    "primary_best_worst_source_recall": 0.5263157894736842,
+    "primary_best_strategy": "balanced_union",
+    "primary_best_material_paired_diff_recall": 0.3859649122807017,
+    "primary_best_material_paired_diff_recall_ci95_low": 0.2142857142857142,
+    "primary_best_material_paired_diff_recall_ci95_high": 0.5
   }
 }
