@@ -56,7 +56,9 @@ def mp_reported_svd_scalar(voigt: np.ndarray) -> float:
     a = np.asarray(voigt, dtype=np.float64)
     if a.shape != (3, 6):
         raise ValueError(f"Expected Voigt shape (3, 6), got {a.shape}")
-    return float(np.linalg.svd(a, compute_uv=False).max())
+    # Use the symmetric eigenvalue of A @ A.T instead of SVD to avoid the
+    # sporadic BLAS aborts seen with np.linalg.svd on some Windows builds.
+    return float(np.sqrt(np.linalg.eigvalsh(a @ a.T).max()))
 
 
 def kelvin_operator_norm(tensor: np.ndarray) -> float:
@@ -84,7 +86,9 @@ def kelvin_operator_norm(tensor: np.ndarray) -> float:
     a_k[:, 3] = np.sqrt(2.0) * t[:, 1, 2]
     a_k[:, 4] = np.sqrt(2.0) * t[:, 0, 2]
     a_k[:, 5] = np.sqrt(2.0) * t[:, 0, 1]
-    return float(np.linalg.svd(a_k, compute_uv=False).max())
+    # Largest singular value via the 3x3 symmetric eigenproblem; avoids the
+    # BLAS aborts observed with np.linalg.svd on some Windows/Anaconda builds.
+    return float(np.sqrt(np.linalg.eigvalsh(a_k @ a_k.T).max()))
 
 
 def max_longitudinal_response(tensor: np.ndarray, n_samples: int = 20000, seed: int = 42) -> float:
@@ -246,39 +250,53 @@ def max_longitudinal_modulus(
             prev_f2 = f * f
 
     if cross_check and best_dir is not None:
-        def neg_f2(x: np.ndarray) -> float:
-            f = float(np.einsum("i,ijk,j,k->", x, t, x, x))
+        # Nelder-Mead spherical-coordinate polish avoids the Fortran aborts
+        # observed on some Windows/SciPy builds with SLSQP and L-BFGS-B.
+        # theta in (0, pi), phi in [0, 2*pi), radius fixed to 1.
+        theta0 = float(np.arccos(np.clip(best_dir[2], -1.0, 1.0)))
+        phi0 = float(np.arctan2(best_dir[1], best_dir[0])) % (2.0 * np.pi)
+
+        def _n_from_spherical(params: np.ndarray) -> np.ndarray:
+            theta, phi = params
+            return np.array(
+                [
+                    np.sin(theta) * np.cos(phi),
+                    np.sin(theta) * np.sin(phi),
+                    np.cos(theta),
+                ],
+                dtype=np.float64,
+            )
+
+        def neg_f2_spherical(params: np.ndarray) -> float:
+            theta, phi = params
+            # Soft barrier keeping theta inside (0, pi).
+            if not (1e-8 < theta < np.pi - 1e-8):
+                return 1e6
+            n = _n_from_spherical(params)
+            f = float(np.einsum("i,ijk,j,k->", n, t, n, n))
             return -(f * f)
 
-        def neg_f2_jac(x: np.ndarray) -> np.ndarray:
-            f, g = _f_and_grad(x)
-            return -2.0 * f * g
-
-        constraint = {
-            "type": "eq",
-            "fun": lambda x: float(x @ x) - 1.0,
-            "jac": lambda x: 2.0 * x,
-        }
         result = optimize.minimize(
-            neg_f2,
-            best_dir,
-            jac=neg_f2_jac,
-            method="SLSQP",
-            constraints=constraint,
-            options={"ftol": 1e-12, "maxiter": 200, "disp": False},
+            neg_f2_spherical,
+            np.array([theta0, phi0], dtype=np.float64),
+            method="Nelder-Mead",
+            bounds=[(1e-8, np.pi - 1e-8), (0.0, 2.0 * np.pi)],
+            options={"xatol": 1e-9, "fatol": 1e-12, "maxiter": 400, "disp": False},
         )
         if result.success:
-            f_ref = float(np.einsum("i,ijk,j,k->", result.x, t, result.x, result.x))
+            n_ref = _n_from_spherical(result.x)
+            f_ref = float(np.einsum("i,ijk,j,k->", n_ref, t, n_ref, n_ref))
             ref_val = abs(f_ref)
             if ref_val > best_val:
+                denom = max(best_val, 1.0)
+                if (ref_val - best_val) / denom > cross_check_tol:
+                    warnings.warn(
+                        f"max_longitudinal_modulus cross-check found a better optimum: "
+                        f"projected-gradient={best_val:.6e}, "
+                        f"spherical-polish={ref_val:.6e}",
+                        stacklevel=2,
+                    )
                 best_val = ref_val
-            denom = max(best_val, 1.0)
-            if abs(ref_val - best_val) / denom > cross_check_tol:
-                warnings.warn(
-                    f"max_longitudinal_modulus cross-check mismatch: "
-                    f"projected-gradient={best_val:.6e}, SLSQP={ref_val:.6e}",
-                    stacklevel=2,
-                )
 
     return float(best_val)
 
@@ -425,6 +443,181 @@ def ranking_summary_table(results: list[RankingResult]) -> list[dict[str, float 
             "median_abs_rank_shift": r.median_absolute_rank_shift,
         })
     return rows
+
+
+# -----------------------------------------------------------------------------
+# Top-k / listwise baseline ranking diagnostics
+# -----------------------------------------------------------------------------
+
+
+def _top_k_indices(scores: np.ndarray, k: int) -> np.ndarray:
+    """Indices of the top ``k`` items by descending score (stable tie-break)."""
+    k = int(min(k, len(scores)))
+    return np.argsort(-scores, kind="stable")[:k]
+
+
+def _top_k_union(left: np.ndarray, right: np.ndarray, k: int) -> np.ndarray:
+    """Indices that appear in the top-``k`` set of either side."""
+    top_l = _top_k_indices(left, k)
+    top_r = _top_k_indices(right, k)
+    return np.unique(np.concatenate([top_l, top_r]))
+
+
+def precision_at_k(left: np.ndarray, right: np.ndarray, k: int) -> float:
+    """Precision of the top-``k`` overlap for paired, equal-length rankings."""
+    left = np.asarray(left, dtype=np.float64)
+    right = np.asarray(right, dtype=np.float64)
+    valid = np.isfinite(left) & np.isfinite(right)
+    left, right = left[valid], right[valid]
+    n = len(left)
+    if n == 0 or k <= 0:
+        return float("nan")
+    kk = min(k, n)
+    top_l = set(_top_k_indices(left, kk))
+    top_r = set(_top_k_indices(right, kk))
+    return len(top_l & top_r) / kk
+
+
+def recall_at_k(left: np.ndarray, right: np.ndarray, k: int) -> float:
+    """Recall of the top-``k`` overlap for paired, equal-length rankings.
+
+    Because the two rankings share the same candidate universe, this equals
+    ``precision_at_k``; it is exposed separately to match conventional
+    information-retrieval terminology.
+    """
+    return precision_at_k(left, right, k)
+
+
+def overlap_coefficient_at_k(left: np.ndarray, right: np.ndarray, k: int) -> float:
+    """Overlap coefficient of the top-``k`` sets: |intersection| / min(|A|,|B|)."""
+    left = np.asarray(left, dtype=np.float64)
+    right = np.asarray(right, dtype=np.float64)
+    valid = np.isfinite(left) & np.isfinite(right)
+    left, right = left[valid], right[valid]
+    n = len(left)
+    if n == 0 or k <= 0:
+        return float("nan")
+    kk = min(k, n)
+    top_l = set(_top_k_indices(left, kk))
+    top_r = set(_top_k_indices(right, kk))
+    denom = min(len(top_l), len(top_r))
+    return len(top_l & top_r) / denom if denom > 0 else 0.0
+
+
+def plain_jaccard_at_k(left: np.ndarray, right: np.ndarray, k: int) -> float:
+    """Plain Jaccard index of the top-``k`` sets (no chance adjustment)."""
+    left = np.asarray(left, dtype=np.float64)
+    right = np.asarray(right, dtype=np.float64)
+    valid = np.isfinite(left) & np.isfinite(right)
+    left, right = left[valid], right[valid]
+    n = len(left)
+    if n == 0 or k <= 0:
+        return float("nan")
+    kk = min(k, n)
+    top_l = set(_top_k_indices(left, kk))
+    top_r = set(_top_k_indices(right, kk))
+    union = len(top_l | top_r)
+    return len(top_l & top_r) / union if union > 0 else 0.0
+
+
+def rank_biased_overlap(left: np.ndarray, right: np.ndarray, p: float = 0.95) -> float:
+    """Rank-Biased Overlap (RBO) between two paired rankings.
+
+    RBO is a top-weighted similarity that does not require a fixed depth and is
+    monotonic in the depth of the prefix considered.  The parameter ``p`` in
+    (0,1) controls the tail weight: values close to 1 put more weight on deep
+    ranks.  This implementation uses the standard extrapolated form
+
+        RBO = (1-p) * sum_{d=1}^{n} p^{d-1} * A_d + p^n * A_n,
+
+    where ``A_d`` is the fraction of common items in the top-``d`` prefixes.
+
+    References
+    ----------
+    Webber, W., Moffat, A., & Zobel, J. (2010). A similarity measure for
+    indefinite rankings. ACM Transactions on Information Systems, 28(4), 1-38.
+    """
+    left = np.asarray(left, dtype=np.float64)
+    right = np.asarray(right, dtype=np.float64)
+    valid = np.isfinite(left) & np.isfinite(right)
+    left, right = left[valid], right[valid]
+    n = len(left)
+    if n == 0 or not 0.0 < p < 1.0:
+        return float("nan")
+
+    order_l = _top_k_indices(left, n)
+    order_r = _top_k_indices(right, n)
+    set_l: set[int] = set()
+    set_r: set[int] = set()
+    agreement = 0.0
+    weight = 1.0 - p
+    for d in range(1, n + 1):
+        set_l.add(int(order_l[d - 1]))
+        set_r.add(int(order_r[d - 1]))
+        inter = len(set_l & set_r)
+        union = len(set_l | set_r)
+        a_d = inter / union if union > 0 else 0.0
+        agreement += weight * (p ** (d - 1)) * a_d
+    # Extrapolated tail term: p^n * A_n.
+    agreement += (p ** n) * a_d
+    return float(agreement)
+
+
+def top_weighted_kendall_tau(left: np.ndarray, right: np.ndarray, k: int) -> float:
+    """Kendall tau computed on the union of the two top-``k`` sets."""
+    left = np.asarray(left, dtype=np.float64)
+    right = np.asarray(right, dtype=np.float64)
+    valid = np.isfinite(left) & np.isfinite(right)
+    left, right = left[valid], right[valid]
+    n = len(left)
+    if n == 0 or k <= 0:
+        return float("nan")
+    kk = min(k, n)
+    subset = _top_k_union(left, right, kk)
+    if len(subset) < 2:
+        return float("nan")
+    a, b = left[subset], right[subset]
+    if np.allclose(a, b):
+        return 1.0
+    tau, _ = stats.kendalltau(a, b)
+    return float(tau) if tau is not None else float("nan")
+
+
+def _spearman_rho_no_pvalue(a: np.ndarray, b: np.ndarray) -> float:
+    """Spearman rho computed without scipy's p-value path.
+
+    Some SciPy/OpenBLAS combinations raise a floating-point exception when the
+    input is constant or perfectly rank-correlated.  We compute the Pearson
+    correlation of average ranks directly and handle those edge cases.
+    """
+    a = np.asarray(a, dtype=np.float64)
+    b = np.asarray(b, dtype=np.float64)
+    ra = stats.rankdata(a, method="average")
+    rb = stats.rankdata(b, method="average")
+    if np.allclose(ra, rb):
+        return 1.0
+    sa = float(np.std(ra, ddof=0))
+    sb = float(np.std(rb, ddof=0))
+    if sa == 0.0 or sb == 0.0:
+        return float("nan")
+    cov = float(np.mean((ra - ra.mean()) * (rb - rb.mean())))
+    return cov / (sa * sb)
+
+
+def top_weighted_spearman_rho(left: np.ndarray, right: np.ndarray, k: int) -> float:
+    """Spearman rho computed on the union of the two top-``k`` sets."""
+    left = np.asarray(left, dtype=np.float64)
+    right = np.asarray(right, dtype=np.float64)
+    valid = np.isfinite(left) & np.isfinite(right)
+    left, right = left[valid], right[valid]
+    n = len(left)
+    if n == 0 or k <= 0:
+        return float("nan")
+    kk = min(k, n)
+    subset = _top_k_union(left, right, kk)
+    if len(subset) < 2:
+        return float("nan")
+    return _spearman_rho_no_pvalue(left[subset], right[subset])
 
 
 # -----------------------------------------------------------------------------

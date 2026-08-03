@@ -109,7 +109,7 @@ Figure~\ref{fig:screening_resolution_flagship} shows the flagship screening-reso
 On P0 the three functionals behave similarly: full-range nAUCC is \PZeroFOneNaucc{} for F1, \PZeroFThreeNaucc{} for F3 and \PZeroFFourNaucc{} for F4 (Table~\ref{tab:concordance}).
 The simultaneous lower confidence bound first exceeds 0 at $q=\PZeroFOneQZero{}$ for F1, but a five-quantile persistent onset at $\delta=0.05$ is not observed.
 P2 is even weaker: F1 nAUCC = \PTwoFOneNaucc{}, F3 nAUCC = \PTwoFThreeNaucc{}, F4 nAUCC = \PTwoFFourNaucc{}.
-Thus, even when half of the candidate pool is screened, the two sources barely agree more than would be expected by chance.
+Thus, even at the broad $q=50\%$ threshold, P0 F1 chance-adjusted Jaccard is only $0.178$ (95\% CI $[0.038, 0.319]$); the simultaneous lower confidence bound does not exceed zero until $q=33\%$.
 
 The banded partial nAUCC summary (Figure~\ref{fig:screening_resolution_flagship}, bottom row and Table~\ref{tab:concordance}) makes the resolution-dependence explicit.
 On P0 F1, concordance is essentially absent in the elite band (partial nAUCC = \PZeroFOneEliteNaucc{}), modest in the intermediate band (\PZeroFOneIntermediateNaucc{}), and only clearly positive in the broad band (\PZeroFOneBroadNaucc{}).
@@ -195,6 +195,7 @@ The interval reflects uncertainty conditional on the selection objective, not a 
 
 The weak elite-tail resolution is a statement about the reproducible resolution of these two databases, not about the physical correctness of either source.
 A model can achieve strong aggregate agreement on a held-out subset of one database while still disagreeing with an independent source on the specific candidates a human experimenter would pursue.
+On P0 F1 the global Kendall $\tau$ is only $0.245$ and Spearman $\rho$ is $0.350$; more importantly, the top-$5\%$ precision is $0.036$ and the chance-adjusted Jaccard at $q=10\%$ is $0.024$ (95\% CI $[-0.105, 0.153]$), essentially indistinguishable from chance (Supplementary Table~S5 and Figure~S2).
 We recommend that future high-throughput screening reports screening-resolution curves, chance-adjusted overlaps, banded partial nAUCC and source-robust portfolio diagnostics alongside aggregate correlations and global rank correlations.
 
 \subsection{Why response properties are more workflow-sensitive}
@@ -215,18 +216,30 @@ Because the objective (worst-source coverage) is aligned with the balanced-union
 Our conclusions are source-pair specific.
 Only MP and JARVIS are compared, and full tensor convention alignment was not performed.
 Elite-tail samples are small ($\sim$6 materials at 1\% in P0, $\sim$2 in P2), so elite-tail statements are lower-bound diagnostics rather than precise population estimates.
-A 48-material third-protocol adjudication plan has been pre-registered to provide independent computational validation; experimental adjudication would be required to settle source correctness on specific candidates \cite{wilkinson2016,choudhary2024leaderboard}.
+A 48-material third-protocol adjudication plan has been pre-registered to provide independent computational validation; the real OSF/Zenodo DOI will be inserted before submission \cite{third_protocol_preregistration}.
+Experimental adjudication would be required to settle source correctness on specific candidates \cite{wilkinson2016,choudhary2024leaderboard}.
 
 \section{Methods}
 \label{sec:methods}
 
 \paragraph{Paired universe.}
 P0 and P2 were built by structure matching of relaxed CIFs followed by a response-blind manual audit of the top candidates using a frozen rule set; full details and the frozen membership file are released in the repository.
+The frozen matcher tolerances are: fractional length tolerance $\ell_\mathrm{tol}=0.2$, site tolerance $s_\mathrm{tol}=0.3$\,\AA, angle tolerance $5^\circ$, primitive-cell reduction enabled, and lattice scaling enabled.
+P0 ($n=573$) is the full set of accepted structure matches; P2 ($n=207$) is the subset passing tighter RMS-distance and lattice-distance thresholds ($\mathrm{RMS}_\mathrm{thr}\approx0.0078$\,\AA, lattice-distance threshold $\approx0.0036$).
+A single auditor made all response-blind decisions; ambiguous cases were quarantined and recorded.
 At the 1\% elite quantile the effective sample is approximately 6 materials in P0 and 2 materials in P2.
+Relaxed-structure distance and cross-source F1 rank discrepancy are only weakly associated on P0 (Spearman $\rho\approx-0.09$; Supplementary Figure~S3), so large response disagreement is not dominated by poorly matched structures.
 
 \paragraph{Response functionals.}
 For each source we compute three coordinate-invariant scalars from the piezoelectric stress tensor $\E$ \cite{nye1957}:
 F1 = $\norm{\E}_F$, F3 = $\max_{\norm{\bm n}=1} |n_i e_{ijk} n_j n_k|$, and F4 = Kelvin/Mandel operator norm on symmetric strain.
+
+\paragraph{Source conventions and validation.}
+Both databases report the piezoelectric stress tensor $\E$ in C/m$^2$ with the same Voigt order ($xx,yy,zz,yz,xz,xy$) and engineering-shear factor-of-two convention.
+JARVIS values are expressed in the source-structure Cartesian frame; MP values are expressed in the MP IEEE-oriented structure frame.
+Before comparison, MP structures are aligned to JARVIS structures using the frozen matcher and the recovered rotation is applied to the MP Cartesian tensor; F1, F3 and F4 are coordinate-frame invariants and are therefore unaffected by the source-specific frame choice.
+Calculation settings not documented in the release metadata---exchange--correlation functional, pseudopotentials, DFPT vs finite-difference, cutoffs, k-points, relaxation thresholds, primitive/conventional defaults, and sign-convention history---are reported as unknown rather than assumed identical (see \path{docs/mp_vs_jarvis_conventions.md}).
+A repository convention audit (\path{scripts/run_convention_audit.py}) confirms rotation invariance of F1/F3/F4, internal consistency of Voigt/Cartesian conversion and shear-factor handling, and convergence of the F3 optimiser to a dense-grid oracle; this rules out low-level convention errors in the CrossPiezo pipeline but does not prove that the two sources used identical calculation settings.
 
 \paragraph{Chance-adjusted concordance curve.}
 For each panel, metric and quantile $q=1\%,\dots,50\%$, we report the observed top-$q$ Jaccard overlap $J_q$, the exact hypergeometric null expectation $\mathbb{E}[J_q]$ under independent rankings, and the chance-adjusted overlap
@@ -238,11 +251,15 @@ The normalised area under the concordance curve is
 \begin{equation}
 \mathrm{nAUCC} = \frac{1}{q_{\max}-q_{\min}} \int_{q_{\min}}^{q_{\max}} \widetilde J_q \,dq,
 \end{equation}
-and the persistent consensus onset is the smallest $q$ for which the lower band exceeds a threshold $\delta$ for at least five consecutive quantiles.
+evaluated numerically by trapezoidal integration over the $q=1\%,2\%,\dots,50\%$ grid, and the persistent consensus onset is the smallest $q$ for which the lower band exceeds a threshold $\delta$ for at least five consecutive quantiles.
 nAUCC is a descriptive summary; uncertainty is conveyed by the simultaneous bands on the underlying curve.
 
 \paragraph{Banded reporting.}
 The 1--50\% curve is split into elite (1--10\%), intermediate (10--20\%) and broad (20--50\%) bands; partial nAUCC and simultaneous bands are reported for each.
+
+\paragraph{Conventional ranking diagnostics.}
+For comparison with screening resolution we report standard top-$k$ and listwise diagnostics at $q=1\%,5\%,10\%,20\%,50\%$: plain Jaccard $J_q$, overlap coefficient, precision/recall at $k$, Rank-Biased Overlap with $p=0.95$, top-weighted Kendall $\tau$ on the union of the two top-$k$ sets, top-weighted Spearman $\rho$ on the same union, and the global Kendall $\tau$ and Spearman $\rho$ of the full paired rankings (Supplementary Table~S5 and Figure~S2).
+These metrics illustrate that high global correlation does not imply elite-tail agreement.
 
 \paragraph{Corrected high-response sensitivity.}
 Phase 7C uses three corrected definitions:
@@ -262,7 +279,7 @@ Strategies include single-source, average percentile, Borda count, maximin perce
 The primary summary metric is worst-source recall (material-level).
 Confidence intervals for paired differences versus the better single source are obtained from a full-procedure grouped bootstrap: reduced-formula groups are resampled with replacement, distinct bootstrap identities are assigned to duplicated occurrences, and portfolio selection, baseline selection and worst-source recall are recomputed within each replicate.
 Earlier group-mean and conditional fixed-selection differences are retained in the repository for audit but are not used for the primary claim.
-5-fold grouped cross-evaluation is also performed; CV estimates should be interpreted as an optimistic upper bound because different structural entries of the same reduced formula may leak across folds.
+5-fold naive cross-evaluation by hashed pair identifier is also performed; CV estimates should be interpreted as an optimistic upper bound because different structural entries of the same reduced formula may leak across folds.
 
 \section{Data availability}
 \label{sec:data}

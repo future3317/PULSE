@@ -541,12 +541,64 @@ def fig5_portfolio_frontier() -> None:
     _save(fig, "fig5_portfolio_frontier")
 
 
+def fig_s1_baseline_metric_comparison() -> None:
+    """Compare screening-resolution metrics with conventional top-k / global baselines."""
+    df = pd.read_csv(RESULTS_ROOT / "baseline_metrics_comparison.csv")
+    if df.empty:
+        print("[warn] baseline_metrics_comparison.csv not found; skipping fig_s1", file=sys.stderr)
+        return
+
+    fig, axes = plt.subplots(1, 2, figsize=(6.5, 2.8))
+
+    # Left: global / depth-agnostic metrics.
+    ax = axes[0]
+    global_metrics = {
+        "Global Kendall $\\tau$": df["global_kendall_tau"].iloc[0],
+        "Global Spearman $\\rho$": df["global_spearman_rho"].iloc[0],
+        "RBO ($p=0.95$)": df["rank_biased_overlap_p095"].iloc[0],
+    }
+    y = np.arange(len(global_metrics))
+    colors = [COLORS["f1"], COLORS["f4"], COLORS["mp"]]
+    for i, (name, val) in enumerate(global_metrics.items()):
+        ax.barh(i, val, color=colors[i], height=0.5, edgecolor="white", lw=0.5)
+        ax.text(val + 0.02, i, f"{val:.3f}", va="center", fontsize=7)
+    ax.set_yticks(y)
+    ax.set_yticklabels(list(global_metrics.keys()))
+    ax.set_xlim(-0.05, 1.0)
+    ax.set_xlabel("Value")
+    ax.set_title("(a) Depth-agnostic metrics")
+    ax.axvline(0, color=COLORS["dark_gray"], lw=0.6)
+    ax.invert_yaxis()
+
+    # Right: top-q metrics from the frozen curve.
+    ax = axes[1]
+    ax.plot(df["q_percentile"], df["plain_jaccard"], marker="o", ms=4,
+            color=COLORS["gray"], lw=1.2, label="Plain Jaccard")
+    ax.plot(df["q_percentile"], df["chance_adjusted_jaccard"], marker="s", ms=4,
+            color=COLORS["f1"], lw=1.2, label="Chance-adjusted Jaccard")
+    ax.plot(df["q_percentile"], df["overlap_coefficient"], marker="^", ms=4,
+            color=COLORS["f3"], lw=1.2, label="Overlap coefficient")
+    ax.plot(df["q_percentile"], df["precision_at_k"], marker="d", ms=4,
+            color=COLORS["f4"], lw=1.2, label="Precision@$k$")
+    ax.axhline(0, color=COLORS["dark_gray"], lw=0.6, ls="--")
+    ax.set_xlabel("Screened quantile $q$ (%)")
+    ax.set_ylabel("Value")
+    ax.set_xlim(0, 52)
+    ax.set_ylim(-0.15, 1.05)
+    ax.set_title("(b) Top-$q$ metrics on P0 F1")
+    ax.legend(loc="lower right", frameon=False, fontsize=6)
+
+    fig.tight_layout()
+    _save(fig, "fig_s1_baseline_metric_comparison")
+
+
 def main() -> int:
     fig1_benchmark_concept()
     fig2_screening_resolution_flagship()
     fig3_control_forest()
     fig4_illustrative_candidates()
     fig5_portfolio_frontier()
+    fig_s1_baseline_metric_comparison()
     print(f"[make_screening_resolution_figures] Wrote figures to {FIGURES_ROOT}")
     return 0
 

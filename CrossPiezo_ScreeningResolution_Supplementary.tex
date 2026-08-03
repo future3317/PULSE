@@ -45,7 +45,11 @@ The CrossPiezo-Invariant-v1 panel was constructed from relaxed CIFs shared by th
 The matching pipeline is: (i) load all processed MP and JARVIS piezoelectric records; (ii) compute structure-level overlaps by compositional reduced formula and relaxed-lattice similarity; (iii) apply a frozen similarity threshold to obtain candidate pairs; (iv) perform a response-blind manual audit of the top-matched candidates using a frozen rule set.
 The audit was response-blind: the auditor did not see piezoelectric response values when deciding whether a candidate pair represented the same or a distinct structure.
 All audit decisions, exclusion reasons and ambiguous cases are recorded in the frozen panel-membership file.
-P0 ($n=573$) is the full set of accepted structure matches; P2 ($n=207$) is the subset passing a tighter similarity threshold.
+
+The frozen matcher tolerances are: fractional length tolerance $\ell_\mathrm{tol}=0.2$, site tolerance $s_\mathrm{tol}=0.3$\,\AA, angle tolerance $5^\circ$, primitive-cell reduction enabled, and lattice scaling enabled (see ``configs/matching.yaml'').
+P0 ($n=573$) is the full set of accepted structure matches; P2 ($n=207$) is the subset passing tighter RMS-distance and lattice-distance thresholds ($\mathrm{RMS}_\mathrm{thr}\approx0.0078$\,\AA, lattice-distance threshold $\approx0.0036$).
+Table~\ref{tab:si_matching_audit} gives the resulting distance distributions.
+Figure~\ref{fig:si_distance_discrepancy} shows that relaxed-structure distance is only weakly associated with cross-source F1 rank discrepancy (Spearman $\rho\approx-0.09$), so large response disagreement is not simply an artefact of loose structure matching.
 
 \subsection{Tensor invariants and conventions (Note~3)}
 
@@ -71,6 +75,28 @@ The random seed, number of replicates, studentization details, tie handling and 
 Ties in source rankings are broken by stable sorting; duplicate reduced formulae are retained in the ranking but noted in the panel metadata.
 The persistent-onset criterion requires the lower confidence bound to exceed a threshold $\delta$ for at least five consecutive quantiles.
 
+\subsection{Source workflow and tensor conventions (Note~5)}
+
+Both JARVIS and MP report the piezoelectric stress tensor $\mathbf{e}$ in C/m$^2$ using the same Voigt order ($xx,yy,zz,yz,xz,xy$) and the same engineering-shear factor-of-two convention.
+JARVIS values are expressed in the source-structure Cartesian frame; MP values are expressed in the MP IEEE-oriented structure frame.
+Before any response comparison, MP structures are aligned to JARVIS structures (or vice versa) with a frozen ``pymatgen'' ``StructureMatcher'' configuration and the recovered rotation is applied to the MP Cartesian tensor.
+The three reported scalars (F1, F3, F4) are coordinate-frame invariants, so they are unaffected by the source-specific structure-frame choice.
+
+Several calculation settings are not documented in the release metadata used by CrossPiezo: exchange--correlation functional, pseudopotential family, DFPT vs finite-difference ionic response, plane-wave cutoff, k-point density, relaxation thresholds, primitive vs conventional defaults, and sign-convention history.
+These items are therefore reported as unknown rather than assumed identical (see \path{docs/mp_vs_jarvis_conventions.md}).
+The repository convention audit (\path{scripts/run_convention_audit.py}) confirms that F1, F3 and F4 are rotation invariant, that Voigt/Cartesian conversion and engineering-shear handling are internally consistent, and that the F3 optimiser converges to a dense-grid brute-force oracle.
+This audit rules out low-level convention errors in the CrossPiezo pipeline; it does not prove that JARVIS and MP use identical calculation settings.
+
+\subsection{Screening resolution vs conventional ranking diagnostics (Note~6)}
+
+Screening resolution is reported through the chance-adjusted Jaccard curve $\widetilde J_q$ and its area (nAUCC) because these metrics focus on the elite tail where cross-database disagreement is largest.
+For comparison, Table~\ref{tab:si_baseline_metrics} and Figures~\ref{fig:si_synthetic_baseline}--\ref{fig:si_baseline_comparison} report conventional diagnostics:
+plain Jaccard $J_q$, chance-adjusted Jaccard $\widetilde J_q$, overlap coefficient, precision/recall at $k$, Rank-Biased Overlap (RBO) with $p=0.95$, top-weighted Kendall $\tau$ on the union of the two top-$k$ sets, and top-weighted Spearman $\rho$ on the same union.
+
+These diagnostics illustrate that two rankings can have high global correlation yet disagree on the top few percent of candidates.
+The synthetic example in Figure~\ref{fig:si_synthetic_baseline} constructs two length-100 rankings with global Kendall $\tau \approx 0.98$ but disjoint top-$5\%$ sets; global metrics are near-perfect while top-$5\%$ precision and Jaccard are zero.
+On P0 F1 the same pattern holds: global Kendall $\tau$ is high (see Table~\ref{tab:si_baseline_metrics}), but elite-tail agreement is near chance for small $q$.
+
 \section{Supplementary figures}
 
 \begin{figure}[htbp]
@@ -92,6 +118,35 @@ The vertical dashed line marks the equal-budget analysis at $b=1.0$.
 Aggregation changes the coverage--quality trade-off but does not validate physical truth.
 See Note~1 for the distinction between material-level recall and group-mean paired differences.}
 \label{fig:si_portfolio}
+\end{figure}
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.95\textwidth]{fig_synthetic_baseline_metrics}
+\caption{Synthetic motivating example for screening resolution.
+Two length-100 rankings are constructed with global Kendall $\tau \approx 0.98$ but disjoint top-$5\%$ sets, showing that high global rank correlation does not guarantee agreement on elite-screening decisions.
+The reported conventional metrics (global $\tau$, Spearman $\rho$, Rank-Biased Overlap) are near-perfect while top-$5\%$ precision and Jaccard are zero.
+See Note~6 for the full metric definitions.}
+\label{fig:si_synthetic_baseline}
+\end{figure}
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.95\textwidth]{fig_s1_baseline_metric_comparison}
+\caption{Comparison of conventional ranking diagnostics and screening-resolution on P0 F1.
+Top panels report global and top-$q$ Kendall $\tau$ and Spearman $\rho$; bottom panels report chance-adjusted Jaccard $\widetilde J_q$, plain Jaccard $J_q$, precision@$k$, and Rank-Biased Overlap.
+Global correlation is high, but elite-tail agreement is near-chance for small $q$.
+See Table~\ref{tab:si_baseline_metrics} for the numerical values and Note~6 for definitions.}
+\label{fig:si_baseline_comparison}
+\end{figure}
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.95\textwidth]{fig_s2_distance_vs_rank_discrepancy}
+\caption{Relaxed-structure RMS distance versus absolute F1 percentile gap for the 573 P0 matched pairs.
+The weak Spearman correlation ($\rho\approx-0.09$) indicates that large cross-database response disagreement is not dominated by poorly matched structures.
+The LOWESS curve is illustrative and is not a fitted model.}
+\label{fig:si_distance_discrepancy}
 \end{figure}
 
 \section{Supplementary tables}
@@ -180,6 +235,46 @@ Maximin \& 0.386 \& 0.456 \& 0.491 \\
 Balanced union \& 0.526 \& 0.789 \& 1.000 \\
 \bottomrule
 \end{tabular}
+\end{table}
+
+
+\begin{table}[htbp]
+\small
+\setlength{\tabcolsep}{3pt}
+\centering
+\caption{Baseline ranking diagnostics on P0 F1 (global Kendall $\tau$ = 0.245, global Spearman $\rho$ = 0.350).
+Columns are, from left to right: screened quantile $q$, corresponding top-$k$ set size, plain Jaccard, chance-adjusted Jaccard $\widetilde J_q$, overlap coefficient, precision/recall at $k$ (equal for paired rankings), Rank-Biased Overlap with $p=0.95$, top-weighted Kendall $\tau$ on the union of the two top-$k$ sets, top-weighted Spearman $\rho$ on the same union, and the partial nAUCC of the band containing $q$ (elite $1$--$10$, intermediate $10$--$20$, broad $20$--$50$).}
+\label{tab:si_baseline_metrics}
+\begin{tabular}{rccccccccc}
+\toprule
+$q$ (\%) & $k$ & Plain $J$ & $\widetilde J_q$ & Overlap & Prec@$k$ & RBO$_{0.95}$ & $\tau_{q}$ & $\rho_{q}$ & Band nAUCC \\
+\midrule
+1 & 5 & 0.000 & -0.005 & 0.000 & 0.000 & 0.017 & -0.289 & -0.588 & 0.003 \\
+5 & 28 & 0.018 & -0.007 & 0.036 & 0.036 & 0.017 & -0.532 & -0.760 & 0.003 \\
+10 & 57 & 0.075 & 0.024 & 0.140 & 0.140 & 0.017 & -0.386 & -0.613 & 0.003 \\
+20 & 114 & 0.200 & 0.100 & 0.333 & 0.333 & 0.017 & -0.331 & -0.489 & 0.076 \\
+50 & 286 & 0.452 & 0.178 & 0.622 & 0.622 & 0.017 & -0.080 & -0.112 & 0.145 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+
+\begin{table}[htbp]
+\small
+\setlength{\tabcolsep}{3pt}
+\centering
+\caption{Frozen structure-matching audit summary. P0 is the full relaxed-structure matched universe; P2 is the tighter subset retained by the RMS and lattice thresholds recorded in ``panel\_counts.json''.}
+\label{tab:si_matching_audit}
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{lcccccccccccc}
+\toprule
+Panel & Count & Expected & RMS mean & RMS med. & RMS max & Max mean & Max med. & Max max & Lat. mean & Lat. med. & Lat. max \\
+\midrule
+P0 & 573 & 573 & 0.017 & 0.009 & 0.168 & 0.025 & 0.013 & 0.298 & 0.066 & 0.004 & 1.897 \\
+P2 & 207 & 207 & 0.003 & 0.003 & 0.008 & 0.004 & 0.004 & 0.019 & 0.001 & 0.001 & 0.004 \\
+\bottomrule
+\end{tabular}%
+}
 \end{table}
 
 
