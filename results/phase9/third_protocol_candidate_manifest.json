@@ -1,7 +1,7 @@
 {
   "status": "candidate_list_generated_third_protocol_blocked",
-  "generated_at_utc": "2026-08-07T16:41:05.330217+00:00",
-  "git_commit": "0e3f9bb62f408253d193aada86ebb62229d818fe",
+  "generated_at_utc": "2026-08-07T16:52:10.948848+00:00",
+  "git_commit": "b67e12a1a4540b0abe633867fbfa801a1688fe8a",
   "panel_path": "artifacts/phase6a/panels/panel_membership.parquet",
   "panel_sha256": "4239d56df3ff4849d77073f4cb2e0b6b6e5df91958614949af1a369540a2187f",
   "panel_runtime_path": "artifacts/phase6a/panels/panel_membership.parquet",

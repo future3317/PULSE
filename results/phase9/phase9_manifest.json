@@ -1,6 +1,6 @@
 {
-  "generated_at_utc": "2026-08-07T16:41:05.391287+00:00",
-  "git_commit": "0e3f9bb62f408253d193aada86ebb62229d818fe",
+  "generated_at_utc": "2026-08-07T16:52:11.009413+00:00",
+  "git_commit": "b67e12a1a4540b0abe633867fbfa801a1688fe8a",
   "panel_sha256": "4239d56df3ff4849d77073f4cb2e0b6b6e5df91958614949af1a369540a2187f",
   "artifacts": {
     "cluster_bootstrap": {
@@ -244,7 +244,7 @@
     },
     "candidate_manifest": {
       "path": "results/phase9/third_protocol_candidate_manifest.json",
-      "sha256": "704dcd96f3329e483ff8ec67d90383e771793505d5f54ed413aae6bc87ba3fd0"
+      "sha256": "b09440f9625c382cc31897d170279a12e841b6a9c4d5c05506c2ffee2b90f6d1"
     },
     "third_protocol_preflight": {
       "path": "results/phase9/third_protocol_execution_status.json",
