@@ -158,4 +158,4 @@ outputs:
   manuscript:
     tex: CrossPiezo_ScreeningResolution_Manuscript_v0.4.tex
     bib: CrossPiezo_ScreeningResolution_references.bib
-  ccfa_concept: docs/ccfa_method_paper_concept.md
+  ccfa_concept: docs/ccfa_method_paper_concept_v0.2.md

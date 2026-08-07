@@ -13,6 +13,7 @@ import sys
 from pathlib import Path
 
 import matplotlib.pyplot as plt
+import matplotlib as mpl
 import numpy as np
 import pandas as pd
 from scipy import stats
@@ -21,6 +22,9 @@ from crosspiezo.analysis.ranking import (
     precision_at_k,
     top_weighted_kendall_tau,
 )
+
+mpl.rcParams["pdf.fonttype"] = 42
+mpl.rcParams["ps.fonttype"] = 42
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 RESULTS_ROOT = PROJECT_ROOT / "results" / "phase7c"
@@ -69,9 +73,16 @@ def main() -> int:
     ax.plot([1, n], [1, n], "k--", lw=0.8, alpha=0.5)
     ax.set_xlabel("Left ranking")
     ax.set_ylabel("Right ranking")
-    ax.set_title(
-        f"Global Kendall $\\tau$ = {tau_global:.3f}, precision@5% = {prec:.2f}, "
-        f"tail $\\tau$ = {tail_tau:.3f}"
+    ax.set_title(f"Global ($\\tau={tau_global:.3f}$), precision@5%={prec:.0f}")
+    ax.text(
+        0.03,
+        0.97,
+        f"tail $\\tau={tail_tau:.3f}$",
+        transform=ax.transAxes,
+        ha="left",
+        va="top",
+        fontsize=8,
+        bbox=dict(boxstyle="round,pad=0.2", facecolor="white", alpha=0.75, edgecolor="none"),
     )
     ax.legend(loc="lower right", fontsize="small")
     ax.set_xlim(0, n + 1)

@@ -1,0 +1,28 @@
+{
+  "status": "blocked_preflight",
+  "candidate_manifest_generated": true,
+  "candidate_count": 48,
+  "third_protocol_config": "configs/third_protocol_phase7c.yaml",
+  "third_protocol_config_sha256": "7ab4d7dfe29f7c655f53ffc9da4a6da578ab5c9fb1a2cdc31345243017ce4056",
+  "executables": {
+    "abinit": null,
+    "pw.x": null,
+    "vasp_std": null,
+    "qvasp": null
+  },
+  "project_runner_files": [],
+  "independent_tensor_outputs": false,
+  "raw_source_data_read_only": true,
+  "blockers": [
+    "No ABINIT, Quantum ESPRESSO, VASP or equivalent third-protocol executable is available on PATH.",
+    "No project input-generation/relaxation/DFPT runner or scheduler submission entry point is available.",
+    "No documented third-protocol functional, pseudopotential files, code version, k-point generator or resource allocation is available.",
+    "The existing MP/JARVIS tensors cannot be relabeled as an independent third protocol.",
+    "No new data download or external resource provisioning was authorized in this run."
+  ],
+  "required_to_resume": [
+    "Confirm the endpoint aggregation/tie policy recorded in the candidate manifest.",
+    "Provide a runnable ABINIT or Quantum ESPRESSO environment with exact version and pseudopotentials.",
+    "Provide a scheduler/resource allocation and a runner that emits all pre-registered outputs."
+  ]
+}

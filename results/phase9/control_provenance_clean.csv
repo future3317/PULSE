@@ -1,0 +1,11 @@
+attribute,jarvis_source_field,mp_source_field,jarvis_source_database,mp_source_database,unit,calculation_type_version,n_pairs,common_n,jarvis_missing,mp_missing,identical_values,fraction_identical,high_identical_value_fraction_flag,panel
+volume,computed_from_cif,computed_from_cif,JARVIS,Materials_Project,Angstrom^3,computed_from_relaxed_cif,573,573,0,0,0,0.0,False,P0
+band_gap,band_gap,band_gap,JARVIS,Materials_Project,eV,DFT_PBE,573,573,0,0,1,0.0017452006980802,False,P0
+energy_above_hull,energy_above_hull,energy_above_hull,JARVIS,Materials_Project,eV/atom,DFT_phase_diagram,573,573,0,0,199,0.3472949389179756,True,P0
+dielectric_total_trace,dielectric_total,dielectric_total,JARVIS,Materials_Project,dimensionless,DFPT_dielectric_tensor_trace,573,573,0,0,0,0.0,False,P0
+elastic_bulk_modulus_vrh,elastic_tensor,elastic_tensor,JARVIS,Materials_Project,GPa,DFPT_elastic_tensor_VRH_bulk,573,0,573,355,0,,False,P0
+volume,computed_from_cif,computed_from_cif,JARVIS,Materials_Project,Angstrom^3,computed_from_relaxed_cif,207,207,0,0,0,0.0,False,P2
+band_gap,band_gap,band_gap,JARVIS,Materials_Project,eV,DFT_PBE,207,207,0,0,0,0.0,False,P2
+energy_above_hull,energy_above_hull,energy_above_hull,JARVIS,Materials_Project,eV/atom,DFT_phase_diagram,207,207,0,0,84,0.4057971014492754,True,P2
+dielectric_total_trace,dielectric_total,dielectric_total,JARVIS,Materials_Project,dimensionless,DFPT_dielectric_tensor_trace,207,207,0,0,0,0.0,False,P2
+elastic_bulk_modulus_vrh,elastic_tensor,elastic_tensor,JARVIS,Materials_Project,GPa,DFPT_elastic_tensor_VRH_bulk,207,0,207,95,0,,False,P2

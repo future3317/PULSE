@@ -1,6 +1,5 @@
 # Phase 8B Frozen Artifact Consistency Audit
 
-> Date: 2026-08-03  
 > Auditor: Claude Code  
 > Scope: `CrossPiezo_ScreeningResolution_Manuscript.tex`, `CrossPiezo_ScreeningResolution_Supplementary.tex`, frozen Phase 7C artifacts in `results/phase7c/`, and the `results/phase8a/manuscript_numbers.json` reconciliation.  
 > Baseline commit: `90d1ca1b06ecea6cdef82f8d3ae454dafb3ccc7d`  

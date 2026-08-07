@@ -11,6 +11,7 @@ unified font sizes.
 from __future__ import annotations
 
 import sys
+import os
 from pathlib import Path
 
 import matplotlib
@@ -23,6 +24,8 @@ from matplotlib import font_manager
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 FIGURES_ROOT = PROJECT_ROOT / "figures" / "screening_resolution"
 RESULTS_ROOT = PROJECT_ROOT / "results" / "phase7c"
+SOURCE_ROOT = Path(os.environ.get("CROSSPIEZO_SOURCE_ROOT", r"E:\CODE\PULSE"))
+UPGRADE_RESULTS_ROOT = SOURCE_ROOT / "results" / "phase9"
 ARTIFACTS_ROOT = PROJECT_ROOT / "artifacts" / "phase6a"
 
 # --- Typography --------------------------------------------------------------
@@ -36,6 +39,8 @@ else:
 
 plt.rcParams.update(
     {
+        "pdf.fonttype": 42,
+        "ps.fonttype": 42,
         "font.family": _family,
         "font.serif": [FONT_NAME, "DejaVu Serif", "serif"],
         "font.size": 8,
@@ -125,6 +130,14 @@ def _save(fig: plt.Figure, name: str) -> None:
 # --- Figure 1: Benchmark concept ---------------------------------------------
 def fig1_benchmark_concept() -> None:
     """Schematic overview of the CrossPiezo benchmark and screening-resolution idea."""
+    baseline = pd.read_csv(RESULTS_ROOT / "baseline_metrics_comparison.csv")
+    baseline = baseline[(baseline["panel"] == "P0") & (baseline["metric"] == "F1_Frobenius")]
+    elite_counts: dict[int, tuple[int, int]] = {}
+    for q in (1, 5, 10):
+        row = baseline.loc[baseline["q_percentile"] == q].iloc[0]
+        k = int(row["k"])
+        overlap = int(round(float(row["precision_at_k"]) * k))
+        elite_counts[q] = (overlap, k)
     fig = plt.figure(figsize=(6.5, 4.5))
     gs = fig.add_gridspec(2, 2, hspace=0.45, wspace=0.35)
 
@@ -190,19 +203,19 @@ def fig1_benchmark_concept() -> None:
     # Arrow and caption below the bars
     ax_c.annotate("", xy=(7.5, 1.25), xytext=(4.5, 1.25),
                   arrowprops=dict(arrowstyle="->", color=COLORS["dark_gray"], lw=1))
-    ax_c.text(6.0, 1.05, "wider pool  ->  more concordance", fontsize=7, ha="center", va="top")
+    ax_c.text(6.0, 1.05, r"$\mathrm{wider\ pool}\;\rightarrow\;\mathrm{more\ concordance}$", fontsize=7, ha="center", va="top")
 
     # Panel d: main finding
     ax_d = fig.add_subplot(gs[1, 1])
     ax_d.set_xlim(0, 1)
     ax_d.set_ylim(0, 1)
     ax_d.axis("off")
-    ax_d.set_title("(d) Main finding")
     findings = [
-        ("elite (1–10%)", "near chance", COLORS["red"], 0.78),
-        ("intermediate (10–20%)", "weak", COLORS["f3"], 0.52),
-        ("broad (20–50%)", "modest concordance", COLORS["consensus"], 0.26),
+        ("top 1%", f"{elite_counts[1][0]}/{elite_counts[1][1]} shared", COLORS["red"], 0.78),
+        ("top 5%", f"{elite_counts[5][0]}/{elite_counts[5][1]} shared", COLORS["f3"], 0.52),
+        ("top 10%", f"{elite_counts[10][0]}/{elite_counts[10][1]} shared", COLORS["consensus"], 0.26),
     ]
+    ax_d.set_title("(d) Observed elite-set overlap")
     for label, outcome, color, ypos in findings:
         ax_d.scatter(0.12, ypos, s=120, c=color, zorder=3, clip_on=False)
         ax_d.text(0.22, ypos, f"{label}: {outcome}", va="center", fontsize=8)
@@ -213,9 +226,21 @@ def fig1_benchmark_concept() -> None:
 # --- Figure 2: Flagship screening-resolution results -------------------------
 def fig2_screening_resolution_flagship() -> None:
     """P0/P2 resolution curves with banded partial nAUCC summary."""
-    curve = pd.read_csv(RESULTS_ROOT / "concordance_curve.csv")
+    upgrade_curve = UPGRADE_RESULTS_ROOT / "cluster_bootstrap_curve.csv"
+    if upgrade_curve.exists():
+        curve = pd.read_csv(upgrade_curve).rename(
+            columns={
+                "cluster_boot_ci95_low": "adj_jaccard_ci95_low",
+                "cluster_boot_ci95_high": "adj_jaccard_ci95_high",
+            }
+        )
+        print("[fig2] using reduced-formula cluster-bootstrap curve bands")
+    else:
+        curve = pd.read_csv(RESULTS_ROOT / "concordance_curve.csv")
     bands = pd.read_csv(RESULTS_ROOT / "concordance_bands.csv")
     summary = pd.read_csv(RESULTS_ROOT / "concordance_summary.csv")
+    upgrade_summary_path = UPGRADE_RESULTS_ROOT / "cluster_bootstrap_summary.csv"
+    upgrade_summary = pd.read_csv(upgrade_summary_path) if upgrade_summary_path.exists() else None
 
     fig = plt.figure(figsize=(6.5, 5.0))
     gs = fig.add_gridspec(2, 2, height_ratios=[2, 1], hspace=0.35, wspace=0.25)
@@ -225,19 +250,13 @@ def fig2_screening_resolution_flagship() -> None:
     axes_top = [fig.add_subplot(gs[0, i]) for i in range(2)]
     for ax, panel in zip(axes_top, panels):
         sub = curve[curve["panel"] == panel]
-        # thin band color bars at top
-        band_y = 1.02
-        band_height = 0.04
-        band_ranges = [(1, 10, COLORS["light_gray"]), (10, 20, "#D0D0D0"), (20, 50, COLORS["gray"])]
-        for q0, q1, c in band_ranges:
-            ax.axvspan(q0, q1, ymin=band_y, ymax=band_y + band_height,
-                       color=c, lw=0, clip_on=False, transform=ax.get_xaxis_transform())
-        ax.text(5.5, band_y + band_height + 0.02, "elite", ha="center", fontsize=6,
-                transform=ax.get_xaxis_transform(), color=COLORS["dark_gray"])
-        ax.text(15, band_y + band_height + 0.02, "intermediate", ha="center", fontsize=6,
-                transform=ax.get_xaxis_transform(), color=COLORS["dark_gray"])
-        ax.text(35, band_y + band_height + 0.02, "broad", ha="center", fontsize=6,
-                transform=ax.get_xaxis_transform(), color=COLORS["dark_gray"])
+        band_ranges = [(1, 10, COLORS["light_gray"], "elite"),
+                       (10, 20, "#D0D0D0", "intermediate"),
+                       (20, 50, COLORS["gray"], "broad")]
+        for q0, q1, c, label in band_ranges:
+            ax.axvspan(q0, q1, color=c, alpha=0.12, lw=0, zorder=0)
+            ax.text((q0 + q1) / 2.0, 0.98, label, ha="center", va="top", fontsize=6,
+                    transform=ax.get_xaxis_transform(), color=COLORS["dark_gray"])
 
         for metric in ["F1_Frobenius", "F3_Longitudinal", "F4_KelvinOp"]:
             msub = sub[sub["metric"] == metric].sort_values("q_percentile")
@@ -260,23 +279,40 @@ def fig2_screening_resolution_flagship() -> None:
                 lw=0,
                 zorder=2,
             )
+            if metric == "F1_Frobenius":
+                for q_label in (5, 10, 20, 50):
+                    point = msub.loc[msub["q_percentile"] == q_label]
+                    if not point.empty:
+                        value = float(point["chance_adjusted_jaccard"].iloc[0])
+                        ax.annotate(f"{value:.2f}", (q_label, value), xytext=(0, 5),
+                                    textcoords="offset points", ha="center", fontsize=6,
+                                    color=color, zorder=4)
 
         # mark persistent onset for P0
         if panel == "P0":
             for metric in ["F1_Frobenius", "F3_Longitudinal", "F4_KelvinOp"]:
-                srow = summary[(summary["panel"] == panel) & (summary["metric"] == metric)]
+                summary_source = upgrade_summary if upgrade_summary is not None else summary
+                srow = summary_source[(summary_source["panel"] == panel) & (summary_source["metric"] == metric)]
                 onset = srow["persistent_onset_delta0.05"].values[0]
                 if not pd.isna(onset):
                     ax.axvline(onset, color=METRIC_COLOR[metric], ls=":", lw=0.8, alpha=0.7, zorder=1)
-                    ax.text(onset, 0.92, f"{int(onset)}%", rotation=90, va="bottom",
-                            color=METRIC_COLOR[metric], fontsize=6)
+                    ax.text(
+                        onset,
+                        0.86,
+                        f"{int(onset)}%",
+                        rotation=90,
+                        va="bottom",
+                        color=METRIC_COLOR[metric],
+                        fontsize=6,
+                        transform=ax.get_xaxis_transform(),
+                    )
 
         ax.axhline(0, color=COLORS["dark_gray"], linestyle="--", lw=0.8, zorder=1)
         ax.set_xlim(1, 50)
-        ax.set_ylim(-0.6, 1.05)
+        ax.set_ylim(-0.2, 0.4)
         ax.set_xlabel("Screened quantile $q$ (%)")
         if panel == "P0":
-            ax.set_ylabel("Chance-adjusted Jaccard $\widetilde J_q$")
+            ax.set_ylabel(r"Chance-adjusted Jaccard $\widetilde J_q$")
         ax.set_title(PANEL_LABELS[panel])
         ax.legend(loc="lower right", frameon=False)
 
@@ -288,12 +324,31 @@ def fig2_screening_resolution_flagship() -> None:
     for ax, panel in zip(axes_bot, panels):
         sub = bands[bands["panel"] == panel]
         for i, metric in enumerate(["F1_Frobenius", "F3_Longitudinal", "F4_KelvinOp"]):
-            vals = [
-                sub[(sub["metric"] == metric) & (sub["band"] == b)]["partial_nAUCC"].values[0]
-                for b in band_order
-            ]
-            ax.bar(x + i * width, vals, width, label=METRIC_LABELS[metric],
+            if upgrade_summary is not None:
+                srow = upgrade_summary[(upgrade_summary["panel"] == panel) & (upgrade_summary["metric"] == metric)].iloc[0]
+                vals = [float(srow[f"partial_nAUCC_{band}"]) for band in band_order]
+                lows = [float(srow[f"partial_nAUCC_{band}_ci95_low"]) for band in band_order]
+                highs = [float(srow[f"partial_nAUCC_{band}_ci95_high"]) for band in band_order]
+            else:
+                vals = [
+                    sub[(sub["metric"] == metric) & (sub["band"] == b)]["partial_nAUCC"].values[0]
+                    for b in band_order
+                ]
+                lows = highs = [float(v) for v in vals]
+            positions = x + i * width
+            ax.bar(positions, vals, width, label=METRIC_LABELS[metric],
                    color=METRIC_COLOR[metric], edgecolor="white", lw=0.5)
+            if upgrade_summary is not None:
+                ax.errorbar(
+                    positions,
+                    vals,
+                    yerr=[np.asarray(vals) - np.asarray(lows), np.asarray(highs) - np.asarray(vals)],
+                    fmt="none",
+                    ecolor=METRIC_COLOR[metric],
+                    elinewidth=0.8,
+                    capsize=2,
+                    zorder=4,
+                )
         ax.axhline(0, color=COLORS["dark_gray"], lw=0.8)
         ax.set_xticks(x + width)
         ax.set_xticklabels([b.capitalize() for b in band_order])
@@ -375,7 +430,7 @@ def fig3_control_forest() -> None:
 
     axes[1].annotate("shaded band = F1 nAUCC 95% CI", xy=(0.02, 0.90), xycoords="axes fraction",
                      ha="left", va="top", fontsize=6, color=COLORS["dark_gray"])
-    fig.suptitle("Control--F1 consistency advantage on P0", fontsize=9, y=1.02)
+    fig.suptitle("Cross-source consistency of control properties", fontsize=9, y=1.02)
     _save(fig, "fig3_control_forest")
 
 
@@ -491,8 +546,8 @@ def fig4_illustrative_candidates() -> None:
     ax.axvline(10, color=COLORS["dark_gray"], lw=0.6, ls=":", zorder=1)
     ax.set_xlim(0, 100)
     ax.set_ylim(0, 100)
-    ax.set_xlabel("MP percentile (F1)")
-    ax.set_ylabel("JARVIS percentile (F1)")
+    ax.set_xlabel("MP rank percentile, 0 = highest")
+    ax.set_ylabel("JARVIS rank percentile, 0 = highest")
     ax.set_title("Illustrative cross-database consensus and disputed candidates (P0 F1)")
     ax.legend(loc="upper left", frameon=False, fontsize=7)
 
@@ -576,8 +631,6 @@ def fig_s1_baseline_metric_comparison() -> None:
             color=COLORS["gray"], lw=1.2, label="Plain Jaccard")
     ax.plot(df["q_percentile"], df["chance_adjusted_jaccard"], marker="s", ms=4,
             color=COLORS["f1"], lw=1.2, label="Chance-adjusted Jaccard")
-    ax.plot(df["q_percentile"], df["overlap_coefficient"], marker="^", ms=4,
-            color=COLORS["f3"], lw=1.2, label="Overlap coefficient")
     ax.plot(df["q_percentile"], df["precision_at_k"], marker="d", ms=4,
             color=COLORS["f4"], lw=1.2, label="Precision@$k$")
     ax.axhline(0, color=COLORS["dark_gray"], lw=0.6, ls="--")

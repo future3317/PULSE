@@ -167,7 +167,7 @@ def max_longitudinal_modulus(
 
     1. a deterministic dense Fibonacci sphere grid;
     2. multi-start projected gradient ascent on the unit sphere;
-    3. an optional SLSQP constrained-polish cross-check of the best direction;
+    3. an optional bounded Nelder--Mead spherical-coordinate polish of the best direction;
     4. internal symmetrisation of the last two tensor indices.
 
     Parameters
@@ -181,11 +181,12 @@ def max_longitudinal_modulus(
     tol:
         Convergence tolerance for the projected-gradient improvement.
     cross_check:
-        If True, refine the best projected-gradient direction with SLSQP
+        If True, refine the best projected-gradient direction with bounded
+        Nelder--Mead in spherical coordinates
         and warn if the two methods disagree by more than ``cross_check_tol``.
     cross_check_tol:
         Relative tolerance for agreement between the projected-gradient and
-        SLSQP solutions.
+        polished solutions.
     """
     t = np.asarray(tensor, dtype=np.float64)
     if t.shape != (3, 3, 3):

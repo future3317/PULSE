@@ -1189,7 +1189,7 @@ def compile_phase5a_decision(
 
     md += "\n## LaTeX update notes\n"
     md += bullet("Do not modify Abstract/Results/Discussion yet.")
-    md += bullet("Verified numbers and claim changes are recorded in manuscript_notes/.")
+    md += bullet("Verified numbers and claim changes are recorded in the versioned reports and manuscript source.")
 
     write_report(REPORT_ROOT / "14_phase5a_decision.md", md, title="Phase 5A.9: Phase 5A Decision")
     print(f"[Phase 5A.10] Decision: {decision}. Wrote reports/14_phase5a_decision.md")

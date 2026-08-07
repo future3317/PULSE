@@ -1,6 +1,5 @@
 # Phase 8B Submission Readiness Decision
 
-> Date: 2026-08-03 (updated)
 > Decision: **Not Ready for venue submission; portfolio estimand resolved via Phase 8C full-procedure grouped bootstrap**
 > Scope: `CrossPiezo_ScreeningResolution_Manuscript.tex`, `CrossPiezo_ScreeningResolution_Supplementary.tex`, frozen Phase 7C artifacts.
 

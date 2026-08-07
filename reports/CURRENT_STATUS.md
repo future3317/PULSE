@@ -1,42 +1,61 @@
-# CrossPiezo / PULSE — Current Status
+# CrossPiezo current status
 
-> Generated during correctness audit reset.
+This file is a live status snapshot. It intentionally has no manually
+maintained date; use the generated audit report and Git history for provenance.
 
-All Phase 0–5B reports, artifacts, pair manifests, and scientific numbers in this
-repository are **provisional** and under active correctness audit.
+## Active decision
 
-- Audit branch: `audit/correctness-v1`
-- Baseline commit: `ee419516f8641fba18e99266c3288349f96e2785`
-- Pre-audit freeze: `artifacts/releases/pre_audit_ee4195/`
+CrossPiezo Version A remains a two-source benchmark and is scientifically
+complete after the final technical manuscript revision; it is not yet
+administratively ready for submission. The Phase 9 statistical upgrade is
+complete. The independent third protocol is candidate-ready and intentionally
+deferred; no DFT/DFPT tensor result is included.
 
-Do **not** cite the old numbers in manuscripts or the LaTeX draft until the
-`reports/correctness_v1/10_correctness_decision.md` gate has passed.
+## Verified baseline
 
-## What is being audited
+- `pytest`: 117 passed, 1 skipped.
+- Convention audit: 23 passed, 0 failed/errors.
+- Phase 7C independent verifier: reconciled, maximum absolute difference
+  `1.11e-16`, 0 flags.
+- Frozen panel: P0 = 573, P2 = 207.
+- Primary portfolio result: balanced-union recall 0.526 with full-procedure
+  gain +0.386, 95% CI [0.273, 0.441].
+- Unified reduced-formula cluster bootstrap: 2,000 replicates for each of the
+  six P0/P2 × F1/F3/F4 combinations. P0 F1 nAUCC = 0.1051, 95% CI
+  [0.0565, 0.1530]; P0 F1 persistent onset at delta=0.05 is not reached.
+- Tie/cutoff, raw-value and continuous matching-distance sensitivity artifacts
+  are written under `results/phase9/`.
+- Final manuscript revision: above-chance and practical onset definitions are
+  separated, partial nAUCC intervals are identified as percentile-bootstrap
+  intervals, the difference-CI wording matches the displayed table, and SI
+  Table S7 is split into readable S7a/S7b panels.
+- Final paper artifacts: main text 10 pages; supplementary information 11
+  pages; both PDFs compile without overfull, underfull or undefined-reference
+  warnings and contain no Type 3 fonts.
+- Third-protocol candidate set: 48 unique rows with 10/10/10/8/10 strata,
+  P2=24/24, maximum crystal-system count 10 and maximum reduced-formula count
+  2.
 
-- Tensor convention conversions (Voigt ↔ Cartesian, engineering shear, e/d).
-- O(3) parity for polar rank-3 tensors.
-- Cartesian symmetry operations derived from actual structures.
-- Source-native frame reconstruction.
-- Structure-match rotation estimation and RMS/max distance handling.
-- Crystal-system mapping.
-- Orbit discrepancy and exact-frame transport.
-- Rotation-invariant ranking functionals.
-- e3nn tensor-axis symmetrization and periodic graph handling.
-- Prototype / formula split definitions and leakage.
-- Source-held-out / counterfactual evaluation labels.
-- Hard-coded scientific numbers in reporting scripts.
-- PMR definition, bootstrap, and normalization consistency.
+## Submission blockers
 
-## Where new results will appear
+1. Add the real `third_protocol_preregistration` BibTeX entry and DOI.
+2. Replace anonymous author/institution metadata.
+3. Add the permanent archive DOI or private reviewer link.
 
-- `artifacts/correctness_v1/`
-- `reports/correctness_v1/`
+The final main-text and supplementary builds have no overfull/undefined
+reference warnings. The third protocol has not produced any independent tensor
+result.
 
-## Remaining prohibited without human approval
+## Deferred scientific extension
 
-- New DFT/DFPT calculations.
-- MP version shift or third-protocol expansion.
-- Full PULSE model development.
-- Writing results into the main LaTeX draft.
-- Pushing directly to `master`.
+The 48-material third-protocol candidate list and preflight record are retained
+at `results/phase9/`. If this extension is resumed, it must run on an
+independent DFT/DFPT environment with documented pseudopotentials, numerical
+settings, scheduler/resource provenance and the recorded candidate-selection
+policy. The current paper makes no claim from that future calculation.
+
+## Working rule
+
+Use `docs/PROJECT_GUIDE.md` for current scope and commands. Use frozen CSV/JSON
+artifacts and manifests for numbers. Treat older reports and archived plans as
+historical evidence, not as active instructions.

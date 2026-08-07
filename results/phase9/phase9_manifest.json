@@ -1,0 +1,258 @@
+{
+  "generated_at_utc": "2026-08-07T16:41:05.391287+00:00",
+  "git_commit": "0e3f9bb62f408253d193aada86ebb62229d818fe",
+  "panel_sha256": "4239d56df3ff4849d77073f4cb2e0b6b6e5df91958614949af1a369540a2187f",
+  "artifacts": {
+    "cluster_bootstrap": {
+      "path": "results/phase9/cluster_bootstrap_summary.csv",
+      "sha256": "d54bd9ed13e7c7f002d3e9e5b7d31afb7b89551061266910ac19867107494132",
+      "n_rows": 6,
+      "columns": [
+        "panel",
+        "metric",
+        "n",
+        "n_groups",
+        "tau",
+        "tau_ci95_low",
+        "tau_ci95_high",
+        "nAUCC",
+        "nAUCC_ci95_low",
+        "nAUCC_ci95_high",
+        "n_boot_requested",
+        "n_boot_curve",
+        "n_boot_tau",
+        "bootstrap_seed",
+        "persistent_onset_delta0.00",
+        "persistent_onset_delta0.05",
+        "persistent_onset_delta0.10",
+        "partial_nAUCC_elite",
+        "partial_nAUCC_elite_ci95_low",
+        "partial_nAUCC_elite_ci95_high",
+        "partial_nAUCC_elite_n_boot",
+        "partial_nAUCC_intermediate",
+        "partial_nAUCC_intermediate_ci95_low",
+        "partial_nAUCC_intermediate_ci95_high",
+        "partial_nAUCC_intermediate_n_boot",
+        "partial_nAUCC_broad",
+        "partial_nAUCC_broad_ci95_low",
+        "partial_nAUCC_broad_ci95_high",
+        "partial_nAUCC_broad_n_boot"
+      ]
+    },
+    "cluster_bootstrap_curve": {
+      "path": "results/phase9/cluster_bootstrap_curve.csv",
+      "sha256": "7852c937205b93e063069a26ab471c35d7fa44c9a6963f349ca99b580032d4c7",
+      "n_rows": 300,
+      "columns": [
+        "q_percentile",
+        "k",
+        "n",
+        "observed_overlap",
+        "observed_jaccard",
+        "expected_jaccard",
+        "chance_adjusted_jaccard",
+        "cluster_boot_ci95_low",
+        "cluster_boot_ci95_high",
+        "panel",
+        "metric"
+      ]
+    },
+    "cutoff": {
+      "path": "results/phase9/cutoff_gap_tie_diagnostics.csv",
+      "sha256": "b4c85a29a3dacdcdbeb3ab4aadb3d56d76760ae3d1cc71c2ac50b2d82a910944",
+      "n_rows": 300,
+      "columns": [
+        "q_percentile",
+        "n",
+        "k",
+        "observed_overlap",
+        "min_overlap",
+        "max_overlap",
+        "expected_jaccard",
+        "observed_jaccard",
+        "min_jaccard",
+        "max_jaccard",
+        "observed_adjusted_jaccard",
+        "min_adjusted_jaccard",
+        "max_adjusted_jaccard",
+        "bounds_exact",
+        "tie_ambiguous",
+        "left_cutoff_score",
+        "left_next_score",
+        "left_absolute_gap",
+        "left_relative_gap",
+        "left_tie_block_size",
+        "left_optional_needed",
+        "right_cutoff_score",
+        "right_next_score",
+        "right_absolute_gap",
+        "right_relative_gap",
+        "right_tie_block_size",
+        "right_optional_needed",
+        "hypergeometric_pvalue",
+        "panel",
+        "metric"
+      ]
+    },
+    "raw_value_summary": {
+      "path": "results/phase9/raw_value_summary.csv",
+      "sha256": "ea0378dad71de980e9c641d9f53b11509e85d48dcee7fd2a0da01d1bf4288a5b",
+      "n_rows": 12,
+      "columns": [
+        "panel",
+        "metric",
+        "source",
+        "n",
+        "mean",
+        "std",
+        "zero_count",
+        "q00",
+        "q01",
+        "q05",
+        "q25",
+        "q50",
+        "q75",
+        "q95",
+        "q99",
+        "q100"
+      ]
+    },
+    "raw_pairwise_diagnostics": {
+      "path": "results/phase9/raw_pairwise_diagnostics.csv",
+      "sha256": "5a20bef441fb799289eb9396f2a0263fbee3dff4169bed706683f6b254137632",
+      "n_rows": 6,
+      "columns": [
+        "panel",
+        "metric",
+        "n",
+        "absolute_difference_mean",
+        "absolute_difference_median",
+        "absolute_difference_q95",
+        "symmetric_relative_difference_median",
+        "symmetric_relative_difference_q95",
+        "log10_abs_ratio_median",
+        "log10_abs_ratio_q05",
+        "log10_abs_ratio_q95"
+      ]
+    },
+    "matching_distance_thresholds": {
+      "path": "results/phase9/matching_distance_threshold_sensitivity.csv",
+      "sha256": "ae9b971af5b9fd96253187368f14b5815b99c8024b4dc97398b8efb2c7908642",
+      "n_rows": 198,
+      "columns": [
+        "analysis",
+        "panel",
+        "distance_metric",
+        "threshold_quantile",
+        "threshold_value",
+        "metric",
+        "n",
+        "tau",
+        "rho",
+        "nAUCC",
+        "n_excluded",
+        "boundary_count",
+        "nonidentical_space_group_count"
+      ]
+    },
+    "matching_distance_strata": {
+      "path": "results/phase9/matching_distance_strata.csv",
+      "sha256": "27ea260f0c81be29facd99b03059841782903cccfc1239c84e79ff71cbaaf12d",
+      "n_rows": 90,
+      "columns": [
+        "analysis",
+        "panel",
+        "distance_metric",
+        "distance_stratum",
+        "metric",
+        "n",
+        "tau",
+        "rho",
+        "nAUCC",
+        "n_excluded",
+        "distance_min",
+        "distance_max",
+        "boundary_count",
+        "nonidentical_space_group_count"
+      ]
+    },
+    "matching_distance_trim": {
+      "path": "results/phase9/matching_distance_trim_sensitivity.csv",
+      "sha256": "ce61121199ed8e7b89e69b4fd85e0ea77b2e69f23d1d38853d19a3034437fbba",
+      "n_rows": 15,
+      "columns": [
+        "analysis",
+        "panel",
+        "metric",
+        "distance_metric",
+        "trim_fraction",
+        "n_removed",
+        "n_retained",
+        "distance_cutoff",
+        "tau",
+        "rho",
+        "nAUCC",
+        "elite_partial_nAUCC",
+        "top10_k",
+        "top10_overlap",
+        "top10_jaccard"
+      ]
+    },
+    "control_tie_sensitivity": {
+      "path": "results/phase9/control_tie_sensitivity.csv",
+      "sha256": "0b8f175faa271543d5e0ee89cbcd0e7faac948ec6dce5ef8721f63b20b8c2b02",
+      "n_rows": 6,
+      "columns": [
+        "panel",
+        "attribute",
+        "n",
+        "n_tied_rows_jarvis",
+        "n_tied_rows_mp",
+        "tie_break_replicates",
+        "nAUCC_stable",
+        "nAUCC_min",
+        "nAUCC_max",
+        "nAUCC_ci95_low",
+        "nAUCC_ci95_high",
+        "elite_partial_nAUCC_min",
+        "elite_partial_nAUCC_max",
+        "top10_overlap_min",
+        "top10_overlap_max"
+      ]
+    },
+    "control_provenance_clean": {
+      "path": "results/phase9/control_provenance_clean.csv",
+      "sha256": "a6bb8610623159dd93e82013728e64a4996eeec51c038af0ddd8fd3645b51f6d",
+      "n_rows": 10,
+      "columns": [
+        "attribute",
+        "jarvis_source_field",
+        "mp_source_field",
+        "jarvis_source_database",
+        "mp_source_database",
+        "unit",
+        "calculation_type_version",
+        "n_pairs",
+        "common_n",
+        "jarvis_missing",
+        "mp_missing",
+        "identical_values",
+        "fraction_identical",
+        "high_identical_value_fraction_flag",
+        "panel"
+      ]
+    },
+    "candidate_manifest": {
+      "path": "results/phase9/third_protocol_candidate_manifest.json",
+      "sha256": "704dcd96f3329e483ff8ec67d90383e771793505d5f54ed413aae6bc87ba3fd0"
+    },
+    "third_protocol_preflight": {
+      "path": "results/phase9/third_protocol_execution_status.json",
+      "sha256": "9e036f1d4719d64f2e8a9c5ecdb72a5dec1820b09346ebd763d7df9a025200f0"
+    },
+    "report": {
+      "path": "reports/phase9/01_scientific_upgrade.md",
+      "sha256": "26859a61ec8bf22d9d1a6fd14994348c9ed4d2614ae05c0c0cfe588ecc1c9a7c"
+    }
+  }
+}

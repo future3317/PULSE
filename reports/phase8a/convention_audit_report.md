@@ -1,6 +1,5 @@
 # CrossPiezo tensor-convention audit report
 
-**Date:** 2026-08-03
 **Command:** `python run_convention_audit.py`
 **Exit code:** 0
 

@@ -417,7 +417,17 @@ def verify_wp_f(cfg: dict[str, Any], panel_df: pd.DataFrame) -> dict[str, Any]:
 
 def main() -> int:
     cfg = _load_config()
-    panel_df = pd.read_parquet(PROJECT_ROOT / cfg["panels"]["membership_path"])
+    panel_path = PROJECT_ROOT / cfg["panels"]["membership_path"]
+    try:
+        panel_df = pd.read_parquet(panel_path)
+    except OSError as exc:
+        if "Repetition level histogram size mismatch" in str(exc):
+            raise RuntimeError(
+                "The frozen panel Parquet requires pyarrow>=23.0; the current "
+                "PyArrow runtime cannot decode its data pages. "
+                f"Use a compatible environment to read {panel_path}."
+            ) from exc
+        raise
 
     result_a = verify_wp_a(cfg, panel_df)
     result_f = verify_wp_f(cfg, panel_df)

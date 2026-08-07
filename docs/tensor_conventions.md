@@ -1,36 +1,40 @@
-# CrossPiezo Tensor Conventions
+# CrossPiezo tensor conventions
 
-## Default internal representation
+## Internal representation
 
-- **Quantity**: piezoelectric stress tensor `e`.
-- **Shape**: full Cartesian `3 × 3 × 3`.
-- **Symmetry**: last two indices symmetric (`e_{ijk} = e_{ikj}`).
-- **Unit**: `C/m^2`.
-- **Internal engineering Voigt order**: `xx, yy, zz, yz, xz, xy`.
-- **Engineering shear**: off-diagonal Voigt components equal twice the
-  tensor-shear component.
+- Quantity: piezoelectric stress tensor `e`.
+- Shape: full Cartesian `3 x 3 x 3`.
+- Minor symmetry: `e_ijk = e_ikj` in the strain indices.
+- Unit: `C/m^2`.
+- Engineering Voigt order: `xx, yy, zz, yz, xz, xy`.
+- Engineering shear components are converted explicitly when expanding to
+  Cartesian form.
 
-## Transformations recorded for every tensor
+## Transformation history
 
-- source Voigt order;
-- internal Voigt order;
-- engineering shear / tensor shear convention;
-- unit;
-- stress (`e`) vs. strain (`d`) identity;
-- Cartesian expansion;
-- cell / lattice basis;
-- atom mapping;
-- point-group action and symmetry projection;
-- source functional and code version.
+Every converted record must retain source Voigt order, internal order, shear
+convention, units, stress/strain identity, Cartesian expansion, lattice basis,
+atom mapping, rotation parity, point-group action, and source provenance.
+Unknown conventions are quarantined rather than inferred.
 
-## Rotation rule
+## Pair transport and metrics
 
-For a matched pair, the MP Cartesian tensor is rotated into the JARVIS frame
-using the polar-decomposition rotation obtained from the structure matcher:
+For an accepted structure match, the recovered Cartesian transport is recorded
+before comparison. The active cross-source endpoints are coordinate-frame
+invariants:
 
-```
-e'_{ijk} = R_{il} R_{jm} R_{kn} e_{lmn}
-```
+- F1: Cartesian Frobenius norm;
+- F3: maximum collinear longitudinal response;
+- F4: Kelvin/Mandel operator norm on symmetric strain.
 
-This assumes the Cartesian tensor axes are tied to the CIF lattice axes.
-Source-standard orientations (e.g. IEEE) may require additional alignment.
+The convention audit and tests validate rotation invariance, Voigt/Cartesian
+conversion, engineering-shear handling, and the F3 numerical optimizer. These
+tests do not prove that MP and JARVIS used identical electronic-structure
+workflows.
+
+## Prohibited transformations
+
+- no silent `e`/`d` conversion;
+- no silent sign, unit, shear, or frame change;
+- no averaging MP and JARVIS tensors into a physical reference;
+- no use of MP's plain Voigt SVD scalar as a cross-source invariant endpoint.

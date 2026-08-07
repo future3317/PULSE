@@ -22,4 +22,4 @@
 
 ## LaTeX update notes
 - Do not modify Abstract/Results/Discussion yet.
-- Verified numbers and claim changes are recorded in manuscript_notes/.
+- Verified numbers and claim changes are retained in `archive/legacy/manuscript_notes/`.

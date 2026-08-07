@@ -16,6 +16,7 @@ from __future__ import annotations
 
 import importlib.util
 import inspect
+import os
 import subprocess
 import sys
 import traceback
@@ -48,6 +49,17 @@ def _run_tests_in_module(module_path: Path) -> tuple[list[str], list[str], list[
     """Run a test module in a subprocess and return (passed, failed, errors)."""
     runner = PROJECT_ROOT / "scripts" / "_run_test_module.py"
     cmd = [sys.executable, str(runner), str(module_path)]
+    env = os.environ.copy()
+    src_path = str(PROJECT_ROOT / "src")
+    existing_pythonpath = env.get("PYTHONPATH")
+    env["PYTHONPATH"] = os.pathsep.join(
+        [src_path, existing_pythonpath] if existing_pythonpath else [src_path]
+    )
+    # Some Windows NumPy/SciPy builds abort inside the BLAS layer when these
+    # small numerical tests start multiple worker threads.  Keep the isolated
+    # audit deterministic and single-threaded without changing the test logic.
+    for variable in ("OMP_NUM_THREADS", "MKL_NUM_THREADS", "OPENBLAS_NUM_THREADS"):
+        env.setdefault(variable, "1")
     result = subprocess.run(
         cmd,
         cwd=PROJECT_ROOT,
@@ -55,6 +67,7 @@ def _run_tests_in_module(module_path: Path) -> tuple[list[str], list[str], list[
         text=True,
         encoding="utf-8",
         errors="replace",
+        env=env,
     )
     passed: list[str] = []
     failed: list[str] = []
@@ -131,7 +144,6 @@ def main() -> int:
     lines = [
         "# CrossPiezo tensor-convention audit report",
         "",
-        f"**Date:** 2026-08-03",
         f"**Command:** `python {Path(__file__).name}`",
         f"**Exit code:** {returncode}",
         "",

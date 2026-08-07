@@ -1,0 +1,140 @@
+{
+  "status": "candidate_list_generated_third_protocol_blocked",
+  "generated_at_utc": "2026-08-07T16:41:05.330217+00:00",
+  "git_commit": "0e3f9bb62f408253d193aada86ebb62229d818fe",
+  "panel_path": "artifacts/phase6a/panels/panel_membership.parquet",
+  "panel_sha256": "4239d56df3ff4849d77073f4cb2e0b6b6e5df91958614949af1a369540a2187f",
+  "panel_runtime_path": "artifacts/phase6a/panels/panel_membership.parquet",
+  "paper_config_path": "configs/third_protocol_phase7c.yaml",
+  "paper_config_sha256": "7ab4d7dfe29f7c655f53ffc9da4a6da578ab5c9fb1a2cdc31345243017ce4056",
+  "candidate_list_artifact": {
+    "path": "results/phase9/third_protocol_candidate_list.csv",
+    "sha256": "fe00879264b582ec737f8cb53f665158c47b704d38a7b4be9220283ebf27512c",
+    "n_rows": 48,
+    "columns": [
+      "stratum",
+      "selection_order",
+      "pair_id",
+      "jarvis_id",
+      "mp_id",
+      "formula",
+      "reduced_formula",
+      "crystal_system",
+      "jarvis_crystal_system",
+      "mp_crystal_system",
+      "atom_count_reduced",
+      "P2",
+      "jarvis_f1",
+      "mp_f1",
+      "jarvis_f3",
+      "mp_f3",
+      "jarvis_f4",
+      "mp_f4",
+      "rms_distance",
+      "max_distance",
+      "lattice_distance",
+      "space_group_relation"
+    ]
+  },
+  "balance": {
+    "n_candidates": 48,
+    "n_unique_pair_ids": 48,
+    "stratum_counts": {
+      "consensus_elite": 10,
+      "jarvis_only_elite": 10,
+      "mp_only_elite": 10,
+      "consensus_low": 8,
+      "diversity_balanced": 10
+    },
+    "crystal_system_counts": {
+      "hexagonal": 10,
+      "tetragonal": 8,
+      "trigonal": 8,
+      "orthorhombic": 8,
+      "cubic": 7,
+      "triclinic": 4,
+      "cross_source_mismatch": 3
+    },
+    "P2_counts": {
+      "False": 24,
+      "True": 24
+    },
+    "reduced_formula_max_count": 2,
+    "crystal_system_mismatch_count": 3,
+    "p2_balance_pass": true,
+    "max_crystal_system_pass": true,
+    "max_reduced_formula_pass": true
+  },
+  "selection_policy": {
+    "panel": "P0",
+    "panel_n": 573,
+    "top_k": 57,
+    "bottom_k": 114,
+    "endpoint_aggregation": "source-wise mean percentile across F1/F3/F4; stable pair_id tie-break",
+    "elite_pool": "union of endpoint-specific source top-k sets; consensus is the intersection of the two source pools",
+    "source_only": "source aggregate top-k candidates outside the other source endpoint-union pool",
+    "low_pool": "intersection of source aggregate bottom-k sets, restricted to non-zero response",
+    "diversity_balanced": "remaining P0 rows; choose the P2/non-P2 counts needed to balance the complete 48-row set, then greedily minimize crystal/atom/formula over-representation with pair_id tie-break",
+    "ambiguity_note": "The pre-registration did not specify endpoint aggregation or tie policy; these operational rules are recorded here and must be accepted before external DFT execution."
+  },
+  "strata": {
+    "consensus_elite": [
+      "JVASP-1023__mp-19",
+      "JVASP-36689__mp-989625",
+      "JVASP-29860__mp-626701",
+      "JVASP-25210__mp-567313",
+      "JVASP-29377__mp-550998",
+      "JVASP-36531__mp-1014251",
+      "JVASP-36529__mp-1014244",
+      "JVASP-3450__mp-20459",
+      "JVASP-36671__mp-1017551",
+      "JVASP-35206__mp-1020712"
+    ],
+    "jarvis_only_elite": [
+      "JVASP-7878__mp-19128",
+      "JVASP-29722__mp-583463",
+      "JVASP-36580__mp-1016108",
+      "JVASP-35152__mp-1019743",
+      "JVASP-36144__mp-1007823",
+      "JVASP-35150__mp-1019740",
+      "JVASP-22673__mp-604884",
+      "JVASP-35109__mp-1019508",
+      "JVASP-7746__mp-12433",
+      "JVASP-35107__mp-1019379"
+    ],
+    "mp_only_elite": [
+      "JVASP-34284__mp-552941",
+      "JVASP-11820__mp-19241",
+      "JVASP-59062__mp-29927",
+      "JVASP-7773__mp-13108",
+      "JVASP-43637__mp-776952",
+      "JVASP-53082__mp-676400",
+      "JVASP-35097__mp-1019323",
+      "JVASP-57456__mp-558828",
+      "JVASP-36889__mp-998193",
+      "JVASP-110__mp-5986"
+    ],
+    "consensus_low": [
+      "JVASP-25051__mp-154",
+      "JVASP-46065__mp-769025",
+      "JVASP-34410__mp-554845",
+      "JVASP-29604__mp-569994",
+      "JVASP-34330__mp-554243",
+      "JVASP-3906__mp-27934",
+      "JVASP-29542__mp-567542",
+      "JVASP-9097__mp-1554"
+    ],
+    "diversity_balanced": [
+      "JVASP-10493__mp-9197",
+      "JVASP-2919__mp-9198",
+      "JVASP-11815__mp-19219",
+      "JVASP-3306__mp-14983",
+      "JVASP-52299__mp-753378",
+      "JVASP-10675__mp-10413",
+      "JVASP-9732__mp-5679",
+      "JVASP-11133__mp-13589",
+      "JVASP-59246__mp-33508",
+      "JVASP-12575__mp-23904"
+    ]
+  }
+}
