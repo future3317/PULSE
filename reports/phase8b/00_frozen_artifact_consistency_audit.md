@@ -1,5 +1,8 @@
 # Phase 8B Frozen Artifact Consistency Audit
 
+> **Historical audit:** this report records the pre-correction artifact state.
+> Current results are in reports/phase7c/04_portfolio.md.
+
 > Auditor: Claude Code  
 > Scope: `CrossPiezo_ScreeningResolution_Manuscript.tex`, `CrossPiezo_ScreeningResolution_Supplementary.tex`, frozen Phase 7C artifacts in `results/phase7c/`, and the `results/phase8a/manuscript_numbers.json` reconciliation.  
 > Baseline commit: `90d1ca1b06ecea6cdef82f8d3ae454dafb3ccc7d`  

@@ -1,9 +1,17 @@
 {
-  "timestamp": "2026-08-03T05:18:24.051524+00:00",
-  "commit": "786b03bf38916098c88f0be1576ae6fefe0c693b",
+  "timestamp": "2026-08-16T13:31:11.250857+00:00",
+  "commit": "c3be688bfee5b1ebf608281992ea1c5046c4100b",
   "config_commit": "7c19a3a2401bc37b9f3dcb680c66c052d54f4c71",
   "branch": "paper/screening-resolution-q1-v1",
   "files": [
+    {
+      "path": "results\\phase7c\\baseline_metrics_comparison.csv",
+      "sha256": "cbda31e2ae2f45614044787a15d4f1447017dc22a934d0907f8b0caa835007ec"
+    },
+    {
+      "path": "results\\phase7c\\baseline_synthetic_example.csv",
+      "sha256": "28284ae9871ec95128873a5c7d0fc7b35037e978cff1d7b5628460c3120d4997"
+    },
     {
       "path": "results\\phase7c\\concordance_bands.csv",
       "sha256": "0753f36f1da944ee3f4882f6ac4a30f9b1d9015821d659d0684ab0d2bf77b40b"
@@ -25,20 +33,24 @@
       "sha256": "0956c4f3af687a5b3935c0dfde75f5685bbb6078d52ec15d887f01643988bea7"
     },
     {
+      "path": "results\\phase7c\\matching_audit_summary.csv",
+      "sha256": "b8993ef68858cea6df0fa17a7fc877a0f5c5472c5059d3c1fb09045588b5f69a"
+    },
+    {
       "path": "results\\phase7c\\portfolio_benchmark.csv",
-      "sha256": "552e9dffab809dbafa07f10bdc5e9a2f1ac414a1fa1b618a62ade00cbb545e63"
+      "sha256": "fbfd5c2404be0a703bef3915336aa3b649b52d251ad29aa6ada8257b24f2f21c"
     },
     {
       "path": "results\\phase7c\\portfolio_full_procedure_bootstrap.csv",
-      "sha256": "1787907baa9433be0ea78f646f262d926fd3ef654f041a85399f8624c20a8c4b"
+      "sha256": "23d2767bce5be19c6f0ed78430a37fe3aba567a0bd8ffe4878000c53043a8942"
     },
     {
       "path": "results\\phase7c\\portfolio_paired_differences.csv",
-      "sha256": "85526a84bcf5af91a279eebe0d6326a051f0c2d073c18da2350d63f225bf9364"
+      "sha256": "787673cca14376e8648af41a5d81a7c0560a9eab7c67f3ba31afa30a71d03c76"
     },
     {
       "path": "results\\phase7c\\portfolio_pareto.csv",
-      "sha256": "36dd6b1aaf3c332a231255f1a01a9d722c0c876dcc6f8f1d6ce742a57430b65a"
+      "sha256": "22d4c8d569d71f3c9b9732bc47a834c964e61b7d29afb9656cf79894eceff3fc"
     },
     {
       "path": "results\\phase7c\\property_control_comparison.csv",
@@ -54,11 +66,11 @@
     },
     {
       "path": "results\\phase7c\\manuscript_numbers.json",
-      "sha256": "27e0504f49ea976bbbcd8a9d7a5e872773f11535a4845c429f309eb592d92bba"
+      "sha256": "6af0cdd3a9430a7febf9b0e45ba6cf1d748ebba88d5d5c8b5fa028cb52e2e54c"
     },
     {
       "path": "results\\phase7c\\phase7c_manifest.json",
-      "sha256": "f5a747a6ba79d00099e7f7bd7a8429095bbee5a1bca2fa79627eb53504d5ce65"
+      "sha256": "8dfcd65ebe2e0e63802e3f1b43006a9e45bbe78397f98189da6fe0ee9cd22d4f"
     },
     {
       "path": "results\\phase7c\\verification_summary.json",
@@ -72,10 +84,10 @@
     "P0_F1_partial_nAUCC_broad": 0.1454315807410962,
     "P0_F1_dual_high_10pct_nAUCC": -0.0457965096560343,
     "n_positive_P0_controls": 4,
-    "primary_best_worst_source_recall": 0.5263157894736842,
-    "primary_best_strategy": "balanced_union",
-    "primary_best_full_proc_delta_best_recall": 0.3859649122807017,
-    "primary_best_full_proc_delta_best_recall_ci95_low": 0.2727272727272727,
-    "primary_best_full_proc_delta_best_recall_ci95_high": 0.4406779661016948
+    "primary_best_worst_source_recall": 0.5614035087719298,
+    "primary_best_strategy": "minimax_oracle",
+    "primary_best_full_proc_delta_best_recall": 0.4210526315789473,
+    "primary_best_full_proc_delta_best_recall_ci95_low": 0.3571428571428572,
+    "primary_best_full_proc_delta_best_recall_ci95_high": 0.4642857142857143
   }
 }

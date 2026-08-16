@@ -1,5 +1,8 @@
 # Phase 8B Submission Readiness Decision
 
+> **Superseded:** this historical readiness snapshot predates the exact
+> minimax-selector correction and the current manuscript revision.
+
 > Decision: **Not Ready for venue submission; portfolio estimand resolved via Phase 8C full-procedure grouped bootstrap**
 > Scope: `CrossPiezo_ScreeningResolution_Manuscript.tex`, `CrossPiezo_ScreeningResolution_Supplementary.tex`, frozen Phase 7C artifacts.
 

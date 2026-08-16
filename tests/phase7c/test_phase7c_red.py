@@ -19,7 +19,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from crosspiezo.analysis.phase7b_stats import naucc, portfolio_metrics, screening_resolution_curve
+from crosspiezo.analysis.phase7b_stats import naucc, portfolio_metrics, portfolio_select, screening_resolution_curve
 from crosspiezo.analysis.phase7c_stats import (
     anchor_high_response_mask,
     conditional_permutation_high_response,
@@ -58,6 +58,37 @@ def test_partial_naucc_constant_curve():
     curve = pd.DataFrame({"q_percentile": qs, "chance_adjusted_jaccard": np.ones(50)})
     assert partial_naucc(curve, 1.0, 10.0) == pytest.approx(1.0, abs=1e-9)
     assert partial_naucc(curve, 20.0, 50.0) == pytest.approx(1.0, abs=1e-9)
+
+
+def test_minimax_oracle_balances_one_sided_elites_at_fixed_budget():
+    left = [6.0, 5.0, 4.0, 3.0, 2.0, 1.0]
+    right = [6.0, 5.0, 1.0, 0.0, 4.0, 3.0]
+
+    selected = portfolio_select("minimax_oracle", left, right, q_star=0.5, budget_factor=1.0)
+    metrics = portfolio_metrics(selected, left, right, q_star=0.5)
+
+    assert len(selected) == 3
+    assert metrics["worst_source_recall"] == pytest.approx(2 / 3)
+
+
+def test_minimax_oracle_is_not_below_balanced_union():
+    left = [6.0, 5.0, 4.0, 3.0, 2.0, 1.0]
+    right = [6.0, 5.0, 1.0, 0.0, 4.0, 3.0]
+
+    oracle = portfolio_metrics(
+        portfolio_select("minimax_oracle", left, right, q_star=0.5, budget_factor=1.0),
+        left,
+        right,
+        q_star=0.5,
+    )
+    heuristic = portfolio_metrics(
+        portfolio_select("balanced_union", left, right, q_star=0.5, budget_factor=1.0),
+        left,
+        right,
+        q_star=0.5,
+    )
+
+    assert oracle["worst_source_recall"] >= heuristic["worst_source_recall"]
 
 
 def test_dual_high_avoids_extreme_high_low_outliers():

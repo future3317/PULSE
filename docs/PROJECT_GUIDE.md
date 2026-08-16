@@ -42,7 +42,8 @@ acquisition.
 | P0 F1 nAUCC | 0.105 (full 1–50% range) |
 | Elite partial nAUCC | 0.003 (1–10%) |
 | Balanced-union recall | 0.526 at P0 F1, q*=10%, equal budget |
-| Full-procedure gain | +0.386, 95% CI [0.273, 0.441] |
+| Exact minimax observed-ranking recall | 0.561 (32/57) at P0 F1, q*=10%, equal budget |
+| Exact minimax full-procedure gain | +0.421, 95% CI [0.357, 0.464] |
 
 The frozen point estimates remain authoritative in `results/phase7c/`; the
 unified cluster-bootstrap intervals and upgrade diagnostics are in

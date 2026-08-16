@@ -5,11 +5,11 @@ maintained date; use the generated audit report and Git history for provenance.
 
 ## Active decision
 
-CrossPiezo Version A remains a two-source benchmark and is scientifically
-complete after the final technical manuscript revision; it is not yet
-administratively ready for submission. The Phase 9 statistical upgrade is
-complete. The independent third protocol is candidate-ready and intentionally
-deferred; no DFT/DFPT tensor result is included.
+CrossPiezo remains a two-source benchmark in active pre-submission revision.
+The latest audit corrected the exact minimax observed-ranking selector and added
+cutoff-distance and quarantine-removal sensitivities to the paper-side package.
+The independent third protocol is intentionally deferred; no DFT/DFPT tensor
+result is included.
 
 ## Verified baseline
 
@@ -18,8 +18,9 @@ deferred; no DFT/DFPT tensor result is included.
 - Phase 7C independent verifier: reconciled, maximum absolute difference
   `1.11e-16`, 0 flags.
 - Frozen panel: P0 = 573, P2 = 207.
-- Primary portfolio result: balanced-union recall 0.526 with full-procedure
-  gain +0.386, 95% CI [0.273, 0.441].
+- Balanced-union reference: recall 0.526.
+- Exact minimax observed-ranking benchmark: recall 0.561 (32/57) with
+  full-procedure gain +0.421, 95% CI [0.357, 0.464].
 - Unified reduced-formula cluster bootstrap: 2,000 replicates for each of the
   six P0/P2 × F1/F3/F4 combinations. P0 F1 nAUCC = 0.1051, 95% CI
   [0.0565, 0.1530]; P0 F1 persistent onset at delta=0.05 is not reached.

@@ -1,5 +1,8 @@
 # Phase 8A Final Decision
 
+> **Superseded:** this historical decision predates the exact minimax-selector
+> correction. It is retained for audit history only.
+
 ## Decision
 
 ### Submission Ready, Stronger Venue Requires Adjudication

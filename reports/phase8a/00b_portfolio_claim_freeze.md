@@ -1,5 +1,9 @@
 # Phase 8A Portfolio Claim Freeze
 
+> **Superseded:** this historical freeze predates the exact minimax-selector
+> correction. Use results/phase7c/portfolio_benchmark.csv and
+> reports/phase7c/04_portfolio.md for current values.
+
 > Source: `results/phase7c/portfolio_benchmark.csv` and `results/phase7c/portfolio_paired_differences.csv`  
 > Scope: P0/P2 × F1/F3/F4, equal budget (`budget_factor = 1.0`)
 

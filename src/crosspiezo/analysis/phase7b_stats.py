@@ -618,12 +618,13 @@ def portfolio_select(
 
 
 def _minimax_oracle(left: np.ndarray, right: np.ndarray, q_star: float, budget: int) -> set[int]:
-    """Greedy near-exact maximiser of worst-source recall.
+    """Exact max--min selector for two observed elite sets.
 
-    Starts from the intersection of the two elite sets and greedily adds the
-    item that most improves worst-source recall, breaking ties by average
-    percentile.  Membership arrays are used so that each greedy step is
-    vectorised over candidates.
+    The objective depends only on four membership categories: intersection,
+    JARVIS-only, MP-only and neither. Selecting the intersection first and
+    then balancing the two one-sided categories is therefore exact for the
+    worst-source recall objective; average percentile is used only to choose
+    among selections with the same objective value.
     """
     n = len(left)
     if budget <= 0 or n == 0:
@@ -640,34 +641,42 @@ def _minimax_oracle(left: np.ndarray, right: np.ndarray, q_star: float, budget: 
     pr = _source_percentiles(right)
     avg_pct = 0.5 * (pl + pr)
 
-    selected = np.zeros(n, dtype=bool)
-    selected[top_j & top_m] = True
-    if selected.sum() > budget:
-        idx = np.where(selected)[0]
-        order = sorted(idx, key=lambda i: (-avg_pct[i], i))[:budget]
-        selected.fill(False)
-        selected[order] = True
-        return set(np.where(selected)[0].tolist())
+    categories = {
+        "intersection": np.where(top_j & top_m)[0].tolist(),
+        "jarvis_only": np.where(top_j & ~top_m)[0].tolist(),
+        "mp_only": np.where(~top_j & top_m)[0].tolist(),
+        "neither": np.where(~top_j & ~top_m)[0].tolist(),
+    }
+    for values in categories.values():
+        values.sort(key=lambda i: (-avg_pct[i], i))
 
-    candidates = ~selected
-    count_j = int((selected & top_j).sum())
-    count_m = int((selected & top_m).sum())
-    while selected.sum() < budget and candidates.any():
-        scores = np.minimum(
-            (count_j + top_j.astype(np.int64)) / target_k,
-            (count_m + top_m.astype(np.int64)) / target_k,
-        ).astype(np.float64)
-        scores[~candidates] = -1.0
-        best_score = float(scores.max())
-        best_pool = np.where((scores == best_score) & candidates)[0]
-        best_i = int(min(best_pool, key=lambda i: (-avg_pct[i], i)))
-        selected[best_i] = True
-        candidates[best_i] = False
-        if top_j[best_i]:
-            count_j += 1
-        if top_m[best_i]:
-            count_m += 1
-    return set(np.where(selected)[0].tolist())
+    intersection = categories["intersection"][:budget]
+    selected = list(intersection)
+    if len(selected) == budget:
+        return set(selected)
+
+    remaining = budget - len(selected)
+    n_j = len(categories["jarvis_only"])
+    n_m = len(categories["mp_only"])
+    best: tuple[int, int, int] | None = None
+    best_take_j = 0
+    best_take_m = 0
+    for take_j in range(min(n_j, remaining) + 1):
+        take_m = min(n_m, remaining - take_j)
+        objective = min(len(intersection) + take_j, len(intersection) + take_m)
+        candidate = (objective, take_j + take_m, -abs(take_j - take_m))
+        if best is None or candidate > best:
+            best = candidate
+            best_take_j = take_j
+            best_take_m = take_m
+
+    assert best is not None
+    selected.extend(categories["jarvis_only"][:best_take_j])
+    selected.extend(categories["mp_only"][:best_take_m])
+
+    fill = budget - len(selected)
+    selected.extend(categories["neither"][:fill])
+    return set(selected)
 
 
 def portfolio_metrics(selected: Sequence[int], left: np.ndarray, right: np.ndarray, q_star: float) -> dict[str, Any]:
