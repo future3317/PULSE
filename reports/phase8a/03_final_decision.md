@@ -55,7 +55,7 @@
 | `reports/phase8a/01_reviewer_attack_matrix.md` | Three-archetype reviewer concerns and fixes |
 | `reports/phase8a/02_third_protocol_readiness.md` | Third-protocol audit (not executed) |
 | `reports/phase8a/03_final_decision.md` | This decision |
-| `submission/phase8a_venue_decision.md` | Venue decision and routes |
+| `archive/docs-consolidation-20260818/submission/phase8a_venue_decision.md` | Historical venue decision and routes |
 | `CrossPiezo_ScreeningResolution_Manuscript_v0.7.tex` | Revised manuscript |
 | `results/phase8a/manuscript_numbers.json` | Corrected manuscript numbers from CSV |
 

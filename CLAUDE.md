@@ -2,10 +2,9 @@
 
 Before changing the project, read:
 
-1. `CROSSPIEZO_TASKBOOK.md`
+1. `README.md`
 2. `docs/PROJECT_GUIDE.md`
-3. `docs/DOCUMENTATION_INDEX.md`
-4. `reports/CURRENT_STATUS.md`
+3. `docs/SCIENTIFIC_CONTRACT.md`
 
 ## Active scope
 
@@ -23,8 +22,8 @@ Before changing the project, read:
   and call the result a true tensor or ground truth.
 - Portfolio analysis is a two-source risk-management illustration, not physical
   validation or a universal method comparison.
-- Keep claims within the evidence documented in `docs/claim_boundary.md` and the
-  current manuscript Methods section.
+- Keep claims within the evidence documented in `docs/SCIENTIFIC_CONTRACT.md`
+  and the current manuscript Methods section.
 
 ## Engineering rules
 

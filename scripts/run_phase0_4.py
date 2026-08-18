@@ -235,7 +235,7 @@ def phase_0(tex_path: Path, bib_path: Path) -> dict[str, Any]:
     claim_md += bullet("Protocol uncertainty (functional, pseudopotential, DFPT implementation)")
     claim_md += bullet("Version uncertainty (database rebuilds, symmetrization)")
     claim_md += bullet("Model uncertainty (data, architecture, optimization)")
-    write_report(PROJECT_ROOT / "docs" / "claim_boundary.md", claim_md, title="Claim Boundary")
+    write_report(REPORT_ROOT / "phase0_4_generated" / "claim_boundary.md", claim_md, title="Claim Boundary")
 
     stat_md = ""
     stat_md += "## Statistical plan summary\n"
@@ -244,9 +244,9 @@ def phase_0(tex_path: Path, bib_path: Path) -> dict[str, Any]:
     stat_md += bullet("Rank stability: top-k Jaccard, Kendall tau, Spearman rho.")
     stat_md += bullet("Stratification by crystal system, space group, chemical system, response amplitude.")
     stat_md += bullet("PMR = median paired-source Frobenius disagreement / mean in-source MAE.")
-    write_report(PROJECT_ROOT / "docs" / "statistical_plan.md", stat_md, title="Statistical Plan")
+    write_report(REPORT_ROOT / "phase0_4_generated" / "statistical_plan.md", stat_md, title="Statistical Plan")
 
-    print("[Phase 0] Wrote reports/00_environment_and_scope.md, docs/claim_boundary.md, docs/statistical_plan.md")
+    print("[Phase 0] Wrote reports/00_environment_and_scope.md and reports/phase0_4_generated/*")
     return {"env": env, "contract": contract}
 
 

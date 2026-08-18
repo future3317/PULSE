@@ -1,5 +1,10 @@
 # CrossPiezo archive
 
+The active documentation entry points are `README.md`,
+`docs/PROJECT_GUIDE.md`, and `docs/SCIENTIFIC_CONTRACT.md`. The
+pre-consolidation active documents are preserved under
+`archive/docs-consolidation-20260818/`.
+
 The archive preserves reproducibility bundles and superseded planning material
 without presenting them as current instructions.
 

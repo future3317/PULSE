@@ -101,7 +101,7 @@ Before any response comparison, MP structures are aligned to JARVIS structures (
 The three reported scalars (F1, F3, F4) are coordinate-frame invariants, so they are unaffected by the source-specific structure-frame choice.
 
 Several calculation settings are not documented in the release metadata used by CrossPiezo: exchange--correlation functional, pseudopotential family, DFPT vs finite-difference ionic response, plane-wave cutoff, k-point density, relaxation thresholds, primitive vs conventional defaults, and sign-convention history.
-These items are therefore reported as unknown rather than assumed identical (see \path{docs/mp_vs_jarvis_conventions.md}).
+These items are therefore reported as unknown rather than assumed identical (see \path{docs/SCIENTIFIC_CONTRACT.md}).
 The repository convention audit (\path{scripts/run_convention_audit.py}) confirms that F1, F3 and F4 are rotation invariant, that Voigt/Cartesian conversion and engineering-shear handling are internally consistent, and that the F3 optimiser converges to a dense-grid brute-force oracle.
 This audit rules out low-level convention errors in the CrossPiezo pipeline; it does not prove that JARVIS and MP use identical calculation settings.
 

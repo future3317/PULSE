@@ -74,7 +74,8 @@ flowchart LR
 | Primary portfolio example / 主组合示例 | Equal-budget balanced-union with worst-source recall |
 | Reproducibility rule / 可复现规则 | Frozen artifacts and versioned scripts are authoritative; prose does not override generated results |
 
-See [`docs/matching_protocol.md`](docs/matching_protocol.md), [`docs/tensor_conventions.md`](docs/tensor_conventions.md), [`docs/statistical_plan.md`](docs/statistical_plan.md), and [`docs/data_contract.md`](docs/data_contract.md) for the detailed contract.
+See [`docs/SCIENTIFIC_CONTRACT.md`](docs/SCIENTIFIC_CONTRACT.md) for the single
+active data, matching, tensor, statistical, and claim contract.
 
 ## Evidence boundary / 证据边界
 
@@ -85,15 +86,15 @@ This repository supports conclusions about source-conditional agreement, screeni
 - generalization beyond the evaluated structure-matched panel;
 - an independent third-protocol DFT/DFPT result—the prepared candidate manifest is not an adjudication result.
 
-The full claim policy is maintained in [`docs/claim_boundary.md`](docs/claim_boundary.md).
+The full claim policy is maintained in the claim-boundary section of
+[`docs/SCIENTIFIC_CONTRACT.md`](docs/SCIENTIFIC_CONTRACT.md).
 
 ## Repository map / 仓库导航
 
-- [`docs/PROJECT_GUIDE.md`](docs/PROJECT_GUIDE.md) — active scope, frozen numbers, workflow, and change protocol.
-- [`docs/DOCUMENTATION_INDEX.md`](docs/DOCUMENTATION_INDEX.md) — live documentation, evidence, and historical material.
-- [`reports/CURRENT_STATUS.md`](reports/CURRENT_STATUS.md) — verification and submission-readiness snapshot.
-- [`reports/phase9/01_scientific_upgrade.md`](reports/phase9/01_scientific_upgrade.md) — statistical upgrade and sensitivity report.
-- [`docs/claim_boundary.md`](docs/claim_boundary.md) — supported claims and required qualifiers.
+- [`docs/PROJECT_GUIDE.md`](docs/PROJECT_GUIDE.md) — active scope, frozen numbers, workflow, blockers, and navigation.
+- [`docs/SCIENTIFIC_CONTRACT.md`](docs/SCIENTIFIC_CONTRACT.md) — one source for data, matching, tensor, statistics, provenance, and claim boundaries.
+- [`reports/README.md`](reports/README.md) — evidence and historical report navigation.
+- [`archive/docs-consolidation-20260818/`](archive/docs-consolidation-20260818/) — pre-consolidation active documents.
 - [`src/crosspiezo/`](src/crosspiezo/) — reusable matching, tensor, ranking, and analysis modules.
 - [`scripts/`](scripts/) — reproducibility and audit entry points.
 - [`tests/`](tests/) — contract and regression tests.
@@ -123,7 +124,7 @@ python scripts/run_scientific_upgrade.py
 
 ## Checks / 检查
 
-The README badge reports the lightweight targeted contract gate: **26 targeted checks passed**. The repository also keeps broader verification records and known runtime notes in [`reports/CURRENT_STATUS.md`](reports/CURRENT_STATUS.md); use those records when interpreting a full-suite run rather than treating a badge as a substitute for the scientific audit.
+The README badge reports the lightweight targeted contract gate: **26 targeted checks passed**. Use the generated reports and manifests under `reports/` and `results/` when interpreting a full-suite run; a badge is not a substitute for the scientific audit.
 
 Every change to analysis behavior should update the relevant code and tests, regenerate dependent artifacts, inspect the diff, and record the resulting evidence in the current report. Documentation uses Git history and generated provenance instead of manually maintained “last updated” dates.
 

@@ -1,70 +1,65 @@
-# CrossPiezo current project guide
+# CrossPiezo project guide
 
-This is the live operating guide for the repository. It deliberately has no
-manually maintained date field. Provenance comes from Git history, generated
-reports, result manifests, and artifact hashes.
+This is the active operating guide for the repository. It intentionally has no
+manually maintained date; provenance comes from Git history, generated reports,
+result manifests, and artifact records.
 
-## 1. Active line and scope
+## Active line and scope
 
 CrossPiezo Version A measures screening-resolution agreement between
 structure-matched piezoelectric records from Materials Project (MP) and JARVIS.
-The central result is that global rank agreement alone does not determine
-elite-set reproducibility. The portfolio analysis is a two-source
-risk-management illustration, not evidence of physical truth or independent
-validation.
+The central result is that global rank agreement does not determine elite-set
+reproducibility. The portfolio analysis is a two-source risk-management
+illustration, not evidence of physical truth or independent validation.
 
 The active line includes:
 
 - frozen P0/P2 paired panels;
 - F1/F3/F4 screening-resolution curves and simultaneous bands;
-- the Phase 9 unified reduced-formula cluster-bootstrap upgrade;
-- tie-aware cutoff, raw-value and matching-distance diagnostics;
-- conventional ranking diagnostics and property controls;
-- the full-procedure grouped-bootstrap portfolio analysis;
+- the Phase 9 reduced-formula cluster-bootstrap upgrade;
+- tie-aware cutoff, raw-value, matching-distance, property-control, and
+  portfolio diagnostics;
 - the Version A manuscript and supplementary package.
 
-The Phase 9 third-protocol preflight has generated and hash-bound 48 candidates.
-Real DFT/DFPT adjudication is intentionally deferred; the candidate manifest is
-ready, but no independent tensor result is part of the active line. A future
-run may use the project's server or another documented compute allocation, but
-must preserve the pre-registered protocol and record code, pseudopotential,
-settings, scheduler and output provenance. The active line does not include
-experimental adjudication, PULSE model development, or large-scale data
-acquisition.
+The third-protocol preflight generated a hash-bound candidate set, but real
+DFT/DFPT adjudication is deferred. The active line does not include
+experimental adjudication, PULSE model development, new endpoints, panel
+expansion, or large-scale data acquisition.
 
-## 2. Frozen evidence
+## Frozen evidence
 
 | Item | Current value/source |
 |---|---|
 | P0 panel | 573 structure-matched pairs |
 | P2 panel | 207 tight matches |
 | Primary metric | F1 Cartesian Frobenius norm |
-| P0 F1 nAUCC | 0.105 (full 1–50% range) |
-| Elite partial nAUCC | 0.003 (1–10%) |
+| P0 F1 nAUCC | 0.105 over the full 1–50% range |
+| Elite partial nAUCC | 0.003 over the 1–10% range |
 | Balanced-union recall | 0.526 at P0 F1, q*=10%, equal budget |
-| Exact minimax observed-ranking recall | 0.561 (32/57) at P0 F1, q*=10%, equal budget |
+| Exact minimax observed-ranking recall | 0.561 (32/57) at P0 F1, q*=10% |
 | Exact minimax full-procedure gain | +0.421, 95% CI [0.357, 0.464] |
 
-The frozen point estimates remain authoritative in `results/phase7c/`; the
-unified cluster-bootstrap intervals and upgrade diagnostics are in
-`results/phase9/` and its manifest. Do not copy numbers from historical
-reports into the manuscript.
+Frozen point estimates remain authoritative in `results/phase7c/`. Unified
+cluster-bootstrap intervals and upgrade diagnostics are in `results/phase9/`
+and its manifest. Do not copy numerical values from historical prose into the
+manuscript.
 
-## 3. Scientific boundaries
+## Current decisions and blockers
 
-- Pair records by structure matching; chemical formula alone is insufficient.
-- Keep MP and JARVIS values source-conditional. Never average them and call the
-  result a true tensor, consensus, or physical ground truth.
-- Do not claim experimental validation, physical exactness, generalization, or
-  a protocol uncertainty floor without the corresponding independent evidence.
-- Report the portfolio as a decision/risk-management illustration.
-- Treat undocumented source workflow details as unknown rather than inferred.
+- Version A remains a two-source benchmark; no independent tensor result is
+  reported.
+- The third protocol is deferred after preflight. Resuming it requires an
+  independent DFT/DFPT environment and complete settings/scheduler/output
+  provenance.
+- No new panel members, endpoint changes, PULSE model development, or broad
+  data download are part of the current line.
+- Submission still requires the real preregistration DOI/BibTeX entry, author
+  and institution metadata, and a permanent archive DOI or private reviewer
+  link.
+- The current venue route is a benchmark/materials-informatics submission;
+  stronger adjudication claims wait for independent validation.
 
-See `docs/claim_boundary.md`, `docs/tensor_conventions.md`,
-`docs/matching_protocol.md`, and `docs/mp_vs_jarvis_conventions.md` for the
-technical boundary conditions.
-
-## 4. Canonical workflow
+## Canonical workflow
 
 Run from `E:/CODE/PULSE` with Python 3.11+ and `pyarrow>=23.0`:
 
@@ -80,49 +75,44 @@ python scripts/run_scientific_upgrade.py
 ```
 
 The convention audit sets its own subprocess path and BLAS environment. The
-Phase 7C verifier must run with a PyArrow runtime that can read the frozen panel
-Parquet. Do not regenerate the panel to work around a local PyArrow mismatch.
+Phase 7C verifier must use a PyArrow runtime that reads the frozen panel
+Parquet; do not regenerate the panel to work around a local mismatch.
 
-For manuscript artifacts, run the versioned generators in the paper package,
-then compile the main manuscript and supplementary source with TeX Live. The
-supplementary `.tex` file is generated and must not be hand-edited.
+For manuscript artifacts, use the versioned generators in the paper package
+and compile the main manuscript and generated supplementary source with TeX
+Live. Do not hand-edit generated supplementary TeX.
 
-## 5. Change protocol
+## Change protocol
 
-When changing analysis behavior:
+For analysis changes:
 
 1. update code/configuration and tests;
 2. run the relevant verification scripts;
 3. regenerate dependent CSV/JSON/figures/TeX;
 4. inspect diffs and update only current explanatory prose;
-5. record the result in the current status report or generated audit.
+5. keep artifacts, manifests, and claims synchronized.
 
-When changing documentation:
+For documentation changes, update these canonical files instead of creating a
+new kickoff, handoff, versioned plan, or parallel status file. Link to artifacts
+and commands rather than duplicating large result tables. Historical material
+with recovery or provenance value belongs under `archive/`.
 
-- update the canonical document, not a new handoff or kickoff prompt;
-- do not add a “last updated” date that someone must maintain manually;
-- link to artifacts and commands instead of duplicating large tables;
-- move superseded plans to `archive/legacy/` when they retain historical value.
+## Documentation map
 
-## 6. Current submission blockers
+- [`README.md`](../README.md) — public-facing overview and quick start.
+- [`SCIENTIFIC_CONTRACT.md`](SCIENTIFIC_CONTRACT.md) — claim, data, matching,
+  tensor, source-workflow, and statistical rules.
+- [`CLAUDE.md`](../CLAUDE.md) — agent operating constraints.
+- [`reports/README.md`](../reports/README.md) — report/evidence navigation.
+- [`archive/docs-consolidation-20260818/`](../archive/docs-consolidation-20260818/)
+  — pre-consolidation active documents.
 
-The scientific Version A content is complete. Before venue submission, authors
-must still provide:
-
-- the real pre-registration DOI and BibTeX entry;
-- author and institution metadata;
-- the permanent archive DOI or private reviewer link.
-
-For a stricter venue revision, `reports/open_questions.md` records the remaining
-author decisions and the explicitly deferred third-protocol extension. The
-statistical reviewer gates are now represented by the Phase 9 artifacts.
-
-## 7. Key locations
+## Key locations
 
 - Manuscript package: `E:/PAPER/CrossPiezo_EliteTail_Instability/`
 - Frozen panel: `artifacts/phase6a/panels/`
 - Frozen results: `results/phase7c/`
-- Phase 9 upgrade results: `results/phase9/`
-- Current decision reports: `reports/phase8a/` and `reports/phase8b/`
-- Phase 9 scientific report: `reports/phase9/01_scientific_upgrade.md`
-- Historical plans: `archive/legacy/root_phase_plans/`
+- Phase 9 results: `results/phase9/`
+- Current scientific reports: `reports/phase8a/`, `reports/phase8b/`, and
+  `reports/phase9/`
+- Historical plans and audits: `archive/`
