@@ -1,0 +1,22 @@
+{
+  "status": "completed",
+  "panel_source": "artifacts\\phase6a\\panels\\panel_membership.parquet",
+  "panels": {
+    "P0": 573,
+    "P2": 207
+  },
+  "q_levels_percent": [
+    1,
+    5,
+    10,
+    20,
+    50
+  ],
+  "retention_definition": "|T_A(q_source) intersect T_B(q_target)| / |T_A(q_source)|",
+  "boundary_definition": "source rank percentile minus q; disagreement is source-vs-target top-q membership mismatch",
+  "outputs": {
+    "retention": "results\\phase9\\cross_quantile_retention.csv",
+    "boundary_risk": "results\\phase9\\boundary_risk_by_distance.csv",
+    "global_rank_blindness": "results\\phase9\\global_rank_blindness_construction.csv"
+  }
+}
